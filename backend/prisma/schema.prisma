@@ -1,0 +1,214 @@
+// NexusWait Prisma Schema - see docs/implementation/03-domain-and-database.md
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma/client"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+enum ProjectStatus {
+  active
+  paused
+  archived
+}
+
+enum HostedPageStatus {
+  draft
+  published
+  archived
+}
+
+enum NotificationStatus {
+  pending
+  sent
+  failed
+  dead_letter
+}
+
+enum ApiKeyType {
+  secret
+  publishable
+}
+
+enum PlanTier {
+  spark
+  pulse
+  nexus
+  enterprise
+}
+
+enum IntegrationType {
+  mailchimp
+  sendgrid
+  slack
+  discord
+  hubspot
+  zapier
+  google_sheets
+  segment
+  supabase
+  intercom
+  webhook
+}
+
+model Account {
+  id                    String    @id @default(uuid())
+  plan                  PlanTier  @default(spark)
+  polarCustomerId       String?   @map("polar_customer_id")
+  polarSubscriptionId  String?   @map("polar_subscription_id")
+  createdAt             DateTime  @default(now()) @map("created_at")
+  updatedAt             DateTime  @updatedAt @map("updated_at")
+
+  users           User[]
+  projects        Project[]
+  apiKeys         ApiKey[]
+  polarSubscription PolarSubscription?
+}
+
+model User {
+  id        String   @id @default(uuid())
+  email     String   @unique
+  passwordHash String @map("password_hash")
+  firstName String?  @map("first_name")
+  lastName  String?  @map("last_name")
+  accountId String   @map("account_id")
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  account Account @relation(fields: [accountId], references: [id], onDelete: Cascade)
+}
+
+model Project {
+  id          String        @id @default(uuid())
+  name        String
+  slug        String
+  status      ProjectStatus @default(active)
+  redirectUrl String?       @map("redirect_url")
+  webhookUrl  String?       @map("webhook_url")
+  accountId   String        @map("account_id")
+  createdAt   DateTime      @default(now()) @map("created_at")
+  updatedAt   DateTime      @updatedAt @map("updated_at")
+
+  account        Account        @relation(fields: [accountId], references: [id], onDelete: Cascade)
+  subscribers     Subscriber[]
+  integrations    Integration[]
+  hostedPage      HostedPage?
+}
+
+model Subscriber {
+  id           String   @id @default(uuid())
+  email        String
+  name         String?
+  metadata     Json?
+  referralCode String   @unique @map("referral_code")
+  referrerId   String?  @map("referrer_id")
+  verifiedAt   DateTime? @map("verified_at")
+  source       String?  @default("direct")
+  projectId   String   @map("project_id")
+  createdAt    DateTime @default(now()) @map("created_at")
+  updatedAt    DateTime @updatedAt @map("updated_at")
+
+  project  Project    @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  referrer Subscriber? @relation("Referrals", fields: [referrerId], references: [id])
+  referred Subscriber[] @relation("Referrals")
+
+  @@unique([projectId, email])
+  @@index([projectId, referralCode])
+  @@index([referrerId])
+}
+
+model Integration {
+  id              String          @id @default(uuid())
+  type            IntegrationType
+  displayName     String          @map("display_name")
+  config          Json
+  fieldMapping    Json?           @map("field_mapping")
+  events          String[]
+  enabled        Boolean         @default(true)
+  lastTriggeredAt DateTime?      @map("last_triggered_at")
+  failureCount    Int            @default(0) @map("failure_count")
+  projectId       String         @map("project_id")
+  createdAt       DateTime       @default(now()) @map("created_at")
+  updatedAt       DateTime       @updatedAt @map("updated_at")
+
+  project Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
+}
+
+model HostedPage {
+  id              String           @id @default(uuid())
+  slug            String
+  customDomain    String?          @map("custom_domain")
+  title           String
+  metaDescription String?          @map("meta_description")
+  ogImageUrl      String?          @map("og_image_url")
+  themeId         String           @map("theme_id")
+  themeOverrides  Json?            @map("theme_overrides")
+  sections        Json
+  formConfig      Json             @map("form_config")
+  successConfig   Json             @map("success_config")
+  status          HostedPageStatus @default(draft)
+  publishedAt     DateTime?        @map("published_at")
+  projectId       String           @unique @map("project_id")
+  createdAt       DateTime         @default(now()) @map("created_at")
+  updatedAt       DateTime         @updatedAt @map("updated_at")
+
+  project Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
+}
+
+
+model Notification {
+  id          String             @id @default(uuid())
+  templateId  String             @map("template_id")
+  recipient   String
+  payload     Json
+  status      NotificationStatus @default(pending)
+  attempts    Int                @default(0)
+  maxAttempts Int                @default(3) @map("max_attempts")
+  nextRetryAt DateTime?          @map("next_retry_at")
+  lastError   String?            @map("last_error")
+  sentAt      DateTime?         @map("sent_at")
+  createdAt   DateTime          @default(now()) @map("created_at")
+  updatedAt   DateTime          @updatedAt @map("updated_at")
+
+  template NotificationTemplate? @relation(fields: [templateId], references: [id], onDelete: Cascade)
+}
+
+model NotificationTemplate {
+  id        String   @id @default(uuid())
+  name      String
+  channel   String
+  subject   String?
+  body      String
+  accountId String?  @map("account_id")
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  notifications Notification[]
+}
+
+model ApiKey {
+  id        String     @id @default(uuid())
+  keyHash   String     @map("key_hash")
+  prefix    String
+  type      ApiKeyType
+  projectId String?    @map("project_id")
+  accountId String     @map("account_id")
+  createdAt DateTime   @default(now()) @map("created_at")
+
+  account Account @relation(fields: [accountId], references: [id], onDelete: Cascade)
+}
+
+model PolarSubscription {
+  id                   String   @id @default(uuid())
+  polarSubscriptionId  String   @unique @map("polar_subscription_id")
+  polarCustomerId      String   @map("polar_customer_id")
+  plan                 PlanTier
+  status               String
+  accountId            String   @unique @map("account_id")
+  createdAt            DateTime @default(now()) @map("created_at")
+  updatedAt            DateTime @updatedAt @map("updated_at")
+
+  account Account @relation(fields: [accountId], references: [id], onDelete: Cascade)
+}
