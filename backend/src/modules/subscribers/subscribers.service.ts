@@ -1,33 +1,56 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
+import { EventEmitter2 } from '@nestjs/event-emitter';
 import { PrismaService } from '../../infrastructure/prisma/prisma.service';
 import { randomBytes } from 'crypto';
 import { CreateSubscriberDto } from './dto/create-subscriber.dto';
+import { UpdateSubscriberDto } from './dto/update-subscriber.dto';
 
 @Injectable()
 export class SubscribersService {
-  constructor(private prisma: PrismaService) {}
+  constructor(
+    private prisma: PrismaService,
+    private eventEmitter: EventEmitter2,
+  ) {}
 
   private generateReferralCode(): string {
     return randomBytes(4).toString('base64url').toUpperCase().replace(/[-_]/g, 'A');
   }
 
-  async create(projectId: string, dto: CreateSubscriberDto, referrerId?: string) {
+  async create(projectId: string, dto: CreateSubscriberDto, ref?: string) {
     const project = await this.prisma.project.findUnique({ where: { id: projectId } });
     if (!project) throw new NotFoundException('Project not found');
+
+    // Resolve ref query param to referrerId
+    let referrerId: string | null = null;
+    if (ref) {
+      const referrer = await this.prisma.subscriber.findFirst({
+        where: { projectId, referralCode: ref },
+      });
+      if (referrer) referrerId = referrer.id;
+    }
+
     let code = this.generateReferralCode();
     while (await this.prisma.subscriber.findUnique({ where: { projectId, referralCode: code } }))
       code = this.generateReferralCode();
-    return this.prisma.subscriber.create({
+
+    const subscriber = await this.prisma.subscriber.create({
       data: {
         projectId,
         email: dto.email,
         name: dto.name,
         metadata: dto.metadata as object | undefined,
         referralCode: code,
-        referrerId: referrerId || null,
+        referrerId,
         source: dto.source || 'direct',
       },
     });
+
+    this.eventEmitter.emit('waitlist.signup.created', {
+      projectId,
+      subscriber,
+    });
+
+    return subscriber;
   }
 
   async findAll(projectId: string, accountId: string, limit = 20, cursor?: string) {
@@ -58,5 +81,30 @@ export class SubscribersService {
     });
     if (!sub) throw new NotFoundException('Subscriber not found');
     return sub;
+  }
+
+  async update(projectId: string, subscriberId: string, accountId: string, dto: UpdateSubscriberDto) {
+    const project = await this.prisma.project.findUnique({ where: { id: projectId } });
+    if (!project || project.accountId !== accountId) throw new NotFoundException('Project not found');
+    const sub = await this.prisma.subscriber.findFirst({ where: { id: subscriberId, projectId } });
+    if (!sub) throw new NotFoundException('Subscriber not found');
+    return this.prisma.subscriber.update({
+      where: { id: subscriberId },
+      data: {
+        ...(dto.email !== undefined && { email: dto.email }),
+        ...(dto.name !== undefined && { name: dto.name }),
+        ...(dto.metadata !== undefined && { metadata: dto.metadata as object }),
+        ...(dto.source !== undefined && { source: dto.source }),
+      },
+    });
+  }
+
+  async remove(projectId: string, subscriberId: string, accountId: string) {
+    const project = await this.prisma.project.findUnique({ where: { id: projectId } });
+    if (!project || project.accountId !== accountId) throw new NotFoundException('Project not found');
+    const sub = await this.prisma.subscriber.findFirst({ where: { id: subscriberId, projectId } });
+    if (!sub) throw new NotFoundException('Subscriber not found');
+    await this.prisma.subscriber.delete({ where: { id: subscriberId } });
+    return { deleted: true };
   }
 }

@@ -89,3 +89,8 @@ export type ApiKey = Prisma.ApiKeyModel
  * 
  */
 export type PolarSubscription = Prisma.PolarSubscriptionModel
+/**
+ * Model PlatformConfig
+ * 
+ */
+export type PlatformConfig = Prisma.PlatformConfigModel

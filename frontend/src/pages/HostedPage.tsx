@@ -1,11 +1,19 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { Link } from 'react-router-dom'
 import type { LucideIcon } from 'lucide-react'
 import {
   Globe, Eye, Palette, Type, Layout, Monitor, Tablet, Smartphone,
-  ArrowLeft, Copy, Check, Sparkles,
+  ArrowLeft, Copy, Check, Sparkles, Save, Loader2,
   Plus, GripVertical, Trash2
 } from 'lucide-react'
+import {
+  useProjects,
+  useHostedPage,
+  useUpsertHostedPage,
+  usePublishHostedPage,
+  useUnpublishHostedPage,
+  getMutationErrorMessage,
+} from '../api/hooks'
 
 const themes = [
   { id: 'nexus-dark', name: 'Nexus Dark', preview: 'bg-gradient-to-br from-[#0a0a14] to-[#1a1a2e]' },
@@ -39,7 +47,7 @@ interface PageConfig {
 type HostedTabId = 'design' | 'content' | 'sections' | 'seo'
 type PreviewMode = 'desktop' | 'tablet' | 'mobile'
 
-const tabs: { id: HostedTabId; label: string; icon: LucideIcon }[] = [
+const tabDefs: { id: HostedTabId; label: string; icon: LucideIcon }[] = [
   { id: 'design', label: 'Design', icon: Palette },
   { id: 'content', label: 'Content', icon: Type },
   { id: 'sections', label: 'Sections', icon: Layout },
@@ -53,17 +61,36 @@ const previewIcons: { mode: PreviewMode; icon: LucideIcon; w: string }[] = [
 ]
 
 export default function HostedPage() {
+  // ─── Project selector ──────────────────────────────
+  const { data: projectsList, isLoading: projectsLoading } = useProjects()
+  const projects = projectsList ?? []
+  const [selectedProjectId, setSelectedProjectId] = useState<string | undefined>(undefined)
+
+  // Auto-select first project
+  useEffect(() => {
+    if (!selectedProjectId && projects.length > 0) {
+      setSelectedProjectId(projects[0].id)
+    }
+  }, [projects, selectedProjectId])
+
+  // ─── Page data from API ────────────────────────────
+  const { data: pageData, isLoading: pageLoading } = useHostedPage(selectedProjectId)
+  const upsertPage = useUpsertHostedPage(selectedProjectId)
+  const publishPage = usePublishHostedPage(selectedProjectId)
+  const unpublishPage = useUnpublishHostedPage(selectedProjectId)
+
+  // ─── Local state ───────────────────────────────────
   const [activeTab, setActiveTab] = useState<HostedTabId>('design')
   const [previewMode, setPreviewMode] = useState<PreviewMode>('desktop')
   const [selectedTheme, setSelectedTheme] = useState('nexus-dark')
   const [sections, setSections] = useState(defaultSections)
   const [pageConfig, setPageConfig] = useState<PageConfig>({
-    title: 'SynthOS \u2014 The Future of Operating Systems',
-    subtitle: 'Join the waitlist for early access to the next generation of computing.',
+    title: '',
+    subtitle: '',
     ctaText: 'Join the Waitlist',
-    slug: 'synthos-launch',
+    slug: '',
     customDomain: '',
-    metaDescription: 'Be the first to experience SynthOS. Sign up for early access.',
+    metaDescription: '',
     ogImage: '',
     primaryColor: '#00e8ff',
     headingFont: 'Orbitron',
@@ -71,6 +98,48 @@ export default function HostedPage() {
   })
   const [published, setPublished] = useState(false)
   const [copied, setCopied] = useState(false)
+  const [saved, setSaved] = useState(false)
+  const [pageDataLoaded, setPageDataLoaded] = useState<string | undefined>(undefined)
+
+  // Populate local state from API data
+  useEffect(() => {
+    if (pageData && selectedProjectId && pageDataLoaded !== selectedProjectId) {
+      const p = pageData as Record<string, unknown>
+      const overrides = (p.themeOverrides as Record<string, string>) ?? {}
+      setPageConfig({
+        title: (p.title as string) ?? '',
+        subtitle: (p.subtitle as string) ?? '',
+        ctaText: ((p.formConfig as Record<string, string>)?.ctaText) ?? 'Join the Waitlist',
+        slug: (p.slug as string) ?? '',
+        customDomain: (p.customDomain as string) ?? '',
+        metaDescription: (p.metaDescription as string) ?? '',
+        ogImage: (p.ogImageUrl as string) ?? '',
+        primaryColor: overrides.primaryColor ?? '#00e8ff',
+        headingFont: overrides.headingFont ?? 'Orbitron',
+        bodyFont: overrides.bodyFont ?? 'Rajdhani',
+      })
+      if (p.themeId) setSelectedTheme(p.themeId as string)
+      if (Array.isArray(p.sections) && (p.sections as unknown[]).length > 0) {
+        setSections(
+          (p.sections as { id?: string; type?: string; label?: string; enabled?: boolean }[]).map((s, i) => ({
+            id: s.id ?? `s${i}`,
+            type: s.type ?? 'unknown',
+            label: s.label ?? s.type ?? 'Section',
+            enabled: s.enabled !== false,
+          })),
+        )
+      }
+      setPublished((p.published as boolean) ?? false)
+      setPageDataLoaded(selectedProjectId)
+    }
+  }, [pageData, selectedProjectId, pageDataLoaded])
+
+  // Reset loaded flag when project changes
+  useEffect(() => {
+    if (selectedProjectId !== pageDataLoaded) {
+      setPageDataLoaded(undefined)
+    }
+  }, [selectedProjectId, pageDataLoaded])
 
   const update = <K extends keyof PageConfig>(key: K, val: PageConfig[K]) =>
     setPageConfig(c => ({ ...c, [key]: val }))
@@ -84,9 +153,52 @@ export default function HostedPage() {
   }
 
   const handleCopy = () => {
+    const url = pageConfig.customDomain || `nexuswait.io/${pageConfig.slug}`
+    navigator.clipboard.writeText(url)
     setCopied(true)
     setTimeout(() => setCopied(false), 2000)
   }
+
+  const handleSave = () => {
+    upsertPage.mutate(
+      {
+        slug: pageConfig.slug,
+        title: pageConfig.title,
+        subtitle: pageConfig.subtitle,
+        metaDescription: pageConfig.metaDescription,
+        ogImageUrl: pageConfig.ogImage,
+        themeId: selectedTheme,
+        themeOverrides: {
+          primaryColor: pageConfig.primaryColor,
+          headingFont: pageConfig.headingFont,
+          bodyFont: pageConfig.bodyFont,
+        },
+        sections: sections,
+        formConfig: { ctaText: pageConfig.ctaText },
+        successConfig: {},
+      },
+      {
+        onSuccess: () => {
+          setSaved(true)
+          setTimeout(() => setSaved(false), 2000)
+        },
+      },
+    )
+  }
+
+  const handlePublishToggle = () => {
+    if (published) {
+      unpublishPage.mutate(undefined, {
+        onSuccess: () => setPublished(false),
+      })
+    } else {
+      publishPage.mutate(undefined, {
+        onSuccess: () => setPublished(true),
+      })
+    }
+  }
+
+  const isPublishing = publishPage.isPending || unpublishPage.isPending
 
   return (
     <div className="animate-fade-in">
@@ -100,6 +212,21 @@ export default function HostedPage() {
           <p className="text-sm text-nexus-400 mt-1">Design and publish your waitlist landing page.</p>
         </div>
         <div className="flex items-center gap-2">
+          {/* Project selector */}
+          {projectsLoading ? (
+            <span className="text-xs text-nexus-500">Loading projects...</span>
+          ) : (
+            <select
+              value={selectedProjectId ?? ''}
+              onChange={e => setSelectedProjectId(e.target.value)}
+              className="input-field text-xs py-1.5 w-40"
+            >
+              {projects.map(p => (
+                <option key={p.id} value={p.id}>{p.name}</option>
+              ))}
+              {projects.length === 0 && <option value="">No projects</option>}
+            </select>
+          )}
           <div className="flex items-center gap-1 p-0.5 rounded-lg border border-nexus-700/30 bg-nexus-800/30">
             {previewIcons.map(p => {
               const Icon = p.icon
@@ -120,20 +247,38 @@ export default function HostedPage() {
           </button>
           <button
             type="button"
-            onClick={() => setPublished(!published)}
+            onClick={handleSave}
+            disabled={upsertPage.isPending || !selectedProjectId}
+            className="btn-secondary flex items-center gap-1.5 text-xs"
+          >
+            {upsertPage.isPending ? <Loader2 size={13} className="animate-spin" /> : <Save size={13} />}
+            {saved ? 'Saved!' : 'Save'}
+          </button>
+          <button
+            type="button"
+            onClick={handlePublishToggle}
+            disabled={isPublishing || !selectedProjectId}
             className={`flex items-center gap-1.5 text-xs font-display font-bold tracking-wider px-4 py-2 rounded-lg transition-all ${
               published ? 'bg-emerald-glow/10 text-emerald-glow border border-emerald-glow/20' : 'btn-primary'
             }`}
           >
-            {published ? <><Check size={13} /> Published</> : <><Globe size={13} /> Publish</>}
+            {isPublishing
+              ? <Loader2 size={13} className="animate-spin" />
+              : published ? <><Check size={13} /> Published</> : <><Globe size={13} /> Publish</>}
           </button>
         </div>
       </div>
 
+      {(upsertPage.isError || publishPage.isError || unpublishPage.isError) && (
+        <p className="text-magenta-glow text-xs mb-4">{getMutationErrorMessage(upsertPage.error ?? publishPage.error ?? unpublishPage.error)}</p>
+      )}
+
+      {pageLoading && <p className="text-nexus-500 text-sm mb-4">Loading page config...</p>}
+
       <div className="grid lg:grid-cols-[320px_1fr] gap-6">
         <div className="space-y-4">
           <div className="flex gap-1 p-0.5 rounded-lg border border-cyan-glow/[0.06] bg-nexus-800/30">
-            {tabs.map(tab => {
+            {tabDefs.map(tab => {
               const TabIcon = tab.icon
               return (
                 <button
@@ -303,7 +448,7 @@ export default function HostedPage() {
                       {pageConfig.ctaText || 'Submit'}
                     </div>
                   </div>
-                  <p className="text-[10px] text-white/30 mt-4 font-mono">1,247 people already on the waitlist</p>
+                  <p className="text-[10px] text-white/30 mt-4 font-mono">Join the waitlist</p>
                   {sections.filter(s => s.enabled).length > 1 && (
                     <div className="mt-10 pt-6 border-t border-white/5 w-full">
                       <div className="flex items-center justify-center gap-4 flex-wrap">

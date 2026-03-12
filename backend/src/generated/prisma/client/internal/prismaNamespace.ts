@@ -393,7 +393,8 @@ export const ModelName = {
   Notification: 'Notification',
   NotificationTemplate: 'NotificationTemplate',
   ApiKey: 'ApiKey',
-  PolarSubscription: 'PolarSubscription'
+  PolarSubscription: 'PolarSubscription',
+  PlatformConfig: 'PlatformConfig'
 } as const
 
 export type ModelName = (typeof ModelName)[keyof typeof ModelName]
@@ -409,7 +410,7 @@ export type TypeMap<ExtArgs extends runtime.Types.Extensions.InternalArgs = runt
     omit: GlobalOmitOptions
   }
   meta: {
-    modelProps: "account" | "user" | "project" | "subscriber" | "integration" | "hostedPage" | "notification" | "notificationTemplate" | "apiKey" | "polarSubscription"
+    modelProps: "account" | "user" | "project" | "subscriber" | "integration" | "hostedPage" | "notification" | "notificationTemplate" | "apiKey" | "polarSubscription" | "platformConfig"
     txIsolationLevel: TransactionIsolationLevel
   }
   model: {
@@ -1153,6 +1154,80 @@ export type TypeMap<ExtArgs extends runtime.Types.Extensions.InternalArgs = runt
         }
       }
     }
+    PlatformConfig: {
+      payload: Prisma.$PlatformConfigPayload<ExtArgs>
+      fields: Prisma.PlatformConfigFieldRefs
+      operations: {
+        findUnique: {
+          args: Prisma.PlatformConfigFindUniqueArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$PlatformConfigPayload> | null
+        }
+        findUniqueOrThrow: {
+          args: Prisma.PlatformConfigFindUniqueOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$PlatformConfigPayload>
+        }
+        findFirst: {
+          args: Prisma.PlatformConfigFindFirstArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$PlatformConfigPayload> | null
+        }
+        findFirstOrThrow: {
+          args: Prisma.PlatformConfigFindFirstOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$PlatformConfigPayload>
+        }
+        findMany: {
+          args: Prisma.PlatformConfigFindManyArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$PlatformConfigPayload>[]
+        }
+        create: {
+          args: Prisma.PlatformConfigCreateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$PlatformConfigPayload>
+        }
+        createMany: {
+          args: Prisma.PlatformConfigCreateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        createManyAndReturn: {
+          args: Prisma.PlatformConfigCreateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$PlatformConfigPayload>[]
+        }
+        delete: {
+          args: Prisma.PlatformConfigDeleteArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$PlatformConfigPayload>
+        }
+        update: {
+          args: Prisma.PlatformConfigUpdateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$PlatformConfigPayload>
+        }
+        deleteMany: {
+          args: Prisma.PlatformConfigDeleteManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateMany: {
+          args: Prisma.PlatformConfigUpdateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateManyAndReturn: {
+          args: Prisma.PlatformConfigUpdateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$PlatformConfigPayload>[]
+        }
+        upsert: {
+          args: Prisma.PlatformConfigUpsertArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$PlatformConfigPayload>
+        }
+        aggregate: {
+          args: Prisma.PlatformConfigAggregateArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.AggregatePlatformConfig>
+        }
+        groupBy: {
+          args: Prisma.PlatformConfigGroupByArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.PlatformConfigGroupByOutputType>[]
+        }
+        count: {
+          args: Prisma.PlatformConfigCountArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.PlatformConfigCountAggregateOutputType> | number
+        }
+      }
+    }
   }
 } & {
   other: {
@@ -1210,6 +1285,7 @@ export const UserScalarFieldEnum = {
   passwordHash: 'passwordHash',
   firstName: 'firstName',
   lastName: 'lastName',
+  role: 'role',
   accountId: 'accountId',
   createdAt: 'createdAt',
   updatedAt: 'updatedAt'
@@ -1349,6 +1425,17 @@ export const PolarSubscriptionScalarFieldEnum = {
 export type PolarSubscriptionScalarFieldEnum = (typeof PolarSubscriptionScalarFieldEnum)[keyof typeof PolarSubscriptionScalarFieldEnum]
 
 
+export const PlatformConfigScalarFieldEnum = {
+  id: 'id',
+  apiBaseUrl: 'apiBaseUrl',
+  cdnBaseUrl: 'cdnBaseUrl',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+} as const
+
+export type PlatformConfigScalarFieldEnum = (typeof PlatformConfigScalarFieldEnum)[keyof typeof PlatformConfigScalarFieldEnum]
+
+
 export const SortOrder = {
   asc: 'asc',
   desc: 'desc'
@@ -1442,6 +1529,20 @@ export type DateTimeFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel
  * Reference to a field of type 'DateTime[]'
  */
 export type ListDateTimeFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'DateTime[]'>
+    
+
+
+/**
+ * Reference to a field of type 'UserRole'
+ */
+export type EnumUserRoleFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'UserRole'>
+    
+
+
+/**
+ * Reference to a field of type 'UserRole[]'
+ */
+export type ListEnumUserRoleFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'UserRole[]'>
     
 
 
@@ -1668,6 +1769,7 @@ export type GlobalOmitConfig = {
   notificationTemplate?: Prisma.NotificationTemplateOmit
   apiKey?: Prisma.ApiKeyOmit
   polarSubscription?: Prisma.PolarSubscriptionOmit
+  platformConfig?: Prisma.PlatformConfigOmit
 }
 
 /* Types for Logging */

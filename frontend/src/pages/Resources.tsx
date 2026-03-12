@@ -5,6 +5,7 @@ import {
 } from 'lucide-react'
 import type { LucideIcon } from 'lucide-react'
 import { useState } from 'react'
+import { usePlatformConfig } from '../api/hooks'
 
 const categories: {
   icon: LucideIcon
@@ -74,6 +75,8 @@ const tagColors: Record<string, string> = {
 
 export default function Resources() {
   const [search, setSearch] = useState('')
+  const { data: platformConfig } = usePlatformConfig()
+  const apiUrl = platformConfig?.apiBaseUrl ?? 'https://api.nexuswait.io'
 
   return (
     <div className="grid-bg min-h-screen">
@@ -201,7 +204,7 @@ export default function Resources() {
               <span className="ml-3 font-mono text-[11px] text-nexus-500">API Example — Create Waitlist</span>
             </div>
             <pre className="p-6 font-mono text-sm text-nexus-300 overflow-x-auto leading-relaxed">
-              <code>{`curl -X POST https://api.nexuswait.io/v1/waitlists \\
+              <code>{`curl -X POST ${apiUrl}/v1/waitlists \\
   -H "Authorization: Bearer nw_sk_live_..." \\
   -H "Content-Type: application/json" \\
   -d '{

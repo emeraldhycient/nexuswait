@@ -60,7 +60,8 @@ export const ModelName = {
   Notification: 'Notification',
   NotificationTemplate: 'NotificationTemplate',
   ApiKey: 'ApiKey',
-  PolarSubscription: 'PolarSubscription'
+  PolarSubscription: 'PolarSubscription',
+  PlatformConfig: 'PlatformConfig'
 } as const
 
 export type ModelName = (typeof ModelName)[keyof typeof ModelName]
@@ -97,6 +98,7 @@ export const UserScalarFieldEnum = {
   passwordHash: 'passwordHash',
   firstName: 'firstName',
   lastName: 'lastName',
+  role: 'role',
   accountId: 'accountId',
   createdAt: 'createdAt',
   updatedAt: 'updatedAt'
@@ -234,6 +236,17 @@ export const PolarSubscriptionScalarFieldEnum = {
 } as const
 
 export type PolarSubscriptionScalarFieldEnum = (typeof PolarSubscriptionScalarFieldEnum)[keyof typeof PolarSubscriptionScalarFieldEnum]
+
+
+export const PlatformConfigScalarFieldEnum = {
+  id: 'id',
+  apiBaseUrl: 'apiBaseUrl',
+  cdnBaseUrl: 'cdnBaseUrl',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+} as const
+
+export type PlatformConfigScalarFieldEnum = (typeof PlatformConfigScalarFieldEnum)[keyof typeof PlatformConfigScalarFieldEnum]
 
 
 export const SortOrder = {

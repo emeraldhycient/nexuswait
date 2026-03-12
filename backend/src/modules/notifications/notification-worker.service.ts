@@ -1,6 +1,6 @@
 import { Injectable, OnModuleInit, OnModuleDestroy } from '@nestjs/common';
 import { PrismaService } from '../../infrastructure/prisma/prisma.service';
-import { NotificationStatus } from '@prisma/client';
+import { NotificationStatus } from '../../generated/prisma/client/enums';
 
 const RETRY_DELAYS_MS = [1000, 10000, 60000]; // 1s, 10s, 60s
 

@@ -53,6 +53,11 @@ enum IntegrationType {
   webhook
 }
 
+enum UserRole {
+  user
+  admin
+}
+
 model Account {
   id                    String    @id @default(uuid())
   plan                  PlanTier  @default(spark)
@@ -73,6 +78,7 @@ model User {
   passwordHash String @map("password_hash")
   firstName String?  @map("first_name")
   lastName  String?  @map("last_name")
+  role      UserRole @default(user)
   accountId String   @map("account_id")
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @updatedAt @map("updated_at")
@@ -211,4 +217,14 @@ model PolarSubscription {
   updatedAt            DateTime @updatedAt @map("updated_at")
 
   account Account @relation(fields: [accountId], references: [id], onDelete: Cascade)
+}
+
+model PlatformConfig {
+  id         String   @id @default("singleton")
+  apiBaseUrl String   @default("https://api.nexuswait.io") @map("api_base_url")
+  cdnBaseUrl String   @default("https://cdn.nexuswait.io") @map("cdn_base_url")
+  createdAt  DateTime @default(now()) @map("created_at")
+  updatedAt  DateTime @updatedAt @map("updated_at")
+
+  @@map("platform_config")
 }

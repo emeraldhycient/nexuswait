@@ -1,6 +1,6 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../../infrastructure/prisma/prisma.service';
-import { NotificationStatus } from '@prisma/client';
+import { NotificationStatus } from '../../generated/prisma/client/enums';
 import { CreateTemplateDto } from './dto/create-template.dto';
 
 @Injectable()

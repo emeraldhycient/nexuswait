@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import {
   ArrowRight, ArrowLeft, Share2,
-  Sparkles, Check, Copy
+  Sparkles, Check, Code
 } from 'lucide-react'
 import { useCreateProject, getMutationErrorMessage } from '../api/hooks'
 
@@ -234,13 +234,23 @@ export default function CreateProject() {
 
             <div className="mt-6 card-surface p-4 text-left">
               <div className="flex items-center justify-between mb-2">
-                <span className="text-[10px] font-mono text-nexus-500 tracking-widest uppercase">Embed Code</span>
-                <button type="button" className="text-nexus-500 hover:text-cyan-glow transition-colors"><Copy size={13} /></button>
+                <span className="text-[10px] font-mono text-nexus-500 tracking-widest uppercase">Quick Integration</span>
               </div>
-              <pre className="font-mono text-xs text-cyan-glow/70 bg-nexus-900/50 rounded-lg p-3 overflow-x-auto">
-{`<script src="https://cdn.nexuswait.io/v1.js"></script>
-<div id="nexuswait" data-id="prj-005"></div>`}
-              </pre>
+              <p className="text-xs text-nexus-400 mb-3">
+                After deploying, you'll find the embed code and API snippets on your project page via the <Code size={11} className="inline text-cyan-glow" /> <span className="text-cyan-glow font-semibold">Embed</span> button.
+              </p>
+              <div className="flex items-center gap-2 text-xs text-nexus-500">
+                <span className="w-5 h-5 rounded-full bg-cyan-glow/10 flex items-center justify-center text-cyan-glow font-bold text-[10px]">1</span>
+                <span>Deploy your project</span>
+              </div>
+              <div className="flex items-center gap-2 text-xs text-nexus-500 mt-2">
+                <span className="w-5 h-5 rounded-full bg-cyan-glow/10 flex items-center justify-center text-cyan-glow font-bold text-[10px]">2</span>
+                <span>Click <strong className="text-nexus-300">Embed</strong> to get your snippet</span>
+              </div>
+              <div className="flex items-center gap-2 text-xs text-nexus-500 mt-2">
+                <span className="w-5 h-5 rounded-full bg-cyan-glow/10 flex items-center justify-center text-cyan-glow font-bold text-[10px]">3</span>
+                <span>Paste into your site or use the API</span>
+              </div>
             </div>
 
             <button

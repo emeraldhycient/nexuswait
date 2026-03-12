@@ -1,10 +1,17 @@
-import { useState } from 'react'
+import { useState, useMemo } from 'react'
 import { Link } from 'react-router-dom'
 import {
   ArrowLeft, Key, Copy, Check, Eye, EyeOff, RefreshCw,
-  Terminal, BookOpen, Play, ExternalLink,
+  Terminal, BookOpen, Play, ExternalLink, Plus, Loader2, Trash2,
   Zap, Shield, ChevronDown, ChevronUp
 } from 'lucide-react'
+import {
+  useApiKeys,
+  useCreateApiKey,
+  useRevokeApiKey,
+  usePlatformConfig,
+  getMutationErrorMessage,
+} from '../api/hooks'
 
 const endpoints = [
   { group: 'Projects', items: [
@@ -52,8 +59,19 @@ const methodColors: Record<string, string> = {
   DELETE: 'bg-magenta-glow/10 text-magenta-glow',
 }
 
-const codeExamples: Record<string, string> = {
-  curl: `curl -X POST https://api.nexuswait.io/v1/projects/prj_abc123/subscribers \\
+export default function ApiDocs() {
+  const [copiedKey, setCopiedKey] = useState<string | null>(null)
+  const [activeCodeTab, setActiveCodeTab] = useState<string>('curl')
+  const [expandedGroup, setExpandedGroup] = useState<string | null>('Subscribers')
+  const [playgroundResponse, setPlaygroundResponse] = useState<string | null>(null)
+  const [newlyCreatedKey, setNewlyCreatedKey] = useState<string | null>(null)
+
+  // ─── Platform config ────────────────────────────────
+  const { data: platformConfig } = usePlatformConfig()
+  const apiUrl = platformConfig?.apiBaseUrl ?? 'https://api.nexuswait.io'
+
+  const codeExamples = useMemo<Record<string, string>>(() => ({
+    curl: `curl -X POST ${apiUrl}/v1/projects/prj_abc123/subscribers \\
   -H "Authorization: Bearer nw_pk_live_..." \\
   -H "Content-Type: application/json" \\
   -d '{
@@ -65,7 +83,7 @@ const codeExamples: Record<string, string> = {
     },
     "referral_code": "REF_xyz789"
   }'`,
-  javascript: `import { NexusWait } from '@nexuswait/sdk';
+    javascript: `import { NexusWait } from '@nexuswait/sdk';
 
 const nw = new NexusWait({
   publishableKey: 'nw_pk_live_...'
@@ -80,8 +98,8 @@ const subscriber = await nw.subscribers.create('prj_abc123', {
 });
 
 console.log(subscriber.referralLink);
-// => "https://nexuswait.io/your-project?ref=ABC123"`,
-  react: `import { useNexusWait } from '@nexuswait/react';
+// => "${apiUrl}/your-project?ref=ABC123"`,
+    react: `import { useNexusWait } from '@nexuswait/react';
 
 export default function WaitlistForm() {
   const { submit, status, referralLink, error } = useNexusWait({
@@ -118,7 +136,7 @@ export default function WaitlistForm() {
     </form>
   );
 }`,
-  python: `from nexuswait import NexusWait
+    python: `from nexuswait import NexusWait
 
 nw = NexusWait(secret_key="nw_sk_live_...")
 
@@ -142,18 +160,45 @@ is_valid = nw.webhooks.verify(
     payload=request.body,
     signature=request.headers["X-NexusWait-Signature"],
 )`,
-}
+  }), [apiUrl])
 
-export default function ApiDocs() {
+  // ─── API Keys from real data ───────────────────────
+  const { data: apiKeys, isLoading: keysLoading } = useApiKeys()
+  const createApiKey = useCreateApiKey()
+  const revokeApiKey = useRevokeApiKey()
+
+  const publishableKeys = apiKeys?.filter(k => k.type === 'publishable') ?? []
+  const secretKeys = apiKeys?.filter(k => k.type === 'secret') ?? []
+
   const [showSecretKey, setShowSecretKey] = useState(false)
-  const [copiedKey, setCopiedKey] = useState<string | null>(null)
-  const [activeCodeTab, setActiveCodeTab] = useState<string>('curl')
-  const [expandedGroup, setExpandedGroup] = useState<string | null>('Subscribers')
-  const [playgroundResponse, setPlaygroundResponse] = useState<string | null>(null)
 
-  const copyKey = (type: string) => {
+  const copyKey = (text: string, type: string) => {
+    navigator.clipboard.writeText(text)
     setCopiedKey(type)
     setTimeout(() => setCopiedKey(null), 2000)
+  }
+
+  const generateKey = (type: string) => {
+    createApiKey.mutate(
+      { type },
+      {
+        onSuccess: (data: unknown) => {
+          const raw = (data as { rawKey?: string; key?: string }).rawKey ?? (data as { key?: string }).key
+          if (raw) setNewlyCreatedKey(raw as string)
+        },
+      },
+    )
+  }
+
+  const rotateKeys = async () => {
+    // Revoke all existing keys and regenerate one of each type
+    const allKeys = apiKeys ?? []
+    for (const k of allKeys) {
+      revokeApiKey.mutate(k.id)
+    }
+    // Generate fresh keys
+    generateKey('publishable')
+    generateKey('secret')
   }
 
   const runPlayground = () => {
@@ -163,7 +208,7 @@ export default function ApiDocs() {
       name: 'Jane Doe',
       position: 1248,
       referral_code: 'REF_a1b2c3',
-      referral_link: 'https://nexuswait.io/synthos?ref=REF_a1b2c3',
+      referral_link: `${apiUrl}/synthos?ref=REF_a1b2c3`,
       referral_count: 0,
       fields: { company: 'Acme Corp', role: 'Founder' },
       verified: false,
@@ -209,34 +254,90 @@ export default function ApiDocs() {
       </div>
 
       <div className="card-surface p-6 mb-8">
-        <h2 className="font-display text-sm font-bold text-nexus-200 tracking-widest uppercase mb-4">Your API Keys</h2>
-        <div className="space-y-3">
-          <div className="flex items-center gap-3 p-3 rounded-lg bg-nexus-900/50 border border-nexus-700/30">
-            <div className="shrink-0">
-              <span className="text-[9px] font-mono font-bold tracking-wider uppercase px-2 py-0.5 rounded bg-emerald-glow/10 text-emerald-glow">Publishable</span>
-            </div>
-            <code className="text-xs font-mono text-nexus-300 flex-1 truncate">nw_pk_live_x7k2m9a1b3c5d8e0f4g6h...</code>
-            <button type="button" onClick={() => copyKey('pub')} className="text-nexus-500 hover:text-cyan-glow transition-colors">
-              {copiedKey === 'pub' ? <Check size={13} /> : <Copy size={13} />}
-            </button>
-          </div>
-          <div className="flex items-center gap-3 p-3 rounded-lg bg-nexus-900/50 border border-nexus-700/30">
-            <div className="shrink-0">
-              <span className="text-[9px] font-mono font-bold tracking-wider uppercase px-2 py-0.5 rounded bg-magenta-glow/10 text-magenta-glow">Secret</span>
-            </div>
-            <code className="text-xs font-mono text-nexus-300 flex-1 truncate">
-              {showSecretKey ? 'nw_sk_live_a8f3k2m9x1b7c4d6e0g5h...' : 'nw_sk_live_••••••••••••••••••••••••'}
-            </code>
-            <button type="button" onClick={() => setShowSecretKey(!showSecretKey)} className="text-nexus-500 hover:text-nexus-300">
-              {showSecretKey ? <EyeOff size={13} /> : <Eye size={13} />}
-            </button>
-            <button type="button" onClick={() => copyKey('sec')} className="text-nexus-500 hover:text-cyan-glow transition-colors">
-              {copiedKey === 'sec' ? <Check size={13} /> : <Copy size={13} />}
-            </button>
-          </div>
+        <div className="flex items-center justify-between mb-4">
+          <h2 className="font-display text-sm font-bold text-nexus-200 tracking-widest uppercase">Your API Keys</h2>
+          <button
+            type="button"
+            onClick={() => generateKey('secret')}
+            disabled={createApiKey.isPending}
+            className="btn-secondary text-xs py-1.5 px-3 flex items-center gap-1.5"
+          >
+            <Plus size={12} /> Generate Key
+          </button>
         </div>
+
+        {newlyCreatedKey && (
+          <div className="mb-4 p-3 rounded-lg bg-emerald-glow/10 border border-emerald-glow/20">
+            <p className="text-xs text-emerald-glow font-semibold mb-1">New key created! Copy it now -- it won't be shown again.</p>
+            <code className="text-xs font-mono text-nexus-200 break-all">{newlyCreatedKey}</code>
+            <button
+              type="button"
+              onClick={() => {
+                navigator.clipboard.writeText(newlyCreatedKey)
+                setNewlyCreatedKey(null)
+              }}
+              className="btn-ghost text-xs mt-2"
+            >
+              Copy & Dismiss
+            </button>
+          </div>
+        )}
+
+        {keysLoading && <p className="text-xs text-nexus-500">Loading API keys...</p>}
+
+        {!keysLoading && apiKeys && apiKeys.length === 0 && (
+          <p className="text-xs text-nexus-500 mb-3">No API keys yet. Generate one to get started.</p>
+        )}
+
+        <div className="space-y-3">
+          {publishableKeys.map(k => (
+            <div key={k.id} className="flex items-center gap-3 p-3 rounded-lg bg-nexus-900/50 border border-nexus-700/30">
+              <div className="shrink-0">
+                <span className="text-[9px] font-mono font-bold tracking-wider uppercase px-2 py-0.5 rounded bg-emerald-glow/10 text-emerald-glow">Publishable</span>
+              </div>
+              <code className="text-xs font-mono text-nexus-300 flex-1 truncate">{k.prefix}...</code>
+              <button type="button" onClick={() => copyKey(k.prefix, `pub-${k.id}`)} className="text-nexus-500 hover:text-cyan-glow transition-colors">
+                {copiedKey === `pub-${k.id}` ? <Check size={13} /> : <Copy size={13} />}
+              </button>
+              <button type="button" onClick={() => revokeApiKey.mutate(k.id)} className="text-nexus-600 hover:text-magenta-glow transition-colors">
+                <Trash2 size={13} />
+              </button>
+            </div>
+          ))}
+          {secretKeys.map(k => (
+            <div key={k.id} className="flex items-center gap-3 p-3 rounded-lg bg-nexus-900/50 border border-nexus-700/30">
+              <div className="shrink-0">
+                <span className="text-[9px] font-mono font-bold tracking-wider uppercase px-2 py-0.5 rounded bg-magenta-glow/10 text-magenta-glow">Secret</span>
+              </div>
+              <code className="text-xs font-mono text-nexus-300 flex-1 truncate">
+                {showSecretKey ? `${k.prefix}...` : `${k.prefix.slice(0, 10)}${'*'.repeat(20)}`}
+              </code>
+              <button type="button" onClick={() => setShowSecretKey(!showSecretKey)} className="text-nexus-500 hover:text-nexus-300">
+                {showSecretKey ? <EyeOff size={13} /> : <Eye size={13} />}
+              </button>
+              <button type="button" onClick={() => copyKey(k.prefix, `sec-${k.id}`)} className="text-nexus-500 hover:text-cyan-glow transition-colors">
+                {copiedKey === `sec-${k.id}` ? <Check size={13} /> : <Copy size={13} />}
+              </button>
+              <button type="button" onClick={() => revokeApiKey.mutate(k.id)} className="text-nexus-600 hover:text-magenta-glow transition-colors">
+                <Trash2 size={13} />
+              </button>
+            </div>
+          ))}
+        </div>
+
+        {(createApiKey.isError || revokeApiKey.isError) && (
+          <p className="text-magenta-glow text-xs mt-2">{getMutationErrorMessage(createApiKey.error ?? revokeApiKey.error)}</p>
+        )}
+
         <div className="flex items-center gap-3 mt-3">
-          <button type="button" className="btn-ghost text-xs flex items-center gap-1.5"><RefreshCw size={12} /> Rotate Keys</button>
+          <button
+            type="button"
+            onClick={rotateKeys}
+            disabled={revokeApiKey.isPending || createApiKey.isPending}
+            className="btn-ghost text-xs flex items-center gap-1.5"
+          >
+            {(revokeApiKey.isPending || createApiKey.isPending) ? <Loader2 size={12} className="animate-spin" /> : <RefreshCw size={12} />} Rotate Keys
+          </button>
           <p className="text-[10px] text-nexus-600">Publishable keys are safe for client-side code. Never expose secret keys in the browser.</p>
         </div>
       </div>

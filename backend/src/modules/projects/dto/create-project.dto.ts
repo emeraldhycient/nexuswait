@@ -1,5 +1,5 @@
 import { IsString, IsOptional, IsEnum, MinLength, MaxLength } from 'class-validator';
-import { ProjectStatus } from '@prisma/client';
+import { ProjectStatus } from '../../../generated/prisma/client/enums';
 
 export class CreateProjectDto {
   @IsString()

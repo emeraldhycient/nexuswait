@@ -70,3 +70,11 @@ export const IntegrationType = {
 } as const
 
 export type IntegrationType = (typeof IntegrationType)[keyof typeof IntegrationType]
+
+
+export const UserRole = {
+  user: 'user',
+  admin: 'admin'
+} as const
+
+export type UserRole = (typeof UserRole)[keyof typeof UserRole]

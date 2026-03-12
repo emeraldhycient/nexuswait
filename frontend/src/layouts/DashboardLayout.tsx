@@ -4,7 +4,7 @@ import Logo from '../components/Logo'
 import type { LucideIcon } from 'lucide-react'
 import {
   LayoutDashboard, FolderPlus, Plug, Settings, LogOut, ChevronLeft,
-  ChevronRight, Bell, Search, User, Globe, Webhook, Code
+  ChevronRight, Bell, Search, User, Globe, Webhook, Code, ShieldCheck
 } from 'lucide-react'
 import { useAuth } from '../contexts/AuthContext'
 
@@ -22,7 +22,7 @@ export default function DashboardLayout() {
   const [collapsed, setCollapsed] = useState(false)
   const location = useLocation()
   const navigate = useNavigate()
-  const { token, loading, logout } = useAuth()
+  const { token, loading, logout, isAdmin } = useAuth()
 
   useEffect(() => {
     if (!loading && !token) navigate('/login')
@@ -72,6 +72,16 @@ export default function DashboardLayout() {
         </nav>
 
         <div className="p-2 border-t border-cyan-glow/[0.06]">
+          {isAdmin && (
+            <Link
+              to="/admin"
+              className={`w-full flex items-center gap-3 no-underline mb-1 py-2.5 rounded-lg text-nexus-400 hover:text-magenta-glow hover:bg-magenta-glow/[0.05] transition-all ${collapsed ? 'justify-center px-2' : 'px-3'}`}
+              title={collapsed ? 'Admin' : undefined}
+            >
+              <ShieldCheck size={18} />
+              {!collapsed && <span className="text-sm font-semibold">Admin</span>}
+            </Link>
+          )}
           <button
             onClick={() => setCollapsed(!collapsed)}
             className="w-full flex items-center justify-center gap-2 py-2 text-nexus-500 hover:text-nexus-200 transition-colors rounded-lg hover:bg-nexus-700/30"

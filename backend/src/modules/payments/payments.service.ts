@@ -2,7 +2,7 @@ import { Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { PrismaService } from '../../infrastructure/prisma/prisma.service';
 import axios from 'axios';
-import { PlanTier } from '@prisma/client';
+import { PlanTier } from '../../generated/prisma/client/enums';
 
 const POLAR_API = 'https://api.polar.sh/v1';
 

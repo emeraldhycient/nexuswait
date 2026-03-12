@@ -4,7 +4,11 @@ import { api, setApiTokenGetter } from '../api/client'
 interface AuthUser {
   id: string
   email?: string
-  name?: string
+  firstName?: string
+  lastName?: string
+  role?: string
+  accountId?: string
+  account?: { id: string; plan: string }
   [key: string]: unknown
 }
 
@@ -15,6 +19,7 @@ interface AuthValue {
   logout: () => void
   loading: boolean
   isAuthenticated: boolean
+  isAdmin: boolean
 }
 
 const AuthContext = createContext<AuthValue | null>(null)
@@ -67,6 +72,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     logout,
     loading,
     isAuthenticated: !!token && !!user,
+    isAdmin: user?.role === 'admin',
   }
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>
 }

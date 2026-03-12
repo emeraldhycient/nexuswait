@@ -8,6 +8,7 @@ module.exports = {
   testEnvironment: 'node',
   moduleNameMapper: {
     '^@prisma/client$': '<rootDir>/__mocks__/prisma-client.js',
+    '.*generated/prisma/client/enums$': '<rootDir>/__mocks__/prisma-client.js',
     '^@domain/(.*)$': '<rootDir>/domain/$1',
     '^@application/(.*)$': '<rootDir>/application/$1',
     '^@infrastructure/(.*)$': '<rootDir>/infrastructure/$1',

@@ -1,11 +1,11 @@
 import { Link, useNavigate } from 'react-router-dom'
-import { useEffect, useMemo } from 'react'
+import { useEffect } from 'react'
 import type { LucideIcon } from 'lucide-react'
 import {
   Plus, Users, TrendingUp, ArrowUpRight, MoreHorizontal,
   ExternalLink, Activity, Zap
 } from 'lucide-react'
-import { useProjects } from '../api/hooks'
+import { useProjects, useSubscribers } from '../api/hooks'
 import { useAuth } from '../contexts/AuthContext'
 
 const colorMap: Record<string, string> = {
@@ -14,14 +14,6 @@ const colorMap: Record<string, string> = {
   violet: 'text-violet-glow bg-violet-glow/10',
   amber: 'text-amber-glow bg-amber-glow/10',
 }
-
-const recentSignups = [
-  { name: 'Alex Chen', email: 'alex@startup.io', project: 'SynthOS Launch', time: '2 min ago', source: 'referral' as const },
-  { name: 'Mira Patel', email: 'mira@design.co', project: 'Quantum API Beta', time: '8 min ago', source: 'direct' as const },
-  { name: 'Jordan Kim', email: 'jordan@dev.xyz', project: 'SynthOS Launch', time: '14 min ago', source: 'twitter' as const },
-  { name: 'Sam Rivera', email: 'sam@venture.vc', project: 'NeuralKit Pro', time: '22 min ago', source: 'referral' as const },
-  { name: 'Tara Osei', email: 'tara@cloud.dev', project: 'SynthOS Launch', time: '31 min ago', source: 'direct' as const },
-]
 
 const sourceColors: Record<string, string> = {
   referral: 'bg-emerald-glow/10 text-emerald-glow',
@@ -39,15 +31,21 @@ export default function Dashboard() {
   }, [authLoading, isAuthenticated, navigate])
 
   const projects = projectsList ?? []
+  const firstProjectId = projects.length > 0 ? projects[0].id : undefined
+
+  // Load subscribers from first project to show recent signups
+  const { data: recentSubsData } = useSubscribers(firstProjectId, { enabled: !!firstProjectId })
+  const recentSubs = (
+    Array.isArray(recentSubsData)
+      ? recentSubsData
+      : (recentSubsData as { data?: unknown[] })?.data ?? []
+  ) as { id?: string; name?: string; email?: string; source?: string; createdAt?: string; projectId?: string }[]
+
   const totalSignups = projects.reduce((acc, p) => acc + (p._count?.subscribers ?? 0), 0)
-  const chartHeights = useMemo(() => Array.from({ length: 30 }, (_, i) => ({
-    i,
-    h: Math.min(20 + (i % 10) * 7 + (i > 20 ? i * 0.5 : 0), 100),
-  })), [])
   const stats: { label: string; value: string; change: string; icon: LucideIcon; color: string }[] = [
     { label: 'Total Signups', value: totalSignups.toLocaleString(), change: '', icon: Users, color: 'cyan' },
-    { label: 'This Week', value: '—', change: '', icon: TrendingUp, color: 'emerald' },
-    { label: 'Conversion Rate', value: '—', change: '', icon: Activity, color: 'violet' },
+    { label: 'This Week', value: '\u2014', change: '', icon: TrendingUp, color: 'emerald' },
+    { label: 'Conversion Rate', value: '\u2014', change: '', icon: Activity, color: 'violet' },
     { label: 'Active Projects', value: String(projects.length), change: '', icon: Zap, color: 'amber' },
   ]
 
@@ -133,42 +131,76 @@ export default function Dashboard() {
             <button type="button" className="text-nexus-500 hover:text-nexus-300"><MoreHorizontal size={16} /></button>
           </div>
           <div className="card-surface divide-y divide-cyan-glow/[0.04]">
-            {recentSignups.map((s, i) => (
-              <div key={i} className="p-4 flex items-start gap-3">
-                <div className="w-8 h-8 rounded-full bg-gradient-to-br from-cyan-glow/20 to-magenta-glow/20 flex items-center justify-center shrink-0 mt-0.5">
-                  <span className="text-[10px] font-display font-bold text-cyan-glow">{s.name.split(' ').map(n=>n[0]).join('')}</span>
-                </div>
-                <div className="flex-1 min-w-0">
-                  <div className="text-sm font-semibold text-nexus-200 truncate">{s.name}</div>
-                  <div className="text-xs text-nexus-500 truncate">{s.email}</div>
-                  <div className="flex items-center gap-2 mt-1.5">
-                    <span className={`text-[9px] font-mono font-bold tracking-wider uppercase px-1.5 py-0.5 rounded ${sourceColors[s.source]}`}>{s.source}</span>
-                    <span className="text-[10px] text-nexus-600">{s.time}</span>
+            {recentSubs.length === 0 && (
+              <div className="p-6 text-center">
+                <p className="text-xs text-nexus-500">Recent signups will appear here.</p>
+              </div>
+            )}
+            {recentSubs.slice(0, 5).map((s, i) => {
+              const displayName = s.name ?? s.email ?? 'Unknown'
+              const initials = displayName
+                .split(' ')
+                .map(n => n[0])
+                .join('')
+                .slice(0, 2)
+                .toUpperCase()
+              const source = s.source ?? 'direct'
+              const timeAgo = s.createdAt ? getTimeAgo(s.createdAt) : ''
+              return (
+                <div key={s.id ?? i} className="p-4 flex items-start gap-3">
+                  <div className="w-8 h-8 rounded-full bg-gradient-to-br from-cyan-glow/20 to-magenta-glow/20 flex items-center justify-center shrink-0 mt-0.5">
+                    <span className="text-[10px] font-display font-bold text-cyan-glow">{initials}</span>
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <div className="text-sm font-semibold text-nexus-200 truncate">{displayName}</div>
+                    <div className="text-xs text-nexus-500 truncate">{s.email ?? ''}</div>
+                    <div className="flex items-center gap-2 mt-1.5">
+                      <span className={`text-[9px] font-mono font-bold tracking-wider uppercase px-1.5 py-0.5 rounded ${sourceColors[source] ?? 'bg-nexus-600/10 text-nexus-400'}`}>{source}</span>
+                      {timeAgo && <span className="text-[10px] text-nexus-600">{timeAgo}</span>}
+                    </div>
                   </div>
                 </div>
-              </div>
-            ))}
+              )
+            })}
           </div>
         </div>
       </div>
 
       <div className="card-surface p-6">
-        <h2 className="font-display text-sm font-bold text-nexus-200 tracking-widest uppercase mb-4">Signup Trend — Last 30 Days</h2>
-        <div className="h-40 flex items-end gap-1">
-          {chartHeights.map(({ i, h }) => (
-            <div
-              key={i}
-              className="flex-1 bg-gradient-to-t from-cyan-glow/30 to-cyan-glow/5 rounded-t hover:from-cyan-glow/50 hover:to-cyan-glow/15 transition-colors cursor-pointer"
-              style={{ height: `${h}%` }}
-              title={`Day ${i + 1}`}
-            />
-          ))}
-        </div>
-        <div className="flex items-center justify-between mt-3">
-          <span className="text-[10px] font-mono text-nexus-600">Feb 10</span>
-          <span className="text-[10px] font-mono text-nexus-600">Mar 11</span>
-        </div>
+        <h2 className="font-display text-sm font-bold text-nexus-200 tracking-widest uppercase mb-4">Signup Trend</h2>
+        {projects.length === 0 ? (
+          <p className="text-xs text-nexus-500">Create a project to see signup trends.</p>
+        ) : (
+          <div className="h-40 flex items-end gap-1">
+            {projects.map((p) => {
+              const count = p._count?.subscribers ?? 0
+              const maxSubs = Math.max(...projects.map(pp => pp._count?.subscribers ?? 0), 1)
+              const h = Math.max((count / maxSubs) * 100, 5)
+              return (
+                <div
+                  key={p.id}
+                  className="flex-1 bg-gradient-to-t from-cyan-glow/30 to-cyan-glow/5 rounded-t hover:from-cyan-glow/50 hover:to-cyan-glow/15 transition-colors cursor-pointer"
+                  style={{ height: `${h}%` }}
+                  title={`${p.name}: ${count.toLocaleString()} signups`}
+                />
+              )
+            })}
+          </div>
+        )}
       </div>
     </div>
   )
+}
+
+function getTimeAgo(dateStr: string): string {
+  const now = Date.now()
+  const then = new Date(dateStr).getTime()
+  const diffMs = now - then
+  const mins = Math.floor(diffMs / 60000)
+  if (mins < 1) return 'just now'
+  if (mins < 60) return `${mins} min ago`
+  const hours = Math.floor(mins / 60)
+  if (hours < 24) return `${hours}h ago`
+  const days = Math.floor(hours / 24)
+  return `${days}d ago`
 }
