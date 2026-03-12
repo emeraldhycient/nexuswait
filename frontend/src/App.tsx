@@ -30,10 +30,14 @@ import AdminSubscribers from './pages/admin/AdminSubscribers'
 import AdminIntegrations from './pages/admin/AdminIntegrations'
 import AdminNotifications from './pages/admin/AdminNotifications'
 import AdminSystem from './pages/admin/AdminSystem'
+import PublicWaitlistPage from './pages/PublicWaitlistPage'
 
 export default function App() {
   return (
     <Routes>
+      {/* Standalone public waitlist page — no layout */}
+      <Route path="/w/:slug" element={<PublicWaitlistPage />} />
+
       <Route element={<PublicLayout />}>
         <Route path="/" element={<Landing />} />
         <Route path="/pricing" element={<Pricing />} />

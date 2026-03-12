@@ -1,4 +1,4 @@
-import { IsString, IsOptional, IsObject, MinLength, MaxLength } from 'class-validator';
+import { IsString, IsOptional, IsObject, IsArray, MinLength, MaxLength } from 'class-validator';
 
 export class UpsertHostedPageDto {
   @IsString()
@@ -25,8 +25,8 @@ export class UpsertHostedPageDto {
   @IsObject()
   themeOverrides?: Record<string, unknown>;
 
-  @IsObject()
-  sections: Record<string, unknown>;
+  @IsArray()
+  sections: Record<string, unknown>[];
 
   @IsObject()
   formConfig: Record<string, unknown>;

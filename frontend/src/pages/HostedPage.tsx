@@ -2,9 +2,9 @@ import { useState, useEffect } from 'react'
 import { Link } from 'react-router-dom'
 import type { LucideIcon } from 'lucide-react'
 import {
-  Globe, Eye, Palette, Type, Layout, Monitor, Tablet, Smartphone,
-  ArrowLeft, Copy, Check, Sparkles, Save, Loader2,
-  Plus, GripVertical, Trash2
+  Globe, Eye, Palette, Layout, Monitor, Tablet, Smartphone,
+  ArrowLeft, Copy, Check, Save, Loader2, GripVertical, Trash2,
+  ChevronDown, ChevronRight, FileText, CheckCircle,
 } from 'lucide-react'
 import {
   useProjects,
@@ -15,43 +15,25 @@ import {
   getMutationErrorMessage,
 } from '../api/hooks'
 
-const themes = [
-  { id: 'nexus-dark', name: 'Nexus Dark', preview: 'bg-gradient-to-br from-[#0a0a14] to-[#1a1a2e]' },
-  { id: 'aurora', name: 'Aurora', preview: 'bg-gradient-to-br from-[#0f172a] to-[#1e3a5f]' },
-  { id: 'ember', name: 'Ember', preview: 'bg-gradient-to-br from-[#1a0a0a] to-[#2e1a1a]' },
-  { id: 'frost', name: 'Frost', preview: 'bg-gradient-to-br from-[#f0f4f8] to-[#d9e2ec]' },
-  { id: 'minimal-light', name: 'Minimal Light', preview: 'bg-gradient-to-br from-white to-[#f5f5f5]' },
-  { id: 'midnight', name: 'Midnight', preview: 'bg-gradient-to-br from-[#0d0d1a] to-[#1a1a3e]' },
-]
+import type { Section, FormConfig, SuccessConfig } from '../shared/hosted-page-types'
+import { defaultFormConfig, defaultSuccessConfig, defaultContentForType } from '../shared/hosted-page-types'
+import { THEMES, HEADING_FONTS, BODY_FONTS, resolveTheme } from '../shared/theme-config'
 
-const defaultSections = [
-  { id: 's1', type: 'hero', label: 'Hero Section', enabled: true },
-  { id: 's2', type: 'features', label: 'Features Grid', enabled: true },
-  { id: 's3', type: 'social-proof', label: 'Social Proof', enabled: false },
-  { id: 's4', type: 'countdown', label: 'Countdown Timer', enabled: false },
-]
+import { SectionContentEditor } from './hosted-page-editor/SectionContentEditor'
+import { SectionPicker } from './hosted-page-editor/SectionPicker'
+import { FormConfigPanel } from './hosted-page-editor/FormConfigPanel'
+import { SuccessConfigPanel } from './hosted-page-editor/SuccessConfigPanel'
+import { EditorPreview } from './hosted-page-editor/EditorPreview'
 
-interface PageConfig {
-  title: string
-  subtitle: string
-  ctaText: string
-  slug: string
-  customDomain: string
-  metaDescription: string
-  ogImage: string
-  primaryColor: string
-  headingFont: string
-  bodyFont: string
-}
-
-type HostedTabId = 'design' | 'content' | 'sections' | 'seo'
+type HostedTabId = 'design' | 'sections' | 'form' | 'success' | 'seo'
 type PreviewMode = 'desktop' | 'tablet' | 'mobile'
 
 const tabDefs: { id: HostedTabId; label: string; icon: LucideIcon }[] = [
   { id: 'design', label: 'Design', icon: Palette },
-  { id: 'content', label: 'Content', icon: Type },
   { id: 'sections', label: 'Sections', icon: Layout },
-  { id: 'seo', label: 'SEO & Domain', icon: Globe },
+  { id: 'form', label: 'Form', icon: FileText },
+  { id: 'success', label: 'Success', icon: CheckCircle },
+  { id: 'seo', label: 'SEO', icon: Globe },
 ]
 
 const previewIcons: { mode: PreviewMode; icon: LucideIcon; w: string }[] = [
@@ -66,7 +48,6 @@ export default function HostedPage() {
   const projects = projectsList ?? []
   const [selectedProjectId, setSelectedProjectId] = useState<string | undefined>(undefined)
 
-  // Auto-select first project
   useEffect(() => {
     if (!selectedProjectId && projects.length > 0) {
       setSelectedProjectId(projects[0].id)
@@ -83,77 +64,111 @@ export default function HostedPage() {
   const [activeTab, setActiveTab] = useState<HostedTabId>('design')
   const [previewMode, setPreviewMode] = useState<PreviewMode>('desktop')
   const [selectedTheme, setSelectedTheme] = useState('nexus-dark')
-  const [sections, setSections] = useState(defaultSections)
-  const [pageConfig, setPageConfig] = useState<PageConfig>({
-    title: '',
-    subtitle: '',
-    ctaText: 'Join the Waitlist',
-    slug: '',
-    customDomain: '',
-    metaDescription: '',
-    ogImage: '',
-    primaryColor: '#00e8ff',
-    headingFont: 'Orbitron',
-    bodyFont: 'Rajdhani',
-  })
+
+  const [sections, setSections] = useState<Section[]>([
+    { id: 's1', type: 'hero', label: 'Hero Section', enabled: true, content: defaultContentForType('hero') } as Section,
+  ])
+  const [formConfig, setFormConfig] = useState<FormConfig>(defaultFormConfig())
+  const [successConfig, setSuccessConfig] = useState<SuccessConfig>(defaultSuccessConfig())
+
+  const [slug, setSlug] = useState('')
+  const [customDomain, setCustomDomain] = useState('')
+  const [metaDescription, setMetaDescription] = useState('')
+  const [ogImage, setOgImage] = useState('')
+  const [primaryColor, setPrimaryColor] = useState('#00e8ff')
+  const [headingFont, setHeadingFont] = useState('Orbitron')
+  const [bodyFont, setBodyFont] = useState('Rajdhani')
+
   const [published, setPublished] = useState(false)
   const [copied, setCopied] = useState(false)
   const [saved, setSaved] = useState(false)
   const [pageDataLoaded, setPageDataLoaded] = useState<string | undefined>(undefined)
+  const [expandedSectionId, setExpandedSectionId] = useState<string | null>(null)
 
   // Populate local state from API data
   useEffect(() => {
     if (pageData && selectedProjectId && pageDataLoaded !== selectedProjectId) {
       const p = pageData as Record<string, unknown>
       const overrides = (p.themeOverrides as Record<string, string>) ?? {}
-      setPageConfig({
-        title: (p.title as string) ?? '',
-        subtitle: (p.subtitle as string) ?? '',
-        ctaText: ((p.formConfig as Record<string, string>)?.ctaText) ?? 'Join the Waitlist',
-        slug: (p.slug as string) ?? '',
-        customDomain: (p.customDomain as string) ?? '',
-        metaDescription: (p.metaDescription as string) ?? '',
-        ogImage: (p.ogImageUrl as string) ?? '',
-        primaryColor: overrides.primaryColor ?? '#00e8ff',
-        headingFont: overrides.headingFont ?? 'Orbitron',
-        bodyFont: overrides.bodyFont ?? 'Rajdhani',
-      })
+      setPrimaryColor(overrides.primaryColor ?? '#00e8ff')
+      setHeadingFont(overrides.headingFont ?? 'Orbitron')
+      setBodyFont(overrides.bodyFont ?? 'Rajdhani')
+      setSlug((p.slug as string) ?? '')
+      setCustomDomain((p.customDomain as string) ?? '')
+      setMetaDescription((p.metaDescription as string) ?? '')
+      setOgImage((p.ogImageUrl as string) ?? '')
       if (p.themeId) setSelectedTheme(p.themeId as string)
+
+      // Load sections with full content
       if (Array.isArray(p.sections) && (p.sections as unknown[]).length > 0) {
         setSections(
-          (p.sections as { id?: string; type?: string; label?: string; enabled?: boolean }[]).map((s, i) => ({
+          (p.sections as Section[]).map((s, i) => ({
+            ...s,
             id: s.id ?? `s${i}`,
-            type: s.type ?? 'unknown',
             label: s.label ?? s.type ?? 'Section',
             enabled: s.enabled !== false,
-          })),
+            content: s.content ?? defaultContentForType(s.type),
+          } as Section)),
         )
       }
-      setPublished((p.published as boolean) ?? false)
+
+      // Load form & success config
+      if (p.formConfig && typeof p.formConfig === 'object') {
+        setFormConfig({ ...defaultFormConfig(), ...(p.formConfig as FormConfig) })
+      }
+      if (p.successConfig && typeof p.successConfig === 'object') {
+        setSuccessConfig({ ...defaultSuccessConfig(), ...(p.successConfig as SuccessConfig) })
+      }
+
+      // Fix: use status field instead of published boolean
+      setPublished((p.status as string) === 'published')
       setPageDataLoaded(selectedProjectId)
     }
   }, [pageData, selectedProjectId, pageDataLoaded])
 
-  // Reset loaded flag when project changes
   useEffect(() => {
-    if (selectedProjectId !== pageDataLoaded) {
-      setPageDataLoaded(undefined)
-    }
+    if (selectedProjectId !== pageDataLoaded) setPageDataLoaded(undefined)
   }, [selectedProjectId, pageDataLoaded])
 
-  const update = <K extends keyof PageConfig>(key: K, val: PageConfig[K]) =>
-    setPageConfig(c => ({ ...c, [key]: val }))
-
+  // ─── Section operations ────────────────────────────
   const toggleSection = (id: string) => {
-    setSections(s => s.map(sec => sec.id === id ? { ...sec, enabled: !sec.enabled } : sec))
+    setSections((s) => s.map((sec) => (sec.id === id ? { ...sec, enabled: !sec.enabled } as Section : sec)))
   }
 
   const removeSection = (id: string) => {
-    setSections(s => s.filter(sec => sec.id !== id))
+    setSections((s) => s.filter((sec) => sec.id !== id))
+    if (expandedSectionId === id) setExpandedSectionId(null)
   }
 
+  const updateSection = (updated: Section) => {
+    setSections((s) => s.map((sec) => (sec.id === updated.id ? updated : sec)))
+  }
+
+  const addSection = (newSection: Section) => {
+    setSections((s) => [...s, newSection])
+    setExpandedSectionId(newSection.id)
+  }
+
+  // Drag-and-drop reorder
+  const [dragIdx, setDragIdx] = useState<number | null>(null)
+
+  const handleDragStart = (idx: number) => setDragIdx(idx)
+  const handleDragOver = (e: React.DragEvent, idx: number) => {
+    e.preventDefault()
+    if (dragIdx === null || dragIdx === idx) return
+    setSections((prev) => {
+      const copy = [...prev]
+      const [moved] = copy.splice(dragIdx, 1)
+      copy.splice(idx, 0, moved)
+      return copy
+    })
+    setDragIdx(idx)
+  }
+  const handleDragEnd = () => setDragIdx(null)
+
+  // ─── Save / Publish ────────────────────────────────
   const handleCopy = () => {
-    const url = pageConfig.customDomain || `nexuswait.io/${pageConfig.slug}`
+    const url = customDomain || `${window.location.origin}/w/${slug}`
     navigator.clipboard.writeText(url)
     setCopied(true)
     setTimeout(() => setCopied(false), 2000)
@@ -162,20 +177,15 @@ export default function HostedPage() {
   const handleSave = () => {
     upsertPage.mutate(
       {
-        slug: pageConfig.slug,
-        title: pageConfig.title,
-        subtitle: pageConfig.subtitle,
-        metaDescription: pageConfig.metaDescription,
-        ogImageUrl: pageConfig.ogImage,
+        slug,
+        title: (sections.find((s) => s.type === 'hero')?.content as { headline?: string })?.headline || slug,
+        metaDescription,
+        ogImageUrl: ogImage,
         themeId: selectedTheme,
-        themeOverrides: {
-          primaryColor: pageConfig.primaryColor,
-          headingFont: pageConfig.headingFont,
-          bodyFont: pageConfig.bodyFont,
-        },
-        sections: sections,
-        formConfig: { ctaText: pageConfig.ctaText },
-        successConfig: {},
+        themeOverrides: { primaryColor, headingFont, bodyFont },
+        sections,
+        formConfig,
+        successConfig,
       },
       {
         onSuccess: () => {
@@ -188,17 +198,16 @@ export default function HostedPage() {
 
   const handlePublishToggle = () => {
     if (published) {
-      unpublishPage.mutate(undefined, {
-        onSuccess: () => setPublished(false),
-      })
+      unpublishPage.mutate(undefined, { onSuccess: () => setPublished(false) })
     } else {
-      publishPage.mutate(undefined, {
-        onSuccess: () => setPublished(true),
-      })
+      publishPage.mutate(undefined, { onSuccess: () => setPublished(true) })
     }
   }
 
   const isPublishing = publishPage.isPending || unpublishPage.isPending
+
+  // Resolved theme for preview
+  const resolvedTheme = resolveTheme(selectedTheme, { primaryColor, headingFont, bodyFont })
 
   return (
     <div className="animate-fade-in">
@@ -212,23 +221,22 @@ export default function HostedPage() {
           <p className="text-sm text-nexus-400 mt-1">Design and publish your waitlist landing page.</p>
         </div>
         <div className="flex items-center gap-2">
-          {/* Project selector */}
           {projectsLoading ? (
             <span className="text-xs text-nexus-500">Loading projects...</span>
           ) : (
             <select
               value={selectedProjectId ?? ''}
-              onChange={e => setSelectedProjectId(e.target.value)}
+              onChange={(e) => setSelectedProjectId(e.target.value)}
               className="input-field text-xs py-1.5 w-40"
             >
-              {projects.map(p => (
+              {projects.map((p) => (
                 <option key={p.id} value={p.id}>{p.name}</option>
               ))}
               {projects.length === 0 && <option value="">No projects</option>}
             </select>
           )}
           <div className="flex items-center gap-1 p-0.5 rounded-lg border border-nexus-700/30 bg-nexus-800/30">
-            {previewIcons.map(p => {
+            {previewIcons.map((p) => {
               const Icon = p.icon
               return (
                 <button
@@ -242,9 +250,16 @@ export default function HostedPage() {
               )
             })}
           </div>
-          <button type="button" className="btn-ghost flex items-center gap-1.5 text-xs">
-            <Eye size={13} /> Preview
-          </button>
+          {published && slug && (
+            <a
+              href={`/w/${slug}`}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="btn-ghost flex items-center gap-1.5 text-xs no-underline"
+            >
+              <Eye size={13} /> View Live
+            </a>
+          )}
           <button
             type="button"
             onClick={handleSave}
@@ -276,32 +291,34 @@ export default function HostedPage() {
       {pageLoading && <p className="text-nexus-500 text-sm mb-4">Loading page config...</p>}
 
       <div className="grid lg:grid-cols-[320px_1fr] gap-6">
+        {/* ─── Left: Settings Panel ─── */}
         <div className="space-y-4">
-          <div className="flex gap-1 p-0.5 rounded-lg border border-cyan-glow/[0.06] bg-nexus-800/30">
-            {tabDefs.map(tab => {
+          <div className="flex gap-1 p-0.5 rounded-lg border border-cyan-glow/[0.06] bg-nexus-800/30 flex-wrap">
+            {tabDefs.map((tab) => {
               const TabIcon = tab.icon
               return (
                 <button
                   key={tab.id}
                   type="button"
                   onClick={() => setActiveTab(tab.id)}
-                  className={`flex-1 flex items-center justify-center gap-1.5 py-2 rounded-md text-xs font-semibold transition-all ${
+                  className={`flex-1 flex items-center justify-center gap-1 py-2 rounded-md text-[10px] font-semibold transition-all min-w-0 ${
                     activeTab === tab.id ? 'bg-cyan-glow/10 text-cyan-glow' : 'text-nexus-500 hover:text-nexus-300'
                   }`}
                 >
-                  <TabIcon size={13} /> {tab.label}
+                  <TabIcon size={12} /> {tab.label}
                 </button>
               )
             })}
           </div>
 
           <div className="card-surface p-5 max-h-[calc(100vh-280px)] overflow-y-auto">
+            {/* ──── Design Tab ──── */}
             {activeTab === 'design' && (
               <div className="space-y-5 animate-fade-in">
                 <div>
                   <label className="block text-xs font-mono text-nexus-400 tracking-wider uppercase mb-3">Theme</label>
                   <div className="grid grid-cols-3 gap-2">
-                    {themes.map(t => (
+                    {THEMES.map((t) => (
                       <button
                         key={t.id}
                         type="button"
@@ -310,7 +327,7 @@ export default function HostedPage() {
                           selectedTheme === t.id ? 'border-cyan-glow/40 ring-1 ring-cyan-glow/20' : 'border-nexus-700/30'
                         }`}
                       >
-                        <div className={`h-12 ${t.preview}`} />
+                        <div className={`h-12 ${t.previewClass}`} />
                         <div className="p-1.5 bg-nexus-800/50">
                           <span className="text-[9px] text-nexus-400 font-mono">{t.name}</span>
                         </div>
@@ -321,95 +338,119 @@ export default function HostedPage() {
                 <div>
                   <label className="block text-xs font-mono text-nexus-400 tracking-wider uppercase mb-1.5">Primary Color</label>
                   <div className="flex items-center gap-2">
-                    <input type="color" value={pageConfig.primaryColor} onChange={e => update('primaryColor', e.target.value)} className="w-9 h-9 rounded-lg cursor-pointer border border-nexus-600 bg-transparent" />
-                    <input type="text" value={pageConfig.primaryColor} onChange={e => update('primaryColor', e.target.value)} className="input-field font-mono text-xs flex-1" />
+                    <input type="color" value={primaryColor} onChange={(e) => setPrimaryColor(e.target.value)} className="w-9 h-9 rounded-lg cursor-pointer border border-nexus-600 bg-transparent" />
+                    <input type="text" value={primaryColor} onChange={(e) => setPrimaryColor(e.target.value)} className="input-field font-mono text-xs flex-1" />
                   </div>
                 </div>
                 <div>
                   <label className="block text-xs font-mono text-nexus-400 tracking-wider uppercase mb-1.5">Heading Font</label>
-                  <select value={pageConfig.headingFont} onChange={e => update('headingFont', e.target.value)} className="input-field text-sm">
-                    {['Orbitron', 'Inter', 'Poppins', 'Space Grotesk', 'DM Sans', 'Montserrat', 'Playfair Display'].map(f => (
-                      <option key={f} value={f}>{f}</option>
-                    ))}
+                  <select value={headingFont} onChange={(e) => setHeadingFont(e.target.value)} className="input-field text-sm">
+                    {HEADING_FONTS.map((f) => <option key={f} value={f}>{f}</option>)}
                   </select>
                 </div>
                 <div>
                   <label className="block text-xs font-mono text-nexus-400 tracking-wider uppercase mb-1.5">Body Font</label>
-                  <select value={pageConfig.bodyFont} onChange={e => update('bodyFont', e.target.value)} className="input-field text-sm">
-                    {['Rajdhani', 'Inter', 'DM Sans', 'Source Sans Pro', 'Nunito', 'Lato'].map(f => (
-                      <option key={f} value={f}>{f}</option>
-                    ))}
+                  <select value={bodyFont} onChange={(e) => setBodyFont(e.target.value)} className="input-field text-sm">
+                    {BODY_FONTS.map((f) => <option key={f} value={f}>{f}</option>)}
                   </select>
                 </div>
               </div>
             )}
 
-            {activeTab === 'content' && (
-              <div className="space-y-4 animate-fade-in">
-                <div>
-                  <label className="block text-xs font-mono text-nexus-400 tracking-wider uppercase mb-1.5">Headline</label>
-                  <input type="text" value={pageConfig.title} onChange={e => update('title', e.target.value)} className="input-field text-sm" />
-                </div>
-                <div>
-                  <label className="block text-xs font-mono text-nexus-400 tracking-wider uppercase mb-1.5">Subtitle</label>
-                  <textarea value={pageConfig.subtitle} onChange={e => update('subtitle', e.target.value)} rows={3} className="input-field text-sm resize-none" />
-                </div>
-                <div>
-                  <label className="block text-xs font-mono text-nexus-400 tracking-wider uppercase mb-1.5">CTA Button Text</label>
-                  <input type="text" value={pageConfig.ctaText} onChange={e => update('ctaText', e.target.value)} className="input-field text-sm" />
-                </div>
-              </div>
-            )}
-
+            {/* ──── Sections Tab ──── */}
             {activeTab === 'sections' && (
               <div className="space-y-3 animate-fade-in">
-                <p className="text-xs text-nexus-500 mb-2">Drag to reorder. Toggle visibility per section.</p>
-                {sections.map(sec => (
-                  <div key={sec.id} className="flex items-center gap-2 p-3 rounded-lg bg-nexus-700/15 border border-nexus-700/20">
-                    <GripVertical size={14} className="text-nexus-600 cursor-grab" />
-                    <span className="flex-1 text-sm text-nexus-200 font-semibold">{sec.label}</span>
-                    <button type="button" onClick={() => toggleSection(sec.id)} className={`w-8 h-4.5 rounded-full transition-all relative ${sec.enabled ? 'bg-cyan-glow' : 'bg-nexus-600'}`} style={{ width: 32, height: 18 }}>
-                      <div className="w-3.5 h-3.5 rounded-full bg-white absolute top-[2px] transition-transform" style={{ width: 14, height: 14, transform: sec.enabled ? 'translateX(16px)' : 'translateX(2px)' }} />
-                    </button>
-                    <button type="button" onClick={() => removeSection(sec.id)} className="text-nexus-600 hover:text-magenta-glow transition-colors">
-                      <Trash2 size={13} />
-                    </button>
-                  </div>
-                ))}
-                <button type="button" className="w-full flex items-center justify-center gap-1.5 py-2.5 rounded-lg border border-dashed border-nexus-600 text-xs text-nexus-500 hover:text-cyan-glow hover:border-cyan-glow/30 transition-all">
-                  <Plus size={13} /> Add Section
-                </button>
+                <p className="text-xs text-nexus-500 mb-2">Drag to reorder. Click to expand and edit content.</p>
+                {sections.map((sec, idx) => {
+                  const isExpanded = expandedSectionId === sec.id
+                  return (
+                    <div
+                      key={sec.id}
+                      draggable
+                      onDragStart={() => handleDragStart(idx)}
+                      onDragOver={(e) => handleDragOver(e, idx)}
+                      onDragEnd={handleDragEnd}
+                      className={`rounded-lg border transition-all ${
+                        dragIdx === idx ? 'border-cyan-glow/30 bg-cyan-glow/5' : 'bg-nexus-700/15 border-nexus-700/20'
+                      }`}
+                    >
+                      <div className="flex items-center gap-2 p-3">
+                        <GripVertical size={14} className="text-nexus-600 cursor-grab shrink-0" />
+                        <button
+                          type="button"
+                          onClick={() => setExpandedSectionId(isExpanded ? null : sec.id)}
+                          className="flex-1 flex items-center gap-2 text-left"
+                        >
+                          {isExpanded ? <ChevronDown size={13} className="text-cyan-glow" /> : <ChevronRight size={13} className="text-nexus-500" />}
+                          <span className="text-sm text-nexus-200 font-semibold">{sec.label}</span>
+                          <span className="text-[9px] font-mono text-nexus-600 ml-auto">{sec.type}</span>
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => toggleSection(sec.id)}
+                          className={`w-8 rounded-full transition-all relative ${sec.enabled ? 'bg-cyan-glow' : 'bg-nexus-600'}`}
+                          style={{ width: 32, height: 18 }}
+                        >
+                          <div
+                            className="rounded-full bg-white absolute top-[2px] transition-transform"
+                            style={{ width: 14, height: 14, transform: sec.enabled ? 'translateX(16px)' : 'translateX(2px)' }}
+                          />
+                        </button>
+                        <button type="button" onClick={() => removeSection(sec.id)} className="text-nexus-600 hover:text-magenta-glow transition-colors shrink-0">
+                          <Trash2 size={13} />
+                        </button>
+                      </div>
+                      {isExpanded && (
+                        <div className="px-3 pb-3 border-t border-nexus-700/20 pt-3">
+                          <SectionContentEditor
+                            section={sec}
+                            onChange={updateSection}
+                          />
+                        </div>
+                      )}
+                    </div>
+                  )
+                })}
+                <SectionPicker existingSections={sections} onAdd={addSection} />
               </div>
             )}
 
+            {/* ──── Form Tab ──── */}
+            {activeTab === 'form' && <FormConfigPanel config={formConfig} onChange={setFormConfig} />}
+
+            {/* ──── Success Tab ──── */}
+            {activeTab === 'success' && <SuccessConfigPanel config={successConfig} onChange={setSuccessConfig} />}
+
+            {/* ──── SEO Tab ──── */}
             {activeTab === 'seo' && (
               <div className="space-y-4 animate-fade-in">
                 <div>
                   <label className="block text-xs font-mono text-nexus-400 tracking-wider uppercase mb-1.5">Page Slug</label>
                   <div className="flex items-center">
-                    <span className="text-xs text-nexus-500 font-mono pr-1">nexuswait.io/</span>
-                    <input type="text" value={pageConfig.slug} onChange={e => update('slug', e.target.value)} className="input-field text-sm font-mono flex-1" />
+                    <span className="text-xs text-nexus-500 font-mono pr-1">/w/</span>
+                    <input type="text" value={slug} onChange={(e) => setSlug(e.target.value)} className="input-field text-sm font-mono flex-1" />
                   </div>
                 </div>
                 <div>
                   <label className="block text-xs font-mono text-nexus-400 tracking-wider uppercase mb-1.5">Custom Domain</label>
-                  <input type="text" value={pageConfig.customDomain} onChange={e => update('customDomain', e.target.value)} className="input-field text-sm" placeholder="waitlist.yoursite.com" />
+                  <input type="text" value={customDomain} onChange={(e) => setCustomDomain(e.target.value)} className="input-field text-sm" placeholder="waitlist.yoursite.com" />
                   <p className="text-[10px] text-nexus-600 mt-1">Add a CNAME record pointing to pages.nexuswait.io</p>
                 </div>
                 <div>
                   <label className="block text-xs font-mono text-nexus-400 tracking-wider uppercase mb-1.5">Meta Description</label>
-                  <textarea value={pageConfig.metaDescription} onChange={e => update('metaDescription', e.target.value)} rows={2} className="input-field text-sm resize-none" />
-                  <p className="text-[10px] text-nexus-600 mt-1">{pageConfig.metaDescription.length}/160 characters</p>
+                  <textarea value={metaDescription} onChange={(e) => setMetaDescription(e.target.value)} rows={2} className="input-field text-sm resize-none" />
+                  <p className="text-[10px] text-nexus-600 mt-1">{metaDescription.length}/160 characters</p>
                 </div>
                 <div>
                   <label className="block text-xs font-mono text-nexus-400 tracking-wider uppercase mb-1.5">OG Image URL</label>
-                  <input type="url" value={pageConfig.ogImage} onChange={e => update('ogImage', e.target.value)} className="input-field text-sm" placeholder="https://..." />
+                  <input type="url" value={ogImage} onChange={(e) => setOgImage(e.target.value)} className="input-field text-sm" placeholder="https://..." />
                 </div>
               </div>
             )}
           </div>
         </div>
 
+        {/* ─── Right: Preview ─── */}
         <div className="card-surface overflow-hidden">
           <div className="flex items-center justify-between px-4 py-2.5 border-b border-cyan-glow/[0.06]">
             <div className="flex items-center gap-2">
@@ -419,47 +460,25 @@ export default function HostedPage() {
             </div>
             <div className="flex items-center gap-1.5 px-3 py-1 rounded bg-nexus-900/50 border border-nexus-700/30">
               <Globe size={10} className="text-nexus-500" />
-              <span className="font-mono text-[10px] text-nexus-400">{pageConfig.customDomain || `nexuswait.io/${pageConfig.slug}`}</span>
+              <span className="font-mono text-[10px] text-nexus-400">{customDomain || `${window.location.host}/w/${slug}`}</span>
             </div>
             <button type="button" onClick={handleCopy} className="text-nexus-500 hover:text-cyan-glow transition-colors">
               {copied ? <Check size={13} /> : <Copy size={13} />}
             </button>
           </div>
 
-          <div className="flex justify-center p-4 bg-nexus-900/30 min-h-[500px]">
-            <div style={{ width: previewMode === 'desktop' ? '100%' : previewMode === 'tablet' ? '768px' : '375px', maxWidth: '100%' }} className="transition-all duration-300">
-              <div className={`rounded-lg overflow-hidden ${themes.find(t => t.id === selectedTheme)?.preview ?? ''}`} style={{ minHeight: 460 }}>
-                <div className="p-8 sm:p-12 text-center flex flex-col items-center justify-center min-h-[460px]">
-                  <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full border border-white/10 bg-white/5 mb-6">
-                    <Sparkles size={10} className="text-cyan-glow" />
-                    <span className="font-mono text-[10px] tracking-wider" style={{ color: pageConfig.primaryColor }}>NOW ACCEPTING SIGNUPS</span>
-                  </div>
-                  <h2 className="text-2xl sm:text-3xl font-bold text-white leading-tight mb-4 max-w-lg" style={{ fontFamily: pageConfig.headingFont }}>
-                    {pageConfig.title || 'Your Headline Here'}
-                  </h2>
-                  <p className="text-sm text-white/60 max-w-md mb-8" style={{ fontFamily: pageConfig.bodyFont }}>
-                    {pageConfig.subtitle || 'Your subtitle goes here'}
-                  </p>
-                  <div className="flex flex-col sm:flex-row items-center gap-2 w-full max-w-sm">
-                    <div className="flex-1 w-full h-10 rounded-lg bg-white/5 border border-white/10 px-3 flex items-center">
-                      <span className="text-xs text-white/30" style={{ fontFamily: pageConfig.bodyFont }}>you@email.com</span>
-                    </div>
-                    <div className="h-10 px-6 rounded-lg flex items-center justify-center text-xs font-bold tracking-wider text-nexus-900" style={{ background: pageConfig.primaryColor, fontFamily: pageConfig.headingFont }}>
-                      {pageConfig.ctaText || 'Submit'}
-                    </div>
-                  </div>
-                  <p className="text-[10px] text-white/30 mt-4 font-mono">Join the waitlist</p>
-                  {sections.filter(s => s.enabled).length > 1 && (
-                    <div className="mt-10 pt-6 border-t border-white/5 w-full">
-                      <div className="flex items-center justify-center gap-4 flex-wrap">
-                        {sections.filter(s => s.enabled).map(sec => (
-                          <span key={sec.id} className="text-[9px] font-mono text-white/20 px-2 py-1 border border-white/5 rounded">{sec.label}</span>
-                        ))}
-                      </div>
-                    </div>
-                  )}
-                </div>
-              </div>
+          <div className="flex justify-center p-4 bg-nexus-900/30 min-h-[500px] overflow-auto">
+            <div
+              style={{ width: previewMode === 'desktop' ? '100%' : previewMode === 'tablet' ? '768px' : '375px', maxWidth: '100%' }}
+              className="transition-all duration-300"
+            >
+              <EditorPreview
+                sections={sections}
+                formConfig={formConfig}
+                successConfig={successConfig}
+                theme={resolvedTheme}
+                projectId={selectedProjectId}
+              />
             </div>
           </div>
         </div>

@@ -1,0 +1,216 @@
+import { useState, useRef } from 'react'
+import { Loader2, CheckCircle, Users, Share2, Copy, Check } from 'lucide-react'
+import type { FormConfig, SuccessConfig, ResolvedTheme } from './hosted-page-types'
+import { api } from '../api/client'
+
+interface WaitlistSignupFormProps {
+  formConfig: FormConfig
+  successConfig: SuccessConfig
+  projectId: string
+  isPreview?: boolean
+  theme: ResolvedTheme
+  referralCode?: string
+  subscriberCount?: number
+}
+
+interface SuccessData {
+  position?: number
+  referralCode?: string
+}
+
+export function WaitlistSignupForm({
+  formConfig,
+  successConfig,
+  projectId,
+  isPreview = false,
+  theme,
+  referralCode,
+  subscriberCount,
+}: WaitlistSignupFormProps) {
+  const [email, setEmail] = useState('')
+  const [name, setName] = useState('')
+  const [consent, setConsent] = useState(false)
+  const [submitting, setSubmitting] = useState(false)
+  const [success, setSuccess] = useState<SuccessData | null>(null)
+  const [error, setError] = useState('')
+  const [copied, setCopied] = useState(false)
+  const emailRef = useRef<HTMLInputElement>(null)
+
+  async function handleSubmit(e: React.FormEvent) {
+    e.preventDefault()
+    if (isPreview) return
+
+    if (!email.trim()) {
+      setError('Email is required')
+      emailRef.current?.focus()
+      return
+    }
+    if (formConfig.consentText && !consent) {
+      setError('Please check the consent box')
+      return
+    }
+
+    setError('')
+    setSubmitting(true)
+    try {
+      const body: Record<string, unknown> = { email: email.trim() }
+      if (formConfig.showNameField && name.trim()) body.name = name.trim()
+      if (referralCode) body.referralCode = referralCode
+
+      const { data } = await api.post(`/projects/${projectId}/subscribers`, body)
+      setSuccess({
+        position: data?.position ?? data?._count,
+        referralCode: data?.referralCode,
+      })
+    } catch (err: unknown) {
+      const msg =
+        (err as { response?: { data?: { message?: string } } })?.response?.data?.message
+        ?? 'Something went wrong. Please try again.'
+      setError(msg)
+    } finally {
+      setSubmitting(false)
+    }
+  }
+
+  function buildShareUrl(code: string) {
+    return `${window.location.origin}${window.location.pathname}?ref=${code}`
+  }
+
+  function copyToClipboard(text: string) {
+    navigator.clipboard.writeText(text)
+    setCopied(true)
+    setTimeout(() => setCopied(false), 2000)
+  }
+
+  // ─── Success state ──────────────────────────────────
+  if (success) {
+    return (
+      <div className="text-center space-y-4">
+        <CheckCircle size={40} style={{ color: theme.primaryColor }} className="mx-auto" />
+        <h3
+          className="text-xl font-bold"
+          style={{ fontFamily: `'${theme.headingFont}', sans-serif`, color: theme.textColor }}
+        >
+          {successConfig.message || "You're on the list!"}
+        </h3>
+
+        {successConfig.showPosition && success.position && (
+          <p className="text-sm" style={{ color: theme.mutedColor }}>
+            You are <strong style={{ color: theme.primaryColor }}>#{success.position}</strong> on the waitlist
+          </p>
+        )}
+
+        {successConfig.showReferralLink && success.referralCode && (
+          <div
+            className="rounded-lg p-4 space-y-2"
+            style={{ background: theme.surfaceColor, border: `1px solid ${theme.borderColor}` }}
+          >
+            <div className="flex items-center gap-2 justify-center text-xs" style={{ color: theme.mutedColor }}>
+              <Share2 size={13} /> Share to move up the list
+            </div>
+            <div className="flex items-center gap-2">
+              <input
+                readOnly
+                value={buildShareUrl(success.referralCode)}
+                className="flex-1 text-xs rounded px-3 py-2 bg-transparent outline-none"
+                style={{ border: `1px solid ${theme.borderColor}`, color: theme.textColor }}
+              />
+              <button
+                type="button"
+                onClick={() => copyToClipboard(buildShareUrl(success.referralCode!))}
+                className="px-3 py-2 rounded text-xs font-medium flex items-center gap-1"
+                style={{ background: theme.primaryColor, color: theme.isDark ? '#000' : '#fff' }}
+              >
+                {copied ? <Check size={13} /> : <Copy size={13} />}
+                {copied ? 'Copied' : 'Copy'}
+              </button>
+            </div>
+          </div>
+        )}
+
+        {successConfig.redirectUrl && (
+          <p className="text-xs" style={{ color: theme.mutedColor }}>
+            Redirecting in {successConfig.redirectDelay || 5}s...
+          </p>
+        )}
+      </div>
+    )
+  }
+
+  // ─── Form state ─────────────────────────────────────
+  return (
+    <form onSubmit={handleSubmit} className="space-y-3">
+      {subscriberCount !== undefined && subscriberCount > 0 && (
+        <div className="flex items-center justify-center gap-1.5 text-xs mb-2" style={{ color: theme.mutedColor }}>
+          <Users size={13} style={{ color: theme.primaryColor }} />
+          <span><strong style={{ color: theme.textColor }}>{subscriberCount.toLocaleString()}</strong> already joined</span>
+        </div>
+      )}
+
+      {formConfig.showNameField && (
+        <input
+          type="text"
+          placeholder={formConfig.namePlaceholder || 'Your name'}
+          value={name}
+          onChange={(e) => setName(e.target.value)}
+          disabled={isPreview}
+          className="w-full rounded-lg px-4 py-3 text-sm outline-none transition-colors"
+          style={{
+            background: theme.surfaceColor,
+            border: `1px solid ${theme.borderColor}`,
+            color: theme.textColor,
+            fontFamily: `'${theme.bodyFont}', sans-serif`,
+          }}
+        />
+      )}
+
+      <div className="flex gap-2">
+        <input
+          ref={emailRef}
+          type="email"
+          placeholder={formConfig.placeholder || 'you@email.com'}
+          value={email}
+          onChange={(e) => setEmail(e.target.value)}
+          disabled={isPreview}
+          className="flex-1 rounded-lg px-4 py-3 text-sm outline-none transition-colors"
+          style={{
+            background: theme.surfaceColor,
+            border: `1px solid ${theme.borderColor}`,
+            color: theme.textColor,
+            fontFamily: `'${theme.bodyFont}', sans-serif`,
+          }}
+        />
+        <button
+          type="submit"
+          disabled={isPreview || submitting}
+          className="px-6 py-3 rounded-lg text-sm font-bold tracking-wide transition-all whitespace-nowrap"
+          style={{
+            background: theme.primaryColor,
+            color: theme.isDark ? '#000' : '#fff',
+            fontFamily: `'${theme.headingFont}', sans-serif`,
+            opacity: submitting ? 0.7 : 1,
+          }}
+        >
+          {submitting ? <Loader2 size={16} className="animate-spin mx-auto" /> : (formConfig.ctaText || 'Join the Waitlist')}
+        </button>
+      </div>
+
+      {formConfig.consentText && (
+        <label className="flex items-start gap-2 text-xs cursor-pointer" style={{ color: theme.mutedColor }}>
+          <input
+            type="checkbox"
+            checked={consent}
+            onChange={(e) => setConsent(e.target.checked)}
+            disabled={isPreview}
+            className="mt-0.5 shrink-0"
+          />
+          <span>{formConfig.consentText}</span>
+        </label>
+      )}
+
+      {error && (
+        <p className="text-xs text-red-400 text-center">{error}</p>
+      )}
+    </form>
+  )
+}

@@ -632,6 +632,45 @@ export function useUpdatePlatformConfig() {
   })
 }
 
+// ─── Public Pages ───────────────────────────────────────
+
+export function usePublicPage(slug: string | undefined) {
+  return useQuery({
+    queryKey: ['public-page', slug],
+    queryFn: async () => {
+      const { data } = await api.get(`/pages/${slug}`)
+      return data
+    },
+    enabled: !!slug,
+    staleTime: 5 * 60 * 1000,
+  })
+}
+
+export function usePublicSubscriberCount(projectId: string | undefined) {
+  return useQuery({
+    queryKey: ['public-subscriber-count', projectId],
+    queryFn: async () => {
+      const { data } = await api.get(`/projects/${projectId}/subscribers/count`)
+      return data
+    },
+    enabled: !!projectId,
+    refetchInterval: 30_000,
+  })
+}
+
+export function usePublicCreateSubscriber(projectId: string | undefined) {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: async (body: Record<string, unknown>) => {
+      const { data } = await api.post(`/projects/${projectId}/subscribers`, body)
+      return data
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['public-subscriber-count', projectId] })
+    },
+  })
+}
+
 // ─── Helpers ────────────────────────────────────────────
 
 export function getMutationErrorMessage(error: unknown): string {

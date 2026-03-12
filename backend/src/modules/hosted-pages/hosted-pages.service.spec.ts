@@ -35,7 +35,7 @@ describe('HostedPagesService', () => {
     ogImageUrl: 'https://example.com/og.png',
     themeId: 'theme-1',
     themeOverrides: undefined,
-    sections: { hero: { heading: 'Welcome' } },
+    sections: [{ id: 's1', type: 'hero', label: 'Hero', enabled: true, content: { heading: 'Welcome' } }],
     formConfig: { fields: ['email'] },
     successConfig: { message: 'Thank you!' },
   };
@@ -48,6 +48,7 @@ describe('HostedPagesService', () => {
       hostedPage: {
         upsert: jest.fn(),
         findUnique: jest.fn(),
+        findFirst: jest.fn(),
         update: jest.fn(),
       },
     };
@@ -152,6 +153,54 @@ describe('HostedPagesService', () => {
       (prisma.hostedPage.findUnique as jest.Mock).mockResolvedValue(null);
 
       await expect(service.publish('proj-1', 'acc-1')).rejects.toThrow(NotFoundException);
+    });
+  });
+
+  describe('findBySlug', () => {
+    it('should return public page data for a published slug', async () => {
+      const publishedPage = {
+        ...mockHostedPage,
+        status: 'published',
+        publishedAt: new Date(),
+        themeOverrides: { primaryColor: '#ff0000' },
+        sections: [{ id: 's1', type: 'hero', label: 'Hero', enabled: true, content: { headline: 'Hi' } }],
+        formConfig: { ctaText: 'Join' },
+        successConfig: { message: 'Thanks!' },
+      };
+      (prisma.hostedPage.findFirst as jest.Mock).mockResolvedValue(publishedPage);
+
+      const result = await service.findBySlug('my-waitlist');
+
+      expect(result).toEqual({
+        slug: 'my-waitlist',
+        title: 'Join the Waitlist',
+        metaDescription: 'Sign up for early access',
+        ogImageUrl: 'https://example.com/og.png',
+        themeId: 'theme-1',
+        themeOverrides: { primaryColor: '#ff0000' },
+        sections: publishedPage.sections,
+        formConfig: { ctaText: 'Join' },
+        successConfig: { message: 'Thanks!' },
+        projectId: 'proj-1',
+      });
+      expect(prisma.hostedPage.findFirst).toHaveBeenCalledWith({
+        where: { slug: 'my-waitlist', status: 'published' },
+      });
+    });
+
+    it('should throw NotFoundException when slug does not exist', async () => {
+      (prisma.hostedPage.findFirst as jest.Mock).mockResolvedValue(null);
+
+      await expect(service.findBySlug('nonexistent')).rejects.toThrow(NotFoundException);
+    });
+
+    it('should throw NotFoundException for a draft page slug', async () => {
+      (prisma.hostedPage.findFirst as jest.Mock).mockResolvedValue(null);
+
+      await expect(service.findBySlug('my-waitlist')).rejects.toThrow(NotFoundException);
+      expect(prisma.hostedPage.findFirst).toHaveBeenCalledWith({
+        where: { slug: 'my-waitlist', status: 'published' },
+      });
     });
   });
 

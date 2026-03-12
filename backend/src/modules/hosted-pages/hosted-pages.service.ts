@@ -98,6 +98,27 @@ export class HostedPagesService {
     });
   }
 
+  async findBySlug(slug: string) {
+    const page = await this.prisma.hostedPage.findFirst({
+      where: { slug, status: 'published' },
+    });
+    if (!page) {
+      throw new NotFoundException('Page not found');
+    }
+    return {
+      slug: page.slug,
+      title: page.title,
+      metaDescription: page.metaDescription,
+      ogImageUrl: page.ogImageUrl,
+      themeId: page.themeId,
+      themeOverrides: page.themeOverrides,
+      sections: page.sections,
+      formConfig: page.formConfig,
+      successConfig: page.successConfig,
+      projectId: page.projectId,
+    };
+  }
+
   async unpublish(projectId: string, accountId: string) {
     await this.verifyProjectOwnership(projectId, accountId);
 
