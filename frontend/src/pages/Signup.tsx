@@ -1,6 +1,7 @@
 import { Link, useNavigate } from 'react-router-dom'
 import { useState } from 'react'
 import { Eye, EyeOff, ArrowRight, Check } from 'lucide-react'
+import { useRegister, getMutationErrorMessage } from '../api/hooks'
 
 interface SignupForm {
   name: string
@@ -8,14 +9,26 @@ interface SignupForm {
   password: string
 }
 
+function nameToFirstLast(name: string): { firstName: string; lastName: string } {
+  const parts = name.trim().split(/\s+/)
+  const firstName = parts[0] ?? ''
+  const lastName = parts.slice(1).join(' ') ?? ''
+  return { firstName, lastName }
+}
+
 export default function Signup() {
   const [show, setShow] = useState(false)
   const [form, setForm] = useState<SignupForm>({ name: '', email: '', password: '' })
   const navigate = useNavigate()
+  const register = useRegister()
 
   const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault()
-    navigate('/dashboard')
+    const { firstName, lastName } = nameToFirstLast(form.name)
+    register.mutate(
+      { email: form.email, password: form.password, firstName, lastName },
+      { onSuccess: () => navigate('/dashboard') }
+    )
   }
 
   const update = (key: keyof SignupForm) => (e: React.ChangeEvent<HTMLInputElement>) =>
@@ -86,14 +99,21 @@ export default function Signup() {
             <div className="flex items-start gap-2">
               <input type="checkbox" className="w-3.5 h-3.5 mt-0.5 rounded border-nexus-600 accent-cyan-glow" />
               <span className="text-xs text-nexus-400 leading-relaxed">
-                I agree to the <a href="#" className="text-cyan-glow/70 no-underline hover:text-cyan-glow">Terms of Service</a> and{' '}
-                <a href="#" className="text-cyan-glow/70 no-underline hover:text-cyan-glow">Privacy Policy</a>
+                I agree to the <Link to="/terms" className="text-cyan-glow/70 no-underline hover:text-cyan-glow">Terms of Service</Link> and{' '}
+                <Link to="/privacy" className="text-cyan-glow/70 no-underline hover:text-cyan-glow">Privacy Policy</Link>
               </span>
             </div>
 
-            <button type="submit" className="btn-primary w-full flex items-center justify-center gap-2 mt-2">
-              Create Account <ArrowRight size={14} />
+            <button
+              type="submit"
+              disabled={register.isPending}
+              className="btn-primary w-full flex items-center justify-center gap-2 mt-2"
+            >
+              {register.isPending ? 'Creating account...' : 'Create Account'} <ArrowRight size={14} />
             </button>
+            {register.error && (
+              <p className="text-sm text-magenta-glow mt-2">{getMutationErrorMessage(register.error)}</p>
+            )}
           </form>
         </div>
 

@@ -6,6 +6,13 @@ import Pricing from './pages/Pricing'
 import Resources from './pages/Resources'
 import Login from './pages/Login'
 import Signup from './pages/Signup'
+import Terms from './pages/Terms'
+import Privacy from './pages/Privacy'
+import Contact from './pages/Contact'
+import Legal from './pages/Legal'
+import About from './pages/About'
+import Changelog from './pages/Changelog'
+import ForgotPassword from './pages/ForgotPassword'
 import Dashboard from './pages/Dashboard'
 import CreateProject from './pages/CreateProject'
 import ViewProject from './pages/ViewProject'
@@ -24,6 +31,13 @@ export default function App() {
         <Route path="/resources" element={<Resources />} />
         <Route path="/login" element={<Login />} />
         <Route path="/signup" element={<Signup />} />
+        <Route path="/terms" element={<Terms />} />
+        <Route path="/privacy" element={<Privacy />} />
+        <Route path="/contact" element={<Contact />} />
+        <Route path="/legal" element={<Legal />} />
+        <Route path="/about" element={<About />} />
+        <Route path="/changelog" element={<Changelog />} />
+        <Route path="/forgot-password" element={<ForgotPassword />} />
       </Route>
       <Route element={<DashboardLayout />}>
         <Route path="/dashboard" element={<Dashboard />} />

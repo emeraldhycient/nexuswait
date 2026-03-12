@@ -1,16 +1,21 @@
 import { Link, useNavigate } from 'react-router-dom'
 import { useState } from 'react'
 import { Eye, EyeOff, ArrowRight } from 'lucide-react'
+import { useLogin, getMutationErrorMessage } from '../api/hooks'
 
 export default function Login() {
   const [show, setShow] = useState(false)
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const navigate = useNavigate()
+  const login = useLogin()
 
   const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault()
-    navigate('/dashboard')
+    login.mutate(
+      { email, password },
+      { onSuccess: () => navigate('/dashboard') }
+    )
   }
 
   return (
@@ -77,12 +82,19 @@ export default function Login() {
                 <input type="checkbox" className="w-3.5 h-3.5 rounded border-nexus-600 accent-cyan-glow" />
                 <span className="text-xs text-nexus-400">Remember me</span>
               </label>
-              <a href="#" className="text-xs text-cyan-glow/70 hover:text-cyan-glow no-underline">Forgot password?</a>
+              <Link to="/forgot-password" className="text-xs text-cyan-glow/70 hover:text-cyan-glow no-underline">Forgot password?</Link>
             </div>
 
-            <button type="submit" className="btn-primary w-full flex items-center justify-center gap-2 mt-2">
-              Sign In <ArrowRight size={14} />
+            <button
+              type="submit"
+              disabled={login.isPending}
+              className="btn-primary w-full flex items-center justify-center gap-2 mt-2"
+            >
+              {login.isPending ? 'Signing in...' : 'Sign In'} <ArrowRight size={14} />
             </button>
+            {login.error && (
+              <p className="text-sm text-magenta-glow mt-2">{getMutationErrorMessage(login.error)}</p>
+            )}
           </form>
         </div>
 

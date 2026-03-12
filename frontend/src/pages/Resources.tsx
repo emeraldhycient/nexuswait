@@ -1,3 +1,4 @@
+import { Link } from 'react-router-dom'
 import {
   BookOpen, Code, Video, MessageCircle, FileText, Zap,
   ArrowRight, ExternalLink, Search, Terminal, Braces
@@ -107,9 +108,9 @@ export default function Resources() {
           ].map((item, i) => {
             const Icon = item.icon
             return (
-              <a
+              <Link
                 key={i}
-                href="#"
+                to={item.label === 'Community' ? '/contact' : '/resources'}
                 className="no-underline card-surface p-5 flex items-center gap-4 group hover:border-cyan-glow/20 transition-all"
               >
                 <div className="w-10 h-10 rounded-lg bg-cyan-glow/10 border border-cyan-glow/20 flex items-center justify-center">
@@ -120,7 +121,7 @@ export default function Resources() {
                   <div className="text-xs text-nexus-500">{item.desc}</div>
                 </div>
                 <ExternalLink size={14} className="text-nexus-600 group-hover:text-cyan-glow transition-colors" />
-              </a>
+              </Link>
             )
           })}
         </div>
@@ -149,10 +150,10 @@ export default function Resources() {
                   <ul className="space-y-2">
                     {cat.articles.map((article, j) => (
                       <li key={j}>
-                        <a href="#" className="no-underline flex items-center gap-2 text-sm text-nexus-300 hover:text-cyan-glow transition-colors group py-1">
+                        <Link to="/resources" className="no-underline flex items-center gap-2 text-sm text-nexus-300 hover:text-cyan-glow transition-colors group py-1">
                           <FileText size={13} className="text-nexus-600 group-hover:text-cyan-glow/60" />
                           {article}
-                        </a>
+                        </Link>
                       </li>
                     ))}
                   </ul>
@@ -167,9 +168,9 @@ export default function Resources() {
           <h2 className="font-display text-xl font-bold text-nexus-100 tracking-wider mb-8">Featured Guides</h2>
           <div className="grid sm:grid-cols-2 gap-5">
             {guides.map((guide, i) => (
-              <a
+              <Link
                 key={i}
-                href="#"
+                to="/resources"
                 className="no-underline card-surface p-6 group hover:border-cyan-glow/20 transition-all animate-slide-up"
                 style={{ animationDelay: `${i * 0.08}s` }}
               >
@@ -185,7 +186,7 @@ export default function Resources() {
                 <div className="mt-3 flex items-center gap-1 text-xs text-nexus-500 group-hover:text-cyan-glow/60 transition-colors">
                   Read more <ArrowRight size={11} />
                 </div>
-              </a>
+              </Link>
             ))}
           </div>
         </div>

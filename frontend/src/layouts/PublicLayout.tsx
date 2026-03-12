@@ -89,16 +89,16 @@ export default function PublicLayout() {
               </p>
             </div>
             {[
-              { title: 'Product', links: ['Features', 'Pricing', 'Integrations', 'Changelog'] },
-              { title: 'Resources', links: ['Documentation', 'API Reference', 'Blog', 'Community'] },
-              { title: 'Company', links: ['About', 'Careers', 'Contact', 'Legal'] },
+              { title: 'Product', links: [{ label: 'Features', to: '/#features' }, { label: 'Pricing', to: '/pricing' }, { label: 'Integrations', to: '/dashboard/integrations' }, { label: 'Changelog', to: '/changelog' }] },
+              { title: 'Resources', links: [{ label: 'Documentation', to: '/resources' }, { label: 'API Reference', to: '/resources' }, { label: 'Blog', to: '/resources' }, { label: 'Community', to: '/contact' }] },
+              { title: 'Company', links: [{ label: 'About', to: '/about' }, { label: 'Careers', to: '/contact' }, { label: 'Contact', to: '/contact' }, { label: 'Legal', to: '/legal' }] },
             ].map(col => (
               <div key={col.title}>
                 <h4 className="font-display text-xs tracking-[0.2em] text-nexus-300 uppercase mb-4">{col.title}</h4>
                 <ul className="space-y-2.5">
                   {col.links.map(link => (
-                    <li key={link}>
-                      <a href="#" className="text-sm text-nexus-400 hover:text-cyan-glow transition-colors no-underline">{link}</a>
+                    <li key={link.label}>
+                      <Link to={link.to} className="text-sm text-nexus-400 hover:text-cyan-glow transition-colors no-underline">{link.label}</Link>
                     </li>
                   ))}
                 </ul>
@@ -108,9 +108,9 @@ export default function PublicLayout() {
           <div className="mt-14 pt-8 border-t border-nexus-700/50 flex flex-col md:flex-row justify-between items-center gap-4">
             <p className="text-xs text-nexus-500 font-mono">&copy; 2026 NexusWait. All rights reserved.</p>
             <div className="flex items-center gap-6">
-              {['Twitter', 'Discord', 'GitHub'].map(s => (
-                <a key={s} href="#" className="text-xs text-nexus-500 hover:text-cyan-glow transition-colors no-underline">{s}</a>
-              ))}
+              <a href="https://twitter.com" target="_blank" rel="noopener noreferrer" className="text-xs text-nexus-500 hover:text-cyan-glow transition-colors no-underline">Twitter</a>
+              <a href="https://discord.com" target="_blank" rel="noopener noreferrer" className="text-xs text-nexus-500 hover:text-cyan-glow transition-colors no-underline">Discord</a>
+              <a href="https://github.com" target="_blank" rel="noopener noreferrer" className="text-xs text-nexus-500 hover:text-cyan-glow transition-colors no-underline">GitHub</a>
             </div>
           </div>
         </div>

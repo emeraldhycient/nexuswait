@@ -54,6 +54,41 @@ export function useCreateProject() {
   })
 }
 
+export interface UpdateProjectBody {
+  name?: string
+  redirectUrl?: string
+  webhookUrl?: string
+  status?: string
+}
+
+export function useUpdateProject(id: string | undefined) {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: async (body: UpdateProjectBody) => {
+      const { data } = await api.patch<Project>(`/projects/${id}`, body)
+      return data
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['project', id] })
+      queryClient.invalidateQueries({ queryKey: ['projects'] })
+    },
+  })
+}
+
+export function useDeleteProject(id: string | undefined) {
+  const queryClient = useQueryClient()
+  const navigate = useNavigate()
+  return useMutation({
+    mutationFn: async () => {
+      await api.delete(`/projects/${id}`)
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['projects'] })
+      navigate('/dashboard')
+    },
+  })
+}
+
 export function useSubscribers(projectId: string | undefined, opts: { enabled?: boolean } = {}) {
   return useQuery({
     queryKey: ['subscribers', projectId],
