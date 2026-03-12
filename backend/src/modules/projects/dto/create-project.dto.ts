@@ -1,4 +1,4 @@
-import { IsString, IsOptional, IsEnum, MinLength, MaxLength } from 'class-validator';
+import { IsString, IsOptional, IsEnum, IsArray, MinLength, MaxLength } from 'class-validator';
 import { ProjectStatus } from '../../../generated/prisma/client/enums';
 
 export class CreateProjectDto {
@@ -23,4 +23,8 @@ export class CreateProjectDto {
   @IsOptional()
   @IsEnum(ProjectStatus)
   status?: ProjectStatus;
+
+  @IsOptional()
+  @IsArray()
+  customFields?: Record<string, unknown>[];
 }

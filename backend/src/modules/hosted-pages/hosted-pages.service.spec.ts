@@ -166,6 +166,7 @@ describe('HostedPagesService', () => {
         sections: [{ id: 's1', type: 'hero', label: 'Hero', enabled: true, content: { headline: 'Hi' } }],
         formConfig: { ctaText: 'Join' },
         successConfig: { message: 'Thanks!' },
+        project: { customFields: [{ id: 'f1', label: 'Company', fieldKey: 'company', type: 'text', required: false }] },
       };
       (prisma.hostedPage.findFirst as jest.Mock).mockResolvedValue(publishedPage);
 
@@ -182,9 +183,11 @@ describe('HostedPagesService', () => {
         formConfig: { ctaText: 'Join' },
         successConfig: { message: 'Thanks!' },
         projectId: 'proj-1',
+        customFields: publishedPage.project.customFields,
       });
       expect(prisma.hostedPage.findFirst).toHaveBeenCalledWith({
         where: { slug: 'my-waitlist', status: 'published' },
+        include: { project: { select: { customFields: true } } },
       });
     });
 
@@ -200,6 +203,7 @@ describe('HostedPagesService', () => {
       await expect(service.findBySlug('my-waitlist')).rejects.toThrow(NotFoundException);
       expect(prisma.hostedPage.findFirst).toHaveBeenCalledWith({
         where: { slug: 'my-waitlist', status: 'published' },
+        include: { project: { select: { customFields: true } } },
       });
     });
   });

@@ -72,6 +72,20 @@ export type Section =
   | (SectionBase & { type: 'faq'; content: FaqContent })
   | (SectionBase & { type: 'custom-text'; content: CustomTextContent })
 
+// ─── Custom field definitions ────────────────────────
+
+export type CustomFieldType = 'text' | 'number' | 'url' | 'phone' | 'textarea' | 'select' | 'checkbox'
+
+export interface CustomFieldDefinition {
+  id: string
+  label: string
+  fieldKey: string
+  placeholder: string
+  type: CustomFieldType
+  required: boolean
+  options?: string[]
+}
+
 // ─── Form config ─────────────────────────────────────
 
 export interface FormConfig {
@@ -80,6 +94,7 @@ export interface FormConfig {
   showNameField?: boolean
   namePlaceholder?: string
   consentText?: string
+  customFields?: string[]
 }
 
 // ─── Success config ──────────────────────────────────
@@ -154,6 +169,7 @@ export interface PublicPageResponse {
   formConfig: FormConfig
   successConfig: SuccessConfig
   projectId: string
+  customFields?: CustomFieldDefinition[]
 }
 
 // ─── Default content factories ───────────────────────

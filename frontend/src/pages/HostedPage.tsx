@@ -15,7 +15,7 @@ import {
   getMutationErrorMessage,
 } from '../api/hooks'
 
-import type { Section, FormConfig, SuccessConfig } from '../shared/hosted-page-types'
+import type { Section, FormConfig, SuccessConfig, CustomFieldDefinition } from '../shared/hosted-page-types'
 import { defaultFormConfig, defaultSuccessConfig, defaultContentForType } from '../shared/hosted-page-types'
 import { THEMES, HEADING_FONTS, BODY_FONTS, resolveTheme } from '../shared/theme-config'
 
@@ -205,6 +205,13 @@ export default function HostedPage() {
   }
 
   const isPublishing = publishPage.isPending || unpublishPage.isPending
+
+  // Project-level custom field definitions
+  const selectedProject = projects.find((p) => p.id === selectedProjectId)
+  const projectCustomFields = ((selectedProject as Record<string, unknown> | undefined)?.customFields as CustomFieldDefinition[] | undefined) ?? []
+
+  // Derive active custom field defs for preview/form
+  const activeCustomFieldDefs = projectCustomFields.filter((f) => (formConfig.customFields ?? []).includes(f.id))
 
   // Resolved theme for preview
   const resolvedTheme = resolveTheme(selectedTheme, { primaryColor, headingFont, bodyFont })
@@ -416,7 +423,7 @@ export default function HostedPage() {
             )}
 
             {/* ──── Form Tab ──── */}
-            {activeTab === 'form' && <FormConfigPanel config={formConfig} onChange={setFormConfig} />}
+            {activeTab === 'form' && <FormConfigPanel config={formConfig} onChange={setFormConfig} projectCustomFields={projectCustomFields} />}
 
             {/* ──── Success Tab ──── */}
             {activeTab === 'success' && <SuccessConfigPanel config={successConfig} onChange={setSuccessConfig} />}
@@ -478,6 +485,7 @@ export default function HostedPage() {
                 successConfig={successConfig}
                 theme={resolvedTheme}
                 projectId={selectedProjectId}
+                customFieldDefs={activeCustomFieldDefs}
               />
             </div>
           </div>

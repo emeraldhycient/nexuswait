@@ -55,6 +55,7 @@ export type ProjectCountAggregateOutputType = {
   status: number
   redirectUrl: number
   webhookUrl: number
+  customFields: number
   accountId: number
   createdAt: number
   updatedAt: number
@@ -93,6 +94,7 @@ export type ProjectCountAggregateInputType = {
   status?: true
   redirectUrl?: true
   webhookUrl?: true
+  customFields?: true
   accountId?: true
   createdAt?: true
   updatedAt?: true
@@ -178,6 +180,7 @@ export type ProjectGroupByOutputType = {
   status: $Enums.ProjectStatus
   redirectUrl: string | null
   webhookUrl: string | null
+  customFields: runtime.JsonValue | null
   accountId: string
   createdAt: Date
   updatedAt: Date
@@ -211,6 +214,7 @@ export type ProjectWhereInput = {
   status?: Prisma.EnumProjectStatusFilter<"Project"> | $Enums.ProjectStatus
   redirectUrl?: Prisma.StringNullableFilter<"Project"> | string | null
   webhookUrl?: Prisma.StringNullableFilter<"Project"> | string | null
+  customFields?: Prisma.JsonNullableFilter<"Project">
   accountId?: Prisma.StringFilter<"Project"> | string
   createdAt?: Prisma.DateTimeFilter<"Project"> | Date | string
   updatedAt?: Prisma.DateTimeFilter<"Project"> | Date | string
@@ -227,6 +231,7 @@ export type ProjectOrderByWithRelationInput = {
   status?: Prisma.SortOrder
   redirectUrl?: Prisma.SortOrderInput | Prisma.SortOrder
   webhookUrl?: Prisma.SortOrderInput | Prisma.SortOrder
+  customFields?: Prisma.SortOrderInput | Prisma.SortOrder
   accountId?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
@@ -246,6 +251,7 @@ export type ProjectWhereUniqueInput = Prisma.AtLeast<{
   status?: Prisma.EnumProjectStatusFilter<"Project"> | $Enums.ProjectStatus
   redirectUrl?: Prisma.StringNullableFilter<"Project"> | string | null
   webhookUrl?: Prisma.StringNullableFilter<"Project"> | string | null
+  customFields?: Prisma.JsonNullableFilter<"Project">
   accountId?: Prisma.StringFilter<"Project"> | string
   createdAt?: Prisma.DateTimeFilter<"Project"> | Date | string
   updatedAt?: Prisma.DateTimeFilter<"Project"> | Date | string
@@ -262,6 +268,7 @@ export type ProjectOrderByWithAggregationInput = {
   status?: Prisma.SortOrder
   redirectUrl?: Prisma.SortOrderInput | Prisma.SortOrder
   webhookUrl?: Prisma.SortOrderInput | Prisma.SortOrder
+  customFields?: Prisma.SortOrderInput | Prisma.SortOrder
   accountId?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
@@ -280,6 +287,7 @@ export type ProjectScalarWhereWithAggregatesInput = {
   status?: Prisma.EnumProjectStatusWithAggregatesFilter<"Project"> | $Enums.ProjectStatus
   redirectUrl?: Prisma.StringNullableWithAggregatesFilter<"Project"> | string | null
   webhookUrl?: Prisma.StringNullableWithAggregatesFilter<"Project"> | string | null
+  customFields?: Prisma.JsonNullableWithAggregatesFilter<"Project">
   accountId?: Prisma.StringWithAggregatesFilter<"Project"> | string
   createdAt?: Prisma.DateTimeWithAggregatesFilter<"Project"> | Date | string
   updatedAt?: Prisma.DateTimeWithAggregatesFilter<"Project"> | Date | string
@@ -292,6 +300,7 @@ export type ProjectCreateInput = {
   status?: $Enums.ProjectStatus
   redirectUrl?: string | null
   webhookUrl?: string | null
+  customFields?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   createdAt?: Date | string
   updatedAt?: Date | string
   account: Prisma.AccountCreateNestedOneWithoutProjectsInput
@@ -307,6 +316,7 @@ export type ProjectUncheckedCreateInput = {
   status?: $Enums.ProjectStatus
   redirectUrl?: string | null
   webhookUrl?: string | null
+  customFields?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   accountId: string
   createdAt?: Date | string
   updatedAt?: Date | string
@@ -322,6 +332,7 @@ export type ProjectUpdateInput = {
   status?: Prisma.EnumProjectStatusFieldUpdateOperationsInput | $Enums.ProjectStatus
   redirectUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   webhookUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  customFields?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   account?: Prisma.AccountUpdateOneRequiredWithoutProjectsNestedInput
@@ -337,6 +348,7 @@ export type ProjectUncheckedUpdateInput = {
   status?: Prisma.EnumProjectStatusFieldUpdateOperationsInput | $Enums.ProjectStatus
   redirectUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   webhookUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  customFields?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   accountId?: Prisma.StringFieldUpdateOperationsInput | string
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -352,6 +364,7 @@ export type ProjectCreateManyInput = {
   status?: $Enums.ProjectStatus
   redirectUrl?: string | null
   webhookUrl?: string | null
+  customFields?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   accountId: string
   createdAt?: Date | string
   updatedAt?: Date | string
@@ -364,6 +377,7 @@ export type ProjectUpdateManyMutationInput = {
   status?: Prisma.EnumProjectStatusFieldUpdateOperationsInput | $Enums.ProjectStatus
   redirectUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   webhookUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  customFields?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
@@ -375,6 +389,7 @@ export type ProjectUncheckedUpdateManyInput = {
   status?: Prisma.EnumProjectStatusFieldUpdateOperationsInput | $Enums.ProjectStatus
   redirectUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   webhookUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  customFields?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   accountId?: Prisma.StringFieldUpdateOperationsInput | string
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -397,6 +412,7 @@ export type ProjectCountOrderByAggregateInput = {
   status?: Prisma.SortOrder
   redirectUrl?: Prisma.SortOrder
   webhookUrl?: Prisma.SortOrder
+  customFields?: Prisma.SortOrder
   accountId?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
@@ -526,6 +542,7 @@ export type ProjectCreateWithoutAccountInput = {
   status?: $Enums.ProjectStatus
   redirectUrl?: string | null
   webhookUrl?: string | null
+  customFields?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   createdAt?: Date | string
   updatedAt?: Date | string
   subscribers?: Prisma.SubscriberCreateNestedManyWithoutProjectInput
@@ -540,6 +557,7 @@ export type ProjectUncheckedCreateWithoutAccountInput = {
   status?: $Enums.ProjectStatus
   redirectUrl?: string | null
   webhookUrl?: string | null
+  customFields?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   createdAt?: Date | string
   updatedAt?: Date | string
   subscribers?: Prisma.SubscriberUncheckedCreateNestedManyWithoutProjectInput
@@ -583,6 +601,7 @@ export type ProjectScalarWhereInput = {
   status?: Prisma.EnumProjectStatusFilter<"Project"> | $Enums.ProjectStatus
   redirectUrl?: Prisma.StringNullableFilter<"Project"> | string | null
   webhookUrl?: Prisma.StringNullableFilter<"Project"> | string | null
+  customFields?: Prisma.JsonNullableFilter<"Project">
   accountId?: Prisma.StringFilter<"Project"> | string
   createdAt?: Prisma.DateTimeFilter<"Project"> | Date | string
   updatedAt?: Prisma.DateTimeFilter<"Project"> | Date | string
@@ -595,6 +614,7 @@ export type ProjectCreateWithoutSubscribersInput = {
   status?: $Enums.ProjectStatus
   redirectUrl?: string | null
   webhookUrl?: string | null
+  customFields?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   createdAt?: Date | string
   updatedAt?: Date | string
   account: Prisma.AccountCreateNestedOneWithoutProjectsInput
@@ -609,6 +629,7 @@ export type ProjectUncheckedCreateWithoutSubscribersInput = {
   status?: $Enums.ProjectStatus
   redirectUrl?: string | null
   webhookUrl?: string | null
+  customFields?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   accountId: string
   createdAt?: Date | string
   updatedAt?: Date | string
@@ -639,6 +660,7 @@ export type ProjectUpdateWithoutSubscribersInput = {
   status?: Prisma.EnumProjectStatusFieldUpdateOperationsInput | $Enums.ProjectStatus
   redirectUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   webhookUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  customFields?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   account?: Prisma.AccountUpdateOneRequiredWithoutProjectsNestedInput
@@ -653,6 +675,7 @@ export type ProjectUncheckedUpdateWithoutSubscribersInput = {
   status?: Prisma.EnumProjectStatusFieldUpdateOperationsInput | $Enums.ProjectStatus
   redirectUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   webhookUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  customFields?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   accountId?: Prisma.StringFieldUpdateOperationsInput | string
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -667,6 +690,7 @@ export type ProjectCreateWithoutIntegrationsInput = {
   status?: $Enums.ProjectStatus
   redirectUrl?: string | null
   webhookUrl?: string | null
+  customFields?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   createdAt?: Date | string
   updatedAt?: Date | string
   account: Prisma.AccountCreateNestedOneWithoutProjectsInput
@@ -681,6 +705,7 @@ export type ProjectUncheckedCreateWithoutIntegrationsInput = {
   status?: $Enums.ProjectStatus
   redirectUrl?: string | null
   webhookUrl?: string | null
+  customFields?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   accountId: string
   createdAt?: Date | string
   updatedAt?: Date | string
@@ -711,6 +736,7 @@ export type ProjectUpdateWithoutIntegrationsInput = {
   status?: Prisma.EnumProjectStatusFieldUpdateOperationsInput | $Enums.ProjectStatus
   redirectUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   webhookUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  customFields?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   account?: Prisma.AccountUpdateOneRequiredWithoutProjectsNestedInput
@@ -725,6 +751,7 @@ export type ProjectUncheckedUpdateWithoutIntegrationsInput = {
   status?: Prisma.EnumProjectStatusFieldUpdateOperationsInput | $Enums.ProjectStatus
   redirectUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   webhookUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  customFields?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   accountId?: Prisma.StringFieldUpdateOperationsInput | string
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -739,6 +766,7 @@ export type ProjectCreateWithoutHostedPageInput = {
   status?: $Enums.ProjectStatus
   redirectUrl?: string | null
   webhookUrl?: string | null
+  customFields?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   createdAt?: Date | string
   updatedAt?: Date | string
   account: Prisma.AccountCreateNestedOneWithoutProjectsInput
@@ -753,6 +781,7 @@ export type ProjectUncheckedCreateWithoutHostedPageInput = {
   status?: $Enums.ProjectStatus
   redirectUrl?: string | null
   webhookUrl?: string | null
+  customFields?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   accountId: string
   createdAt?: Date | string
   updatedAt?: Date | string
@@ -783,6 +812,7 @@ export type ProjectUpdateWithoutHostedPageInput = {
   status?: Prisma.EnumProjectStatusFieldUpdateOperationsInput | $Enums.ProjectStatus
   redirectUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   webhookUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  customFields?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   account?: Prisma.AccountUpdateOneRequiredWithoutProjectsNestedInput
@@ -797,6 +827,7 @@ export type ProjectUncheckedUpdateWithoutHostedPageInput = {
   status?: Prisma.EnumProjectStatusFieldUpdateOperationsInput | $Enums.ProjectStatus
   redirectUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   webhookUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  customFields?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   accountId?: Prisma.StringFieldUpdateOperationsInput | string
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -811,6 +842,7 @@ export type ProjectCreateManyAccountInput = {
   status?: $Enums.ProjectStatus
   redirectUrl?: string | null
   webhookUrl?: string | null
+  customFields?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   createdAt?: Date | string
   updatedAt?: Date | string
 }
@@ -822,6 +854,7 @@ export type ProjectUpdateWithoutAccountInput = {
   status?: Prisma.EnumProjectStatusFieldUpdateOperationsInput | $Enums.ProjectStatus
   redirectUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   webhookUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  customFields?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   subscribers?: Prisma.SubscriberUpdateManyWithoutProjectNestedInput
@@ -836,6 +869,7 @@ export type ProjectUncheckedUpdateWithoutAccountInput = {
   status?: Prisma.EnumProjectStatusFieldUpdateOperationsInput | $Enums.ProjectStatus
   redirectUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   webhookUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  customFields?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   subscribers?: Prisma.SubscriberUncheckedUpdateManyWithoutProjectNestedInput
@@ -850,6 +884,7 @@ export type ProjectUncheckedUpdateManyWithoutAccountInput = {
   status?: Prisma.EnumProjectStatusFieldUpdateOperationsInput | $Enums.ProjectStatus
   redirectUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   webhookUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  customFields?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
@@ -901,6 +936,7 @@ export type ProjectSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs 
   status?: boolean
   redirectUrl?: boolean
   webhookUrl?: boolean
+  customFields?: boolean
   accountId?: boolean
   createdAt?: boolean
   updatedAt?: boolean
@@ -918,6 +954,7 @@ export type ProjectSelectCreateManyAndReturn<ExtArgs extends runtime.Types.Exten
   status?: boolean
   redirectUrl?: boolean
   webhookUrl?: boolean
+  customFields?: boolean
   accountId?: boolean
   createdAt?: boolean
   updatedAt?: boolean
@@ -931,6 +968,7 @@ export type ProjectSelectUpdateManyAndReturn<ExtArgs extends runtime.Types.Exten
   status?: boolean
   redirectUrl?: boolean
   webhookUrl?: boolean
+  customFields?: boolean
   accountId?: boolean
   createdAt?: boolean
   updatedAt?: boolean
@@ -944,12 +982,13 @@ export type ProjectSelectScalar = {
   status?: boolean
   redirectUrl?: boolean
   webhookUrl?: boolean
+  customFields?: boolean
   accountId?: boolean
   createdAt?: boolean
   updatedAt?: boolean
 }
 
-export type ProjectOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "name" | "slug" | "status" | "redirectUrl" | "webhookUrl" | "accountId" | "createdAt" | "updatedAt", ExtArgs["result"]["project"]>
+export type ProjectOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "name" | "slug" | "status" | "redirectUrl" | "webhookUrl" | "customFields" | "accountId" | "createdAt" | "updatedAt", ExtArgs["result"]["project"]>
 export type ProjectInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   account?: boolean | Prisma.AccountDefaultArgs<ExtArgs>
   subscribers?: boolean | Prisma.Project$subscribersArgs<ExtArgs>
@@ -979,6 +1018,7 @@ export type $ProjectPayload<ExtArgs extends runtime.Types.Extensions.InternalArg
     status: $Enums.ProjectStatus
     redirectUrl: string | null
     webhookUrl: string | null
+    customFields: runtime.JsonValue | null
     accountId: string
     createdAt: Date
     updatedAt: Date
@@ -1415,6 +1455,7 @@ export interface ProjectFieldRefs {
   readonly status: Prisma.FieldRef<"Project", 'ProjectStatus'>
   readonly redirectUrl: Prisma.FieldRef<"Project", 'String'>
   readonly webhookUrl: Prisma.FieldRef<"Project", 'String'>
+  readonly customFields: Prisma.FieldRef<"Project", 'Json'>
   readonly accountId: Prisma.FieldRef<"Project", 'String'>
   readonly createdAt: Prisma.FieldRef<"Project", 'DateTime'>
   readonly updatedAt: Prisma.FieldRef<"Project", 'DateTime'>

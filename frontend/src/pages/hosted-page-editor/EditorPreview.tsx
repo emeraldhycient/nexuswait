@@ -1,4 +1,4 @@
-import type { Section, FormConfig, SuccessConfig, ResolvedTheme } from '../../shared/hosted-page-types'
+import type { Section, FormConfig, SuccessConfig, ResolvedTheme, CustomFieldDefinition } from '../../shared/hosted-page-types'
 import { SectionRenderer } from '../../shared/section-renderers'
 import { WaitlistSignupForm } from '../../shared/WaitlistSignupForm'
 import { GoogleFontsLoader } from '../../shared/GoogleFontsLoader'
@@ -10,9 +10,10 @@ interface EditorPreviewProps {
   successConfig: SuccessConfig
   theme: ResolvedTheme
   projectId?: string
+  customFieldDefs?: CustomFieldDefinition[]
 }
 
-export function EditorPreview({ sections, formConfig, successConfig, theme, projectId }: EditorPreviewProps) {
+export function EditorPreview({ sections, formConfig, successConfig, theme, projectId, customFieldDefs }: EditorPreviewProps) {
   const fontsUrl = buildGoogleFontsUrl([theme.headingFont, theme.bodyFont])
 
   const signupForm = (
@@ -22,6 +23,7 @@ export function EditorPreview({ sections, formConfig, successConfig, theme, proj
       projectId={projectId ?? ''}
       isPreview
       theme={theme}
+      customFieldDefs={customFieldDefs}
     />
   )
 

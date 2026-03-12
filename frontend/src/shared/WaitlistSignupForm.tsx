@@ -1,6 +1,6 @@
 import { useState, useRef } from 'react'
 import { Loader2, CheckCircle, Users, Share2, Copy, Check } from 'lucide-react'
-import type { FormConfig, SuccessConfig, ResolvedTheme } from './hosted-page-types'
+import type { FormConfig, SuccessConfig, ResolvedTheme, CustomFieldDefinition } from './hosted-page-types'
 import { api } from '../api/client'
 
 interface WaitlistSignupFormProps {
@@ -11,6 +11,7 @@ interface WaitlistSignupFormProps {
   theme: ResolvedTheme
   referralCode?: string
   subscriberCount?: number
+  customFieldDefs?: CustomFieldDefinition[]
 }
 
 interface SuccessData {
@@ -26,6 +27,7 @@ export function WaitlistSignupForm({
   theme,
   referralCode,
   subscriberCount,
+  customFieldDefs = [],
 }: WaitlistSignupFormProps) {
   const [email, setEmail] = useState('')
   const [name, setName] = useState('')
@@ -34,7 +36,12 @@ export function WaitlistSignupForm({
   const [success, setSuccess] = useState<SuccessData | null>(null)
   const [error, setError] = useState('')
   const [copied, setCopied] = useState(false)
+  const [customValues, setCustomValues] = useState<Record<string, string | number | boolean>>({})
   const emailRef = useRef<HTMLInputElement>(null)
+
+  const updateCustomValue = (fieldKey: string, value: string | number | boolean) => {
+    setCustomValues((prev) => ({ ...prev, [fieldKey]: value }))
+  }
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
@@ -50,12 +57,37 @@ export function WaitlistSignupForm({
       return
     }
 
+    // Validate required custom fields
+    for (const field of customFieldDefs) {
+      if (field.required) {
+        const val = customValues[field.fieldKey]
+        if (val === undefined || val === '' || val === false) {
+          setError(`${field.label} is required`)
+          return
+        }
+      }
+    }
+
     setError('')
     setSubmitting(true)
     try {
       const body: Record<string, unknown> = { email: email.trim() }
       if (formConfig.showNameField && name.trim()) body.name = name.trim()
       if (referralCode) body.referralCode = referralCode
+
+      // Add custom field values as metadata
+      if (customFieldDefs.length > 0) {
+        const metadata: Record<string, unknown> = {}
+        for (const field of customFieldDefs) {
+          const val = customValues[field.fieldKey]
+          if (val !== undefined && val !== '') {
+            metadata[field.fieldKey] = val
+          }
+        }
+        if (Object.keys(metadata).length > 0) {
+          body.metadata = metadata
+        }
+      }
 
       const { data } = await api.post(`/projects/${projectId}/subscribers`, body)
       setSuccess({
@@ -80,6 +112,13 @@ export function WaitlistSignupForm({
     navigator.clipboard.writeText(text)
     setCopied(true)
     setTimeout(() => setCopied(false), 2000)
+  }
+
+  const inputStyle = {
+    background: theme.surfaceColor,
+    border: `1px solid ${theme.borderColor}`,
+    color: theme.textColor,
+    fontFamily: `'${theme.bodyFont}', sans-serif`,
   }
 
   // ─── Success state ──────────────────────────────────
@@ -137,6 +176,90 @@ export function WaitlistSignupForm({
     )
   }
 
+  // ─── Custom field renderer ────────────────────────────
+  function renderCustomField(field: CustomFieldDefinition) {
+    const val = customValues[field.fieldKey] ?? (field.type === 'checkbox' ? false : '')
+
+    switch (field.type) {
+      case 'text':
+      case 'url':
+      case 'phone':
+        return (
+          <input
+            key={field.id}
+            type={field.type === 'phone' ? 'tel' : field.type}
+            placeholder={field.placeholder || field.label}
+            value={val as string}
+            onChange={(e) => updateCustomValue(field.fieldKey, e.target.value)}
+            disabled={isPreview}
+            className="w-full rounded-lg px-4 py-3 text-sm outline-none transition-colors"
+            style={inputStyle}
+          />
+        )
+      case 'number':
+        return (
+          <input
+            key={field.id}
+            type="number"
+            placeholder={field.placeholder || field.label}
+            value={val as string}
+            onChange={(e) => updateCustomValue(field.fieldKey, e.target.value ? Number(e.target.value) : '')}
+            disabled={isPreview}
+            className="w-full rounded-lg px-4 py-3 text-sm outline-none transition-colors"
+            style={inputStyle}
+          />
+        )
+      case 'textarea':
+        return (
+          <textarea
+            key={field.id}
+            placeholder={field.placeholder || field.label}
+            value={val as string}
+            onChange={(e) => updateCustomValue(field.fieldKey, e.target.value)}
+            disabled={isPreview}
+            rows={3}
+            className="w-full rounded-lg px-4 py-3 text-sm outline-none transition-colors resize-none"
+            style={inputStyle}
+          />
+        )
+      case 'select':
+        return (
+          <select
+            key={field.id}
+            value={val as string}
+            onChange={(e) => updateCustomValue(field.fieldKey, e.target.value)}
+            disabled={isPreview}
+            className="w-full rounded-lg px-4 py-3 text-sm outline-none transition-colors"
+            style={inputStyle}
+          >
+            <option value="">{field.placeholder || `Select ${field.label}`}</option>
+            {(field.options ?? []).map((opt) => (
+              <option key={opt} value={opt}>{opt}</option>
+            ))}
+          </select>
+        )
+      case 'checkbox':
+        return (
+          <label
+            key={field.id}
+            className="flex items-center gap-2 text-xs cursor-pointer"
+            style={{ color: theme.mutedColor }}
+          >
+            <input
+              type="checkbox"
+              checked={val as boolean}
+              onChange={(e) => updateCustomValue(field.fieldKey, e.target.checked)}
+              disabled={isPreview}
+              className="shrink-0"
+            />
+            <span>{field.label}{field.required && ' *'}</span>
+          </label>
+        )
+      default:
+        return null
+    }
+  }
+
   // ─── Form state ─────────────────────────────────────
   return (
     <form onSubmit={handleSubmit} className="space-y-3">
@@ -155,14 +278,12 @@ export function WaitlistSignupForm({
           onChange={(e) => setName(e.target.value)}
           disabled={isPreview}
           className="w-full rounded-lg px-4 py-3 text-sm outline-none transition-colors"
-          style={{
-            background: theme.surfaceColor,
-            border: `1px solid ${theme.borderColor}`,
-            color: theme.textColor,
-            fontFamily: `'${theme.bodyFont}', sans-serif`,
-          }}
+          style={inputStyle}
         />
       )}
+
+      {/* Custom fields */}
+      {customFieldDefs.map((field) => renderCustomField(field))}
 
       <div className="flex gap-2">
         <input
@@ -173,12 +294,7 @@ export function WaitlistSignupForm({
           onChange={(e) => setEmail(e.target.value)}
           disabled={isPreview}
           className="flex-1 rounded-lg px-4 py-3 text-sm outline-none transition-colors"
-          style={{
-            background: theme.surfaceColor,
-            border: `1px solid ${theme.borderColor}`,
-            color: theme.textColor,
-            fontFamily: `'${theme.bodyFont}', sans-serif`,
-          }}
+          style={inputStyle}
         />
         <button
           type="submit"

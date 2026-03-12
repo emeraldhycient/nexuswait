@@ -1301,6 +1301,7 @@ export const ProjectScalarFieldEnum = {
   status: 'status',
   redirectUrl: 'redirectUrl',
   webhookUrl: 'webhookUrl',
+  customFields: 'customFields',
   accountId: 'accountId',
   createdAt: 'createdAt',
   updatedAt: 'updatedAt'

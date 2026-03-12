@@ -62,6 +62,7 @@ export interface UpdateProjectBody {
   redirectUrl?: string
   webhookUrl?: string
   status?: string
+  customFields?: Record<string, unknown>[]
 }
 
 export function useUpdateProject(id: string | undefined) {

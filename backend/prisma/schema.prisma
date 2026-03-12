@@ -92,10 +92,11 @@ model Project {
   slug        String
   status      ProjectStatus @default(active)
   redirectUrl String?       @map("redirect_url")
-  webhookUrl  String?       @map("webhook_url")
-  accountId   String        @map("account_id")
-  createdAt   DateTime      @default(now()) @map("created_at")
-  updatedAt   DateTime      @updatedAt @map("updated_at")
+  webhookUrl    String?       @map("webhook_url")
+  customFields  Json?         @map("custom_fields")
+  accountId     String        @map("account_id")
+  createdAt     DateTime      @default(now()) @map("created_at")
+  updatedAt     DateTime      @updatedAt @map("updated_at")
 
   account        Account        @relation(fields: [accountId], references: [id], onDelete: Cascade)
   subscribers     Subscriber[]

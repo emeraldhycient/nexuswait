@@ -6,7 +6,7 @@ import { GoogleFontsLoader } from '../shared/GoogleFontsLoader'
 import { SeoHead } from '../shared/SeoHead'
 import { SectionRenderer } from '../shared/section-renderers'
 import { WaitlistSignupForm } from '../shared/WaitlistSignupForm'
-import type { PublicPageResponse, Section, FormConfig, SuccessConfig, ThemeOverrides } from '../shared/hosted-page-types'
+import type { PublicPageResponse, Section, FormConfig, SuccessConfig, ThemeOverrides, CustomFieldDefinition } from '../shared/hosted-page-types'
 
 export default function PublicWaitlistPage() {
   const { slug } = useParams<{ slug: string }>()
@@ -47,6 +47,15 @@ export default function PublicWaitlistPage() {
   const theme = resolveTheme(page.themeId ?? 'nexus-dark', themeOverrides)
   const fontsUrl = buildGoogleFontsUrl([theme.headingFont, theme.bodyFont])
 
+  // Filter custom field definitions to only those enabled in formConfig
+  const allCustomFields = (page.customFields ?? []) as CustomFieldDefinition[]
+  const enabledFieldIds = formConfig.customFields ?? []
+  const activeCustomFieldDefs = enabledFieldIds.length > 0
+    ? enabledFieldIds
+        .map((id) => allCustomFields.find((f) => f.id === id))
+        .filter((f): f is CustomFieldDefinition => !!f)
+    : []
+
   const signupForm = (
     <WaitlistSignupForm
       formConfig={formConfig}
@@ -55,6 +64,7 @@ export default function PublicWaitlistPage() {
       theme={theme}
       referralCode={ref}
       subscriberCount={subscriberCount}
+      customFieldDefs={activeCustomFieldDefs}
     />
   )
 

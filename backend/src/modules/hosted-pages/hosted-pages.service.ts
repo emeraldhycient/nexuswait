@@ -101,6 +101,7 @@ export class HostedPagesService {
   async findBySlug(slug: string) {
     const page = await this.prisma.hostedPage.findFirst({
       where: { slug, status: 'published' },
+      include: { project: { select: { customFields: true } } },
     });
     if (!page) {
       throw new NotFoundException('Page not found');
@@ -116,6 +117,7 @@ export class HostedPagesService {
       formConfig: page.formConfig,
       successConfig: page.successConfig,
       projectId: page.projectId,
+      customFields: page.project?.customFields ?? [],
     };
   }
 

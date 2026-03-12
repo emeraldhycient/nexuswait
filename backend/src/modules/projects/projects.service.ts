@@ -15,6 +15,7 @@ export class ProjectsService {
         accountId,
         redirectUrl: dto.redirectUrl,
         webhookUrl: dto.webhookUrl,
+        customFields: dto.customFields as object[] | undefined,
       },
     });
   }
@@ -47,6 +48,7 @@ export class ProjectsService {
         ...(dto.redirectUrl !== undefined && { redirectUrl: dto.redirectUrl }),
         ...(dto.webhookUrl !== undefined && { webhookUrl: dto.webhookUrl }),
         ...(dto.status && { status: dto.status }),
+        ...(dto.customFields !== undefined && { customFields: dto.customFields as object[] }),
       },
     });
   }

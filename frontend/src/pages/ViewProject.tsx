@@ -17,6 +17,8 @@ import {
   usePlatformConfig,
   getMutationErrorMessage,
 } from '../api/hooks'
+import { CustomFieldsBuilder } from './CustomFieldsBuilder'
+import type { CustomFieldDefinition } from '../shared/hosted-page-types'
 
 const tabsList = ['Overview', 'Subscribers', 'Referrals', 'Settings'] as const
 type Tab = (typeof tabsList)[number]
@@ -61,6 +63,7 @@ export default function ViewProject() {
   const [settingsName, setSettingsName] = useState('')
   const [settingsRedirect, setSettingsRedirect] = useState('')
   const [settingsWebhook, setSettingsWebhook] = useState('')
+  const [settingsCustomFields, setSettingsCustomFields] = useState<CustomFieldDefinition[]>([])
   const [settingsLoaded, setSettingsLoaded] = useState(false)
   const [settingsSaved, setSettingsSaved] = useState(false)
   const [deleteConfirm, setDeleteConfirm] = useState(false)
@@ -70,8 +73,12 @@ export default function ViewProject() {
     setSettingsName(project.name ?? '')
     setSettingsRedirect((project.redirectUrl as string) ?? '')
     setSettingsWebhook((project.webhookUrl as string) ?? '')
+    setSettingsCustomFields(((project as Record<string, unknown>).customFields as CustomFieldDefinition[]) ?? [])
     setSettingsLoaded(true)
   }
+
+  // Project-level custom field definitions (for subscriber detail display)
+  const projectCustomFields = ((project as Record<string, unknown> | undefined)?.customFields as CustomFieldDefinition[] | undefined) ?? []
 
   // ─── Derived analytics ─────────────────────────────
   const ov = overview as
@@ -113,7 +120,7 @@ export default function ViewProject() {
 
   const saveSettings = () => {
     updateProject.mutate(
-      { name: settingsName, redirectUrl: settingsRedirect, webhookUrl: settingsWebhook },
+      { name: settingsName, redirectUrl: settingsRedirect, webhookUrl: settingsWebhook, customFields: settingsCustomFields as unknown as Record<string, unknown>[] },
       {
         onSuccess: () => {
           setSettingsSaved(true)
@@ -402,6 +409,12 @@ export default function ViewProject() {
             <label className="block text-xs font-mono text-nexus-400 tracking-wider uppercase mb-1.5">Webhook URL</label>
             <input type="url" value={settingsWebhook} onChange={e => setSettingsWebhook(e.target.value)} className="input-field" placeholder="https://..." />
           </div>
+          <div className="pt-5 border-t border-nexus-700/30">
+            <CustomFieldsBuilder fields={settingsCustomFields} onChange={setSettingsCustomFields} />
+            <p className="text-[10px] text-nexus-600 mt-2">
+              Custom field values are stored in each subscriber&apos;s metadata. Use them in hosted pages, embeds, or API integrations.
+            </p>
+          </div>
           {updateProject.isError && (
             <p className="text-magenta-glow text-xs">{getMutationErrorMessage(updateProject.error)}</p>
           )}
@@ -483,14 +496,32 @@ export default function ViewProject() {
                 <DetailRow label="Referred By" value={selectedSub.referrer.email ?? selectedSub.referrer.referralCode ?? '—'} />
               )}
               <DetailRow label="Signed Up" value={selectedSub.createdAt ? new Date(selectedSub.createdAt).toLocaleString() : '—'} />
-              {selectedSub.metadata && Object.keys(selectedSub.metadata).length > 0 && (
-                <div>
-                  <div className="text-[10px] font-mono text-nexus-500 tracking-wider uppercase mb-1">Metadata</div>
-                  <pre className="text-xs font-mono text-nexus-300 bg-nexus-900/50 border border-nexus-700/30 rounded-lg p-3 overflow-x-auto">
-                    {JSON.stringify(selectedSub.metadata, null, 2)}
-                  </pre>
-                </div>
-              )}
+              {selectedSub.metadata && Object.keys(selectedSub.metadata).length > 0 && (() => {
+                const meta = selectedSub.metadata as Record<string, unknown>
+                const fieldKeyMap = new Map(projectCustomFields.map((f) => [f.fieldKey, f.label]))
+                const knownKeys = new Set(projectCustomFields.map((f) => f.fieldKey))
+                const unknownEntries = Object.entries(meta).filter(([k]) => !knownKeys.has(k))
+                return (
+                  <div className="space-y-2">
+                    {projectCustomFields.length > 0 && (
+                      <div className="text-[10px] font-mono text-nexus-500 tracking-wider uppercase">Custom Fields</div>
+                    )}
+                    {projectCustomFields.map((f) => {
+                      const val = meta[f.fieldKey]
+                      if (val === undefined || val === null || val === '') return null
+                      return <DetailRow key={f.fieldKey} label={fieldKeyMap.get(f.fieldKey) ?? f.fieldKey} value={String(val)} />
+                    })}
+                    {unknownEntries.length > 0 && (
+                      <div>
+                        <div className="text-[10px] font-mono text-nexus-500 tracking-wider uppercase mb-1">Other Metadata</div>
+                        <pre className="text-xs font-mono text-nexus-300 bg-nexus-900/50 border border-nexus-700/30 rounded-lg p-3 overflow-x-auto">
+                          {JSON.stringify(Object.fromEntries(unknownEntries), null, 2)}
+                        </pre>
+                      </div>
+                    )}
+                  </div>
+                )
+              })()}
             </div>
           </div>
         </div>
@@ -538,7 +569,7 @@ export default function ViewProject() {
               <p className="text-xs text-nexus-500 mb-3">Submit signups from your own form using a simple POST request.</p>
               <SnippetBlock
                 label="cURL"
-                code={`curl -X POST ${apiUrl}/v1/projects/${id}/subscribers \\\n  -H "Content-Type: application/json" \\\n  -d '{"email": "user@example.com", "name": "Jane Doe"}'`}
+                code={`curl -X POST ${apiUrl}/v1/projects/${id}/subscribers \\\n  -H "Content-Type: application/json" \\\n  -d '{"email": "user@example.com", "name": "Jane Doe"${projectCustomFields.length > 0 ? `,\n       "metadata": { ${projectCustomFields.slice(0, 2).map((f) => `"${f.fieldKey}": "..."` ).join(', ')} }` : ''}'`}
                 copied={copiedSnippet}
                 onCopy={setCopiedSnippet}
               />
@@ -553,7 +584,7 @@ export default function ViewProject() {
               <p className="text-xs text-nexus-500 mb-3">Use this in your form&apos;s submit handler.</p>
               <SnippetBlock
                 label="JavaScript"
-                code={`const res = await fetch("${apiUrl}/v1/projects/${id}/subscribers", {\n  method: "POST",\n  headers: { "Content-Type": "application/json" },\n  body: JSON.stringify({\n    email: formData.email,\n    name: formData.name,   // optional\n    source: "website",     // optional\n  }),\n});\nconst subscriber = await res.json();\nconsole.log("Position:", subscriber.position);`}
+                code={`const res = await fetch("${apiUrl}/v1/projects/${id}/subscribers", {\n  method: "POST",\n  headers: { "Content-Type": "application/json" },\n  body: JSON.stringify({\n    email: formData.email,\n    name: formData.name,   // optional\n    source: "website",     // optional${projectCustomFields.length > 0 ? `\n    metadata: {            // custom fields\n${projectCustomFields.slice(0, 3).map((f) => `      ${f.fieldKey}: "..."`).join(',\n')}\n    }` : ''}\n  }),\n});\nconst subscriber = await res.json();\nconsole.log("Position:", subscriber.position);`}
                 copied={copiedSnippet}
                 onCopy={setCopiedSnippet}
               />

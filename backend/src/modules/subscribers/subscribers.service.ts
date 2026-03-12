@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
 import { EventEmitter2 } from '@nestjs/event-emitter';
 import { PrismaService } from '../../infrastructure/prisma/prisma.service';
 import { randomBytes } from 'crypto';
@@ -19,6 +19,20 @@ export class SubscribersService {
   async create(projectId: string, dto: CreateSubscriberDto, ref?: string) {
     const project = await this.prisma.project.findUnique({ where: { id: projectId } });
     if (!project) throw new NotFoundException('Project not found');
+
+    // Validate required custom fields
+    const customFields = (project.customFields ?? []) as { fieldKey?: string; label?: string; required?: boolean }[];
+    const requiredFields = customFields.filter((f) => f.required);
+    if (requiredFields.length > 0) {
+      const meta = (dto.metadata ?? {}) as Record<string, unknown>;
+      const missing = requiredFields.filter(
+        (f) => f.fieldKey && (meta[f.fieldKey] === undefined || meta[f.fieldKey] === ''),
+      );
+      if (missing.length > 0) {
+        const names = missing.map((f) => f.label ?? f.fieldKey).join(', ');
+        throw new BadRequestException(`Missing required fields: ${names}`);
+      }
+    }
 
     // Resolve ref query param to referrerId
     let referrerId: string | null = null;
