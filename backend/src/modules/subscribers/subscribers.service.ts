@@ -61,7 +61,10 @@ export class SubscribersService {
       take: limit + 1,
       ...(cursor && { cursor: { id: cursor }, skip: 1 }),
       orderBy: { createdAt: 'desc' },
-      include: { referrer: { select: { id: true, email: true, referralCode: true } } },
+      include: {
+        referrer: { select: { id: true, email: true, referralCode: true } },
+        _count: { select: { referred: true } },
+      },
     });
     const hasMore = subscribers.length > limit;
     const items = hasMore ? subscribers.slice(0, limit) : subscribers;

@@ -31,28 +31,29 @@ describe('AnalyticsService', () => {
   });
 
   describe('getOverview', () => {
-    it('should return all 5 counts', async () => {
+    it('should return overview with derived metrics', async () => {
       (prisma.project.findUnique as jest.Mock).mockResolvedValue({
         id: 'p1',
         accountId: 'acc-1',
       });
       (prisma.subscriber.count as jest.Mock)
-        .mockResolvedValueOnce(100) // totalSubscribers
-        .mockResolvedValueOnce(5) // subscribersToday
-        .mockResolvedValueOnce(25) // subscribersThisWeek
-        .mockResolvedValueOnce(80) // verifiedCount
-        .mockResolvedValueOnce(30); // referralCount
+        .mockResolvedValueOnce(100) // totalSignups
+        .mockResolvedValueOnce(25)  // signupsThisWeek
+        .mockResolvedValueOnce(20)  // signupsPrevWeek
+        .mockResolvedValueOnce(30)  // referralCount
+        .mockResolvedValueOnce(10)  // referralsPrevWeek
+        .mockResolvedValueOnce(5);  // subscribersToday
 
       const result = await service.getOverview('p1', 'acc-1');
 
-      expect(result).toEqual({
-        totalSubscribers: 100,
-        subscribersToday: 5,
-        subscribersThisWeek: 25,
-        verifiedCount: 80,
-        referralCount: 30,
-      });
-      expect(prisma.subscriber.count).toHaveBeenCalledTimes(5);
+      expect(result.totalSignups).toBe(100);
+      expect(result.pageViews).toBe(100);
+      expect(result.referralRate).toBe(30); // 30/100 * 100
+      expect(result.avgDaily).toBe(3.6);   // 25/7 rounded
+      expect(result.signupChange).toBe('+25%');
+      expect(result.subscribersToday).toBe(5);
+      expect(result.referralCount).toBe(30);
+      expect(prisma.subscriber.count).toHaveBeenCalledTimes(6);
     });
 
     it('should throw NotFoundException for wrong project', async () => {
@@ -142,9 +143,9 @@ describe('AnalyticsService', () => {
       const result = await service.getSources('p1', 'acc-1');
 
       expect(result).toEqual([
-        { source: 'twitter', count: 15 },
-        { source: 'direct', count: 10 },
-        { source: 'google', count: 5 },
+        { source: 'twitter', count: 15, pct: 50 },
+        { source: 'direct', count: 10, pct: 33 },
+        { source: 'google', count: 5, pct: 17 },
       ]);
       expect(prisma.subscriber.groupBy).toHaveBeenCalledWith({
         by: ['source'],

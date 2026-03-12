@@ -1,0 +1,482 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>NexusWait — Integration Test Page</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: #0a0e1a;
+      color: #c5cee0;
+      min-height: 100vh;
+      padding: 2rem;
+    }
+    .container { max-width: 720px; margin: 0 auto; }
+    h1 {
+      font-size: 1.75rem;
+      font-weight: 900;
+      color: #f0f4ff;
+      letter-spacing: 0.05em;
+      margin-bottom: 0.25rem;
+    }
+    h1 span { color: #22d3ee; }
+    .subtitle { font-size: 0.8rem; color: #64748b; margin-bottom: 2rem; }
+
+    /* Config bar */
+    .config-bar {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 0.75rem;
+      margin-bottom: 1.5rem;
+      padding: 1rem;
+      background: #111827;
+      border: 1px solid rgba(34,211,238,0.08);
+      border-radius: 0.75rem;
+    }
+    .config-bar label {
+      font-size: 0.65rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      color: #64748b;
+      margin-bottom: 0.35rem;
+      display: block;
+    }
+    .config-bar input {
+      width: 100%;
+      padding: 0.5rem 0.75rem;
+      background: #0a0e1a;
+      border: 1px solid #1e293b;
+      border-radius: 0.5rem;
+      color: #e2e8f0;
+      font-family: 'SF Mono', 'Fira Code', monospace;
+      font-size: 0.8rem;
+      outline: none;
+      transition: border-color 0.2s;
+    }
+    .config-bar input:focus { border-color: #22d3ee; }
+
+    /* Cards */
+    .card {
+      background: #111827;
+      border: 1px solid rgba(34,211,238,0.06);
+      border-radius: 0.75rem;
+      padding: 1.5rem;
+      margin-bottom: 1.25rem;
+    }
+    .card h2 {
+      font-size: 0.7rem;
+      font-weight: 800;
+      text-transform: uppercase;
+      letter-spacing: 0.12em;
+      color: #94a3b8;
+      margin-bottom: 1rem;
+    }
+
+    /* Form */
+    .form-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 0.75rem;
+    }
+    .form-group { display: flex; flex-direction: column; }
+    .form-group.full { grid-column: 1 / -1; }
+    .form-group label {
+      font-size: 0.65rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      color: #64748b;
+      margin-bottom: 0.35rem;
+    }
+    .form-group input,
+    .form-group select {
+      padding: 0.55rem 0.75rem;
+      background: #0a0e1a;
+      border: 1px solid #1e293b;
+      border-radius: 0.5rem;
+      color: #e2e8f0;
+      font-size: 0.85rem;
+      outline: none;
+      transition: border-color 0.2s;
+    }
+    .form-group input:focus,
+    .form-group select:focus { border-color: #22d3ee; }
+    .form-group select { cursor: pointer; }
+    .form-group select option { background: #0a0e1a; }
+    .required::after { content: ' *'; color: #f472b6; }
+
+    /* Buttons */
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+      padding: 0.6rem 1.25rem;
+      font-size: 0.8rem;
+      font-weight: 700;
+      border: none;
+      border-radius: 0.5rem;
+      cursor: pointer;
+      transition: all 0.2s;
+      margin-top: 1rem;
+    }
+    .btn-primary {
+      background: linear-gradient(135deg, #22d3ee, #06b6d4);
+      color: #0a0e1a;
+    }
+    .btn-primary:hover { filter: brightness(1.1); transform: translateY(-1px); }
+    .btn-primary:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
+    .btn-secondary {
+      background: rgba(34,211,238,0.08);
+      color: #22d3ee;
+      border: 1px solid rgba(34,211,238,0.15);
+    }
+    .btn-secondary:hover { background: rgba(34,211,238,0.15); }
+    .btn-secondary:disabled { opacity: 0.5; cursor: not-allowed; }
+
+    /* Response panel */
+    .response-panel {
+      margin-top: 1rem;
+      border-radius: 0.5rem;
+      overflow: hidden;
+      display: none;
+    }
+    .response-panel.visible { display: block; }
+    .response-header {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      padding: 0.5rem 0.75rem;
+      font-size: 0.7rem;
+      font-weight: 700;
+      font-family: monospace;
+      letter-spacing: 0.05em;
+    }
+    .response-header.success { background: rgba(16,185,129,0.1); color: #10b981; }
+    .response-header.error { background: rgba(244,114,182,0.1); color: #f472b6; }
+    .response-body {
+      padding: 0.75rem;
+      background: #0a0e1a;
+      border: 1px solid #1e293b;
+      border-top: none;
+      border-radius: 0 0 0.5rem 0.5rem;
+    }
+    .response-body pre {
+      font-family: 'SF Mono', 'Fira Code', monospace;
+      font-size: 0.75rem;
+      line-height: 1.6;
+      color: #94a3b8;
+      white-space: pre-wrap;
+      word-break: break-word;
+    }
+
+    /* Result highlights */
+    .result-cards {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 0.75rem;
+      margin-top: 1rem;
+      display: none;
+    }
+    .result-cards.visible { display: grid; }
+    .result-card {
+      background: #0a0e1a;
+      border: 1px solid #1e293b;
+      border-radius: 0.5rem;
+      padding: 0.75rem;
+      text-align: center;
+    }
+    .result-card .value {
+      font-size: 1.25rem;
+      font-weight: 900;
+      font-family: monospace;
+    }
+    .result-card .label {
+      font-size: 0.6rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      color: #475569;
+      margin-top: 0.25rem;
+    }
+    .color-cyan { color: #22d3ee; }
+    .color-magenta { color: #f472b6; }
+    .color-emerald { color: #10b981; }
+
+    /* Count section */
+    .count-row {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+    }
+    .count-value {
+      font-size: 2rem;
+      font-weight: 900;
+      color: #22d3ee;
+      font-family: monospace;
+      min-width: 80px;
+    }
+
+    /* Log */
+    .log-area {
+      margin-top: 1rem;
+      max-height: 140px;
+      overflow-y: auto;
+      font-family: 'SF Mono', 'Fira Code', monospace;
+      font-size: 0.7rem;
+      line-height: 1.8;
+      color: #475569;
+      padding: 0.5rem 0;
+    }
+    .log-area .log-entry { border-bottom: 1px solid #1e293b20; padding: 0.15rem 0; }
+    .log-area .log-time { color: #334155; margin-right: 0.5rem; }
+    .log-area .log-ok { color: #10b981; }
+    .log-area .log-err { color: #f472b6; }
+
+    /* Spinner */
+    @keyframes spin { to { transform: rotate(360deg); } }
+    .spinner {
+      display: inline-block;
+      width: 14px;
+      height: 14px;
+      border: 2px solid #0a0e1a40;
+      border-top-color: #0a0e1a;
+      border-radius: 50%;
+      animation: spin 0.6s linear infinite;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1><span>NexusWait</span> Integration Test</h1>
+    <p class="subtitle">Standalone page for testing the waitlist signup API end-to-end. Requests go directly to the backend.</p>
+
+    <!-- Config -->
+    <div class="config-bar">
+      <div>
+        <label for="backendUrl">Backend URL</label>
+        <input type="text" id="backendUrl" value="http://localhost:3000" placeholder="http://localhost:3000" />
+      </div>
+      <div>
+        <label for="projectId">Project ID</label>
+        <input type="text" id="projectId" placeholder="paste your project ID here" />
+      </div>
+    </div>
+
+    <!-- Signup Form -->
+    <div class="card">
+      <h2>Create Subscriber</h2>
+      <form id="signupForm">
+        <div class="form-grid">
+          <div class="form-group">
+            <label for="email" class="required">Email</label>
+            <input type="email" id="email" placeholder="user@example.com" required />
+          </div>
+          <div class="form-group">
+            <label for="name">Name</label>
+            <input type="text" id="name" placeholder="Jane Doe" />
+          </div>
+          <div class="form-group">
+            <label for="source">Source</label>
+            <select id="source">
+              <option value="">— default (direct) —</option>
+              <option value="website">website</option>
+              <option value="social">social</option>
+              <option value="referral">referral</option>
+              <option value="email">email</option>
+              <option value="ads">ads</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label for="refCode">Referral Code</label>
+            <input type="text" id="refCode" placeholder="REF_abc123 (optional)" />
+          </div>
+        </div>
+        <button type="submit" class="btn btn-primary" id="submitBtn">
+          Join Waitlist
+        </button>
+      </form>
+
+      <!-- Result highlight cards -->
+      <div class="result-cards" id="resultCards">
+        <div class="result-card">
+          <div class="value color-cyan" id="resPosition">—</div>
+          <div class="label">Position</div>
+        </div>
+        <div class="result-card">
+          <div class="value color-magenta" id="resReferralCode">—</div>
+          <div class="label">Referral Code</div>
+        </div>
+        <div class="result-card">
+          <div class="value color-emerald" id="resId">—</div>
+          <div class="label">Subscriber ID</div>
+        </div>
+      </div>
+
+      <!-- Full response -->
+      <div class="response-panel" id="responsePanel">
+        <div class="response-header" id="responseHeader"></div>
+        <div class="response-body">
+          <pre id="responseBody"></pre>
+        </div>
+      </div>
+    </div>
+
+    <!-- Subscriber Count -->
+    <div class="card">
+      <h2>Subscriber Count</h2>
+      <div class="count-row">
+        <div class="count-value" id="countValue">—</div>
+        <button type="button" class="btn btn-secondary" id="countBtn">
+          Fetch Count
+        </button>
+      </div>
+      <div class="response-panel" id="countResponsePanel">
+        <div class="response-header" id="countResponseHeader"></div>
+        <div class="response-body">
+          <pre id="countResponseBody"></pre>
+        </div>
+      </div>
+    </div>
+
+    <!-- Request Log -->
+    <div class="card">
+      <h2>Request Log</h2>
+      <div class="log-area" id="logArea">
+        <div class="log-entry" style="color:#334155;">Waiting for requests...</div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const $ = (id) => document.getElementById(id);
+
+    function getApiBase() {
+      const base = $('backendUrl').value.replace(/\/+$/, '');
+      const pid = $('projectId').value.trim();
+      if (!pid) {
+        alert('Please enter a Project ID first.');
+        $('projectId').focus();
+        return null;
+      }
+      return { base, pid };
+    }
+
+    function log(method, url, status, ok) {
+      const area = $('logArea');
+      const first = area.querySelector('.log-entry');
+      if (first && first.style.color) area.innerHTML = '';
+
+      const time = new Date().toLocaleTimeString();
+      const cls = ok ? 'log-ok' : 'log-err';
+      const entry = document.createElement('div');
+      entry.className = 'log-entry';
+      entry.innerHTML = `<span class="log-time">${time}</span><span class="${cls}">${status}</span> ${method} ${url}`;
+      area.prepend(entry);
+    }
+
+    // ── Create Subscriber ──────────────────────────────
+    $('signupForm').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const cfg = getApiBase();
+      if (!cfg) return;
+
+      const btn = $('submitBtn');
+      btn.disabled = true;
+      btn.innerHTML = '<span class="spinner"></span> Submitting...';
+
+      const body = { email: $('email').value };
+      const name = $('name').value.trim();
+      const source = $('source').value;
+      if (name) body.name = name;
+      if (source) body.source = source;
+
+      let url = `${cfg.base}/v1/projects/${cfg.pid}/subscribers`;
+      const ref = $('refCode').value.trim();
+      if (ref) url += `?ref=${encodeURIComponent(ref)}`;
+
+      try {
+        const res = await fetch(url, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(body),
+        });
+
+        const data = await res.json();
+        log('POST', url, res.status, res.ok);
+
+        const panel = $('responsePanel');
+        const header = $('responseHeader');
+        const resBody = $('responseBody');
+
+        panel.classList.add('visible');
+        header.className = `response-header ${res.ok ? 'success' : 'error'}`;
+        header.textContent = `${res.status} ${res.statusText || (res.ok ? 'Created' : 'Error')}`;
+        resBody.textContent = JSON.stringify(data, null, 2);
+
+        if (res.ok) {
+          const cards = $('resultCards');
+          cards.classList.add('visible');
+          $('resPosition').textContent = `#${data.position ?? '?'}`;
+          $('resReferralCode').textContent = data.referralCode ?? '—';
+          $('resId').textContent = (data.id ?? '').slice(0, 12) + '...';
+        }
+      } catch (err) {
+        log('POST', url, 'NETWORK ERROR', false);
+        const panel = $('responsePanel');
+        const header = $('responseHeader');
+        const resBody = $('responseBody');
+        panel.classList.add('visible');
+        header.className = 'response-header error';
+        header.textContent = 'Network Error';
+        resBody.textContent = err.message + '\n\nMake sure the backend is running at ' + cfg.base;
+      } finally {
+        btn.disabled = false;
+        btn.innerHTML = 'Join Waitlist';
+      }
+    });
+
+    // ── Subscriber Count ───────────────────────────────
+    $('countBtn').addEventListener('click', async () => {
+      const cfg = getApiBase();
+      if (!cfg) return;
+
+      const btn = $('countBtn');
+      btn.disabled = true;
+      btn.innerHTML = '<span class="spinner"></span> Fetching...';
+
+      const url = `${cfg.base}/v1/projects/${cfg.pid}/subscribers/count`;
+
+      try {
+        const res = await fetch(url);
+        const data = await res.json();
+        log('GET', url, res.status, res.ok);
+
+        const panel = $('countResponsePanel');
+        const header = $('countResponseHeader');
+        const resBody = $('countResponseBody');
+
+        panel.classList.add('visible');
+        header.className = `response-header ${res.ok ? 'success' : 'error'}`;
+        header.textContent = `${res.status} ${res.statusText || (res.ok ? 'OK' : 'Error')}`;
+        resBody.textContent = JSON.stringify(data, null, 2);
+
+        if (res.ok) {
+          $('countValue').textContent = data.count ?? data;
+        }
+      } catch (err) {
+        log('GET', url, 'NETWORK ERROR', false);
+        $('countResponsePanel').classList.add('visible');
+        $('countResponseHeader').className = 'response-header error';
+        $('countResponseHeader').textContent = 'Network Error';
+        $('countResponseBody').textContent = err.message;
+      } finally {
+        btn.disabled = false;
+        btn.innerHTML = 'Fetch Count';
+      }
+    });
+  </script>
+</body>
+</html>

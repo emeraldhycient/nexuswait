@@ -20,31 +20,83 @@ export class AnalyticsService {
     await this.verifyOwnership(projectId, accountId);
 
     const now = new Date();
-    const startOfToday = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+    const startOfToday = new Date(
+      now.getFullYear(),
+      now.getMonth(),
+      now.getDate(),
+    );
     const sevenDaysAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
+    const fourteenDaysAgo = new Date(now.getTime() - 14 * 24 * 60 * 60 * 1000);
 
-    const [totalSubscribers, subscribersToday, subscribersThisWeek, verifiedCount, referralCount] =
-      await Promise.all([
-        this.prisma.subscriber.count({ where: { projectId } }),
-        this.prisma.subscriber.count({
-          where: { projectId, createdAt: { gte: startOfToday } },
-        }),
-        this.prisma.subscriber.count({
-          where: { projectId, createdAt: { gte: sevenDaysAgo } },
-        }),
-        this.prisma.subscriber.count({
-          where: { projectId, verifiedAt: { not: null } },
-        }),
-        this.prisma.subscriber.count({
-          where: { projectId, referrerId: { not: null } },
-        }),
-      ]);
+    const [
+      totalSignups,
+      signupsThisWeek,
+      signupsPrevWeek,
+      referralCount,
+      referralsPrevWeek,
+      subscribersToday,
+    ] = await Promise.all([
+      this.prisma.subscriber.count({ where: { projectId } }),
+      this.prisma.subscriber.count({
+        where: { projectId, createdAt: { gte: sevenDaysAgo } },
+      }),
+      this.prisma.subscriber.count({
+        where: {
+          projectId,
+          createdAt: { gte: fourteenDaysAgo, lt: sevenDaysAgo },
+        },
+      }),
+      this.prisma.subscriber.count({
+        where: { projectId, referrerId: { not: null } },
+      }),
+      this.prisma.subscriber.count({
+        where: {
+          projectId,
+          referrerId: { not: null },
+          createdAt: { gte: fourteenDaysAgo, lt: sevenDaysAgo },
+        },
+      }),
+      this.prisma.subscriber.count({
+        where: { projectId, createdAt: { gte: startOfToday } },
+      }),
+    ]);
+
+    // Compute derived metrics
+    const referralRate =
+      totalSignups > 0
+        ? Math.round((referralCount / totalSignups) * 100)
+        : 0;
+    const avgDaily =
+      signupsThisWeek > 0 ? Math.round((signupsThisWeek / 7) * 10) / 10 : 0;
+
+    // Week-over-week change strings
+    const pctChange = (curr: number, prev: number): string => {
+      if (prev === 0) return curr > 0 ? '+100%' : '';
+      const diff = Math.round(((curr - prev) / prev) * 100);
+      return diff > 0 ? `+${diff}%` : diff < 0 ? `${diff}%` : '0%';
+    };
+
+    const prevReferralRate =
+      signupsPrevWeek > 0
+        ? Math.round((referralsPrevWeek / signupsPrevWeek) * 100)
+        : 0;
+    const prevAvgDaily =
+      signupsPrevWeek > 0
+        ? Math.round((signupsPrevWeek / 7) * 10) / 10
+        : 0;
 
     return {
-      totalSubscribers,
+      totalSignups,
+      pageViews: totalSignups, // no separate page-view tracking yet; mirror signups
+      referralRate,
+      avgDaily,
+      signupChange: pctChange(signupsThisWeek, signupsPrevWeek),
+      viewsChange: pctChange(signupsThisWeek, signupsPrevWeek),
+      referralChange: pctChange(referralRate, prevReferralRate),
+      dailyChange: pctChange(avgDaily, prevAvgDaily),
+      // raw counts still available for other consumers
       subscribersToday,
-      subscribersThisWeek,
-      verifiedCount,
+      signupsThisWeek,
       referralCount,
     };
   }
@@ -91,9 +143,15 @@ export class AnalyticsService {
       _count: true,
     });
 
+    const total = groups.reduce(
+      (sum: number, g: { _count: number }) => sum + g._count,
+      0,
+    );
+
     return groups.map((g: { source: string | null; _count: number }) => ({
       source: g.source || 'direct',
       count: g._count,
+      pct: total > 0 ? Math.round((g._count / total) * 100) : 0,
     }));
   }
 }

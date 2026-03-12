@@ -92,7 +92,13 @@ export default function ViewProject() {
 
   const subscribers = (Array.isArray(subscribersData) ? subscribersData : (subscribersData as { data?: unknown[] })?.data ?? []) as {
     id?: string; email?: string; name?: string; source?: string; referrals?: number; position?: number; createdAt?: string
+    referralCode?: string; referrer?: { id?: string; email?: string; referralCode?: string } | null
+    metadata?: Record<string, unknown> | null; verifiedAt?: string | null
+    _count?: { referred?: number }
   }[]
+
+  // ─── Subscriber detail modal state ───────────────────
+  const [selectedSub, setSelectedSub] = useState<(typeof subscribers)[number] | null>(null)
 
   const leaderboard = (Array.isArray(referralData) ? referralData : (referralData as { data?: unknown[] })?.data ?? []) as {
     tier?: string; count?: number; reward?: string; name?: string; email?: string; referrals?: number
@@ -325,8 +331,13 @@ export default function ViewProject() {
                         .join('')
                         .slice(0, 2)
                         .toUpperCase()
+                      const refCount = s._count?.referred ?? s.referrals ?? 0
                       return (
-                        <tr key={s.id ?? i} className="border-b border-cyan-glow/[0.03] hover:bg-cyan-glow/[0.02] transition-colors">
+                        <tr
+                          key={s.id ?? i}
+                          className="border-b border-cyan-glow/[0.03] hover:bg-cyan-glow/[0.02] transition-colors cursor-pointer"
+                          onClick={() => setSelectedSub(s)}
+                        >
                           <td className="px-4 py-3 text-xs font-mono text-nexus-600">{s.position ?? i + 1}</td>
                           <td className="px-4 py-3">
                             <div className="flex items-center gap-2.5">
@@ -340,7 +351,7 @@ export default function ViewProject() {
                           <td className="px-4 py-3">
                             <span className={`text-[9px] font-mono font-bold tracking-wider uppercase px-1.5 py-0.5 rounded ${sourceColors[s.source ?? ''] ?? 'bg-nexus-600/10 text-nexus-400'}`}>{s.source ?? 'direct'}</span>
                           </td>
-                          <td className="px-4 py-3 text-xs font-mono text-nexus-400">{s.referrals ?? 0}</td>
+                          <td className="px-4 py-3 text-xs font-mono text-nexus-400">{refCount}</td>
                           <td className="px-4 py-3 text-xs text-nexus-500">{s.createdAt ? new Date(s.createdAt).toLocaleDateString() : '--'}</td>
                         </tr>
                       )
@@ -420,6 +431,67 @@ export default function ViewProject() {
               <Trash2 size={13} />
               {deleteConfirm ? 'Confirm Delete' : 'Delete Project'}
             </button>
+          </div>
+        </div>
+      )}
+
+      {/* ─── Subscriber Detail Modal ──────────────────────── */}
+      {selectedSub && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-nexus-900/80 backdrop-blur-sm animate-fade-in" onClick={() => setSelectedSub(null)}>
+          <div className="w-full max-w-md mx-4 card-surface p-6 relative" onClick={e => e.stopPropagation()}>
+            <button type="button" onClick={() => setSelectedSub(null)} className="absolute top-4 right-4 text-nexus-500 hover:text-nexus-200 transition-colors">
+              <X size={18} />
+            </button>
+
+            <div className="flex items-center gap-3 mb-5">
+              <div className="w-11 h-11 rounded-full bg-gradient-to-br from-cyan-glow/15 to-magenta-glow/15 flex items-center justify-center">
+                <span className="text-sm font-display font-bold text-cyan-glow">
+                  {(selectedSub.name ?? selectedSub.email ?? '?')
+                    .split(' ')
+                    .map(n => n[0])
+                    .join('')
+                    .slice(0, 2)
+                    .toUpperCase()}
+                </span>
+              </div>
+              <div>
+                <h2 className="font-display text-lg font-bold text-nexus-50 tracking-wider">{selectedSub.name ?? 'Unnamed'}</h2>
+                <p className="text-xs font-mono text-nexus-400">{selectedSub.email}</p>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-3 gap-3 mb-5">
+              <div className="bg-nexus-900/50 border border-nexus-700/30 rounded-lg p-3 text-center">
+                <div className="font-display text-lg font-bold text-cyan-glow">#{selectedSub.position ?? '—'}</div>
+                <div className="text-[9px] font-mono text-nexus-500 tracking-wider uppercase mt-0.5">Position</div>
+              </div>
+              <div className="bg-nexus-900/50 border border-nexus-700/30 rounded-lg p-3 text-center">
+                <div className="font-display text-lg font-bold text-emerald-glow">{selectedSub._count?.referred ?? selectedSub.referrals ?? 0}</div>
+                <div className="text-[9px] font-mono text-nexus-500 tracking-wider uppercase mt-0.5">Referrals</div>
+              </div>
+              <div className="bg-nexus-900/50 border border-nexus-700/30 rounded-lg p-3 text-center">
+                <div className="font-display text-lg font-bold text-violet-glow">{selectedSub.verifiedAt ? 'Yes' : 'No'}</div>
+                <div className="text-[9px] font-mono text-nexus-500 tracking-wider uppercase mt-0.5">Verified</div>
+              </div>
+            </div>
+
+            <div className="space-y-3">
+              <DetailRow label="ID" value={selectedSub.id ?? '—'} mono />
+              <DetailRow label="Source" value={selectedSub.source ?? 'direct'} />
+              <DetailRow label="Referral Code" value={selectedSub.referralCode ?? '—'} mono />
+              {selectedSub.referrer && (
+                <DetailRow label="Referred By" value={selectedSub.referrer.email ?? selectedSub.referrer.referralCode ?? '—'} />
+              )}
+              <DetailRow label="Signed Up" value={selectedSub.createdAt ? new Date(selectedSub.createdAt).toLocaleString() : '—'} />
+              {selectedSub.metadata && Object.keys(selectedSub.metadata).length > 0 && (
+                <div>
+                  <div className="text-[10px] font-mono text-nexus-500 tracking-wider uppercase mb-1">Metadata</div>
+                  <pre className="text-xs font-mono text-nexus-300 bg-nexus-900/50 border border-nexus-700/30 rounded-lg p-3 overflow-x-auto">
+                    {JSON.stringify(selectedSub.metadata, null, 2)}
+                  </pre>
+                </div>
+              )}
+            </div>
           </div>
         </div>
       )}
@@ -518,6 +590,15 @@ export default function ViewProject() {
 }
 
 /* ─── Snippet Block Component ──────────────────────────── */
+function DetailRow({ label, value, mono }: { label: string; value: string; mono?: boolean }) {
+  return (
+    <div>
+      <div className="text-[10px] font-mono text-nexus-500 tracking-wider uppercase mb-0.5">{label}</div>
+      <div className={`text-sm text-nexus-200 ${mono ? 'font-mono text-xs' : ''}`}>{value}</div>
+    </div>
+  )
+}
+
 function SnippetBlock({
   label,
   code,
