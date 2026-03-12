@@ -117,15 +117,19 @@ export class AnalyticsService {
       ? granularity
       : 'day';
 
+    // Use Prisma.raw for SQL keywords/literals that can't be parameterized
+    const truncField = Prisma.raw(`'${safeGranularity}'`);
+    const intervalLiteral = Prisma.raw(`'${days} days'`);
+
     const rows = await this.prisma.$queryRaw<
       { date: Date; count: number }[]
     >(
-      Prisma.sql`SELECT date_trunc(${safeGranularity}, created_at) as date, COUNT(*)::int as count
+      Prisma.sql`SELECT date_trunc(${truncField}, "created_at") as "date", COUNT(*)::int as "count"
         FROM "Subscriber"
-        WHERE project_id = ${projectId}
-          AND created_at >= NOW() - cast(${days + ' days'} as interval)
-        GROUP BY date
-        ORDER BY date`,
+        WHERE "project_id" = ${projectId}
+          AND "created_at" >= NOW() - ${intervalLiteral}::interval
+        GROUP BY 1
+        ORDER BY 1`,
     );
 
     return rows.map((row: { date: Date; count: number }) => ({

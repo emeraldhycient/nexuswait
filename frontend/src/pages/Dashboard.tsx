@@ -5,7 +5,7 @@ import {
   Plus, Users, TrendingUp, ArrowUpRight, MoreHorizontal,
   ExternalLink, Activity, Zap
 } from 'lucide-react'
-import { useProjects, useSubscribers } from '../api/hooks'
+import { useProjects, useSubscribers, useAnalyticsTimeseries } from '../api/hooks'
 import { useAuth } from '../contexts/AuthContext'
 
 const colorMap: Record<string, string> = {
@@ -40,6 +40,15 @@ export default function Dashboard() {
       ? recentSubsData
       : (recentSubsData as { data?: unknown[] })?.data ?? []
   ) as { id?: string; name?: string; email?: string; source?: string; createdAt?: string; projectId?: string }[]
+
+  // Signup trend timeseries (30-day, daily granularity)
+  const { data: trendData } = useAnalyticsTimeseries(firstProjectId, '30d', 'day')
+  const trendPoints = (
+    Array.isArray(trendData)
+      ? trendData
+      : (trendData as { data?: unknown[] })?.data ?? []
+  ) as { date?: string; count?: number }[]
+  const trendMax = Math.max(...trendPoints.map(p => p.count ?? 0), 1)
 
   const totalSignups = projects.reduce((acc, p) => acc + (p._count?.subscribers ?? 0), 0)
   const stats: { label: string; value: string; change: string; icon: LucideIcon; color: string }[] = [
@@ -170,18 +179,19 @@ export default function Dashboard() {
         <h2 className="font-display text-sm font-bold text-nexus-200 tracking-widest uppercase mb-4">Signup Trend</h2>
         {projects.length === 0 ? (
           <p className="text-xs text-nexus-500">Create a project to see signup trends.</p>
+        ) : trendPoints.length === 0 ? (
+          <p className="text-xs text-nexus-500">No signup data yet. Trends will appear as subscribers join.</p>
         ) : (
-          <div className="h-40 flex items-end gap-1">
-            {projects.map((p) => {
-              const count = p._count?.subscribers ?? 0
-              const maxSubs = Math.max(...projects.map(pp => pp._count?.subscribers ?? 0), 1)
-              const h = Math.max((count / maxSubs) * 100, 5)
+          <div className="h-40 flex items-end gap-[3px]">
+            {trendPoints.map((point, i) => {
+              const h = Math.max(((point.count ?? 0) / trendMax) * 100, 2)
+              const label = point.date ? new Date(point.date).toLocaleDateString() : ''
               return (
                 <div
-                  key={p.id}
+                  key={i}
                   className="flex-1 bg-gradient-to-t from-cyan-glow/30 to-cyan-glow/5 rounded-t hover:from-cyan-glow/50 hover:to-cyan-glow/15 transition-colors cursor-pointer"
                   style={{ height: `${h}%` }}
-                  title={`${p.name}: ${count.toLocaleString()} signups`}
+                  title={`${label}: ${point.count ?? 0} signups`}
                 />
               )
             })}

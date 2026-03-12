@@ -2,12 +2,13 @@ import { render, screen } from '@testing-library/react'
 import { MemoryRouter } from 'react-router-dom'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import Dashboard from './Dashboard'
-import { useProjects, useSubscribers } from '../api/hooks'
+import { useProjects, useSubscribers, useAnalyticsTimeseries } from '../api/hooks'
 import { useAuth } from '../contexts/AuthContext'
 
 vi.mock('../api/hooks', () => ({
   useProjects: vi.fn(),
   useSubscribers: vi.fn(),
+  useAnalyticsTimeseries: vi.fn(),
 }))
 
 vi.mock('../contexts/AuthContext', () => ({
@@ -23,6 +24,7 @@ vi.mock('react-router-dom', async () => {
 const mockedUseAuth = useAuth as ReturnType<typeof vi.fn>
 const mockedUseProjects = useProjects as ReturnType<typeof vi.fn>
 const mockedUseSubscribers = useSubscribers as ReturnType<typeof vi.fn>
+const mockedUseAnalyticsTimeseries = useAnalyticsTimeseries as ReturnType<typeof vi.fn>
 
 function renderWithProviders(ui: React.ReactElement) {
   const queryClient = new QueryClient({
@@ -80,6 +82,14 @@ function setupMocks(overrides: {
 
   mockedUseSubscribers.mockReturnValue({
     data: subscribers,
+  })
+
+  mockedUseAnalyticsTimeseries.mockReturnValue({
+    data: [
+      { date: '2026-03-10T00:00:00.000Z', count: 5 },
+      { date: '2026-03-11T00:00:00.000Z', count: 8 },
+      { date: '2026-03-12T00:00:00.000Z', count: 3 },
+    ],
   })
 }
 
