@@ -1,0 +1,69 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 630" fill="none">
+  <defs>
+    <!-- Subtle glow for the logo mark -->
+    <filter id="glow" x="-50%" y="-50%" width="200%" height="200%">
+      <feGaussianBlur stdDeviation="3" result="blur"/>
+      <feMerge>
+        <feMergeNode in="blur"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+    <!-- Accent gradient for bottom line -->
+    <linearGradient id="accentGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#00e8ff" stop-opacity="0"/>
+      <stop offset="20%" stop-color="#00e8ff"/>
+      <stop offset="50%" stop-color="#e839ff"/>
+      <stop offset="80%" stop-color="#7c3aed"/>
+      <stop offset="100%" stop-color="#7c3aed" stop-opacity="0"/>
+    </linearGradient>
+  </defs>
+
+  <!-- Dark background -->
+  <rect width="1200" height="630" fill="#0a0f1e"/>
+
+  <!-- Subtle grid lines for techy feel -->
+  <g stroke="#1a2040" stroke-width="0.5" opacity="0.6">
+    <!-- Vertical grid lines -->
+    <line x1="100" y1="0" x2="100" y2="630"/>
+    <line x1="200" y1="0" x2="200" y2="630"/>
+    <line x1="300" y1="0" x2="300" y2="630"/>
+    <line x1="400" y1="0" x2="400" y2="630"/>
+    <line x1="500" y1="0" x2="500" y2="630"/>
+    <line x1="600" y1="0" x2="600" y2="630"/>
+    <line x1="700" y1="0" x2="700" y2="630"/>
+    <line x1="800" y1="0" x2="800" y2="630"/>
+    <line x1="900" y1="0" x2="900" y2="630"/>
+    <line x1="1000" y1="0" x2="1000" y2="630"/>
+    <line x1="1100" y1="0" x2="1100" y2="630"/>
+    <!-- Horizontal grid lines -->
+    <line x1="0" y1="90" x2="1200" y2="90"/>
+    <line x1="0" y1="180" x2="1200" y2="180"/>
+    <line x1="0" y1="270" x2="1200" y2="270"/>
+    <line x1="0" y1="360" x2="1200" y2="360"/>
+    <line x1="0" y1="450" x2="1200" y2="450"/>
+    <line x1="0" y1="540" x2="1200" y2="540"/>
+  </g>
+
+  <!-- Accent glow behind the center area -->
+  <ellipse cx="500" cy="315" rx="250" ry="180" fill="#7c3aed" opacity="0.04"/>
+  <ellipse cx="500" cy="315" rx="140" ry="100" fill="#00e8ff" opacity="0.03"/>
+
+  <!-- Logo mark - scaled up and centered-left -->
+  <g transform="translate(390, 225)" filter="url(#glow)">
+    <!-- Left stroke: bottom-left to top-right (cyan) -->
+    <line x1="18" y1="150" x2="105" y2="12" stroke="#00e8ff" stroke-width="8" stroke-linecap="round"/>
+    <!-- Right stroke: top-left to bottom-right (magenta) -->
+    <line x1="55" y1="12" x2="142" y2="150" stroke="#e839ff" stroke-width="8" stroke-linecap="round"/>
+    <!-- Nexus intersection dot -->
+    <circle cx="80" cy="81" r="7" fill="#ffffff"/>
+  </g>
+
+  <!-- "NexusWait" text -->
+  <text x="590" y="300" font-family="'Segoe UI', 'Helvetica Neue', Arial, sans-serif" font-weight="700" font-size="64" fill="#ffffff" letter-spacing="2">NexusWait</text>
+
+  <!-- Tagline -->
+  <text x="590" y="348" font-family="'Segoe UI', 'Helvetica Neue', Arial, sans-serif" font-weight="400" font-size="22" fill="#00e8ff" letter-spacing="3" opacity="0.8">Futuristic Waitlist Builder</text>
+
+  <!-- Subtle bottom accent line -->
+  <line x1="390" y1="420" x2="960" y2="420" stroke="url(#accentGrad)" stroke-width="1" opacity="0.3"/>
+</svg>

@@ -36,6 +36,19 @@ export default function AdminLayout() {
     if (!loading && token && !isAdmin) navigate('/dashboard')
   }, [loading, token, isAdmin, navigate])
 
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-nexus-900">
+        <div className="text-center">
+          <div className="w-8 h-8 border-2 border-magenta-glow/30 border-t-magenta-glow rounded-full animate-spin mx-auto mb-3" />
+          <p className="text-sm text-nexus-500 font-mono">Loading…</p>
+        </div>
+      </div>
+    )
+  }
+
+  if (!token || !isAdmin) return null
+
   return (
     <div className="min-h-screen flex bg-nexus-900">
       <a

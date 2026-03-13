@@ -2,19 +2,19 @@ import { useState, useEffect } from 'react'
 import { Link } from 'react-router-dom'
 import {
   ArrowLeft, Copy, Check, Code, FileCode2, Paintbrush, Eye,
-  ExternalLink, Info,
+  ExternalLink, Info, Zap,
 } from 'lucide-react'
 import { useProjects } from '../api/hooks'
 
 const API_BASE = import.meta.env.VITE_API_BASE_URL || 'http://localhost:3000/v1'
 
-type Tab = 'basic' | 'full' | 'styled'
+type Tab = 'widget' | 'basic' | 'full' | 'styled'
 
 export default function FormEmbed() {
   const { data: projectsList, isLoading } = useProjects()
   const projects = projectsList ?? []
   const [selectedProjectId, setSelectedProjectId] = useState<string | undefined>(undefined)
-  const [activeTab, setActiveTab] = useState<Tab>('basic')
+  const [activeTab, setActiveTab] = useState<Tab>('widget')
   const [copiedSnippet, setCopiedSnippet] = useState(false)
   const [copiedUrl, setCopiedUrl] = useState(false)
   const [showPreview, setShowPreview] = useState(false)
@@ -27,9 +27,14 @@ export default function FormEmbed() {
 
   const selectedProject = projects.find(p => p.id === selectedProjectId)
   const slug = selectedProject?.slug || 'your-project-slug'
+  const projectId = selectedProject?.id || 'YOUR_PROJECT_ID'
   const actionUrl = `${API_BASE}/s/${slug}`
+  const embedBase = API_BASE.replace('/v1', '')
 
   const snippets: Record<Tab, string> = {
+    widget: `<!-- NexusWait Widget -->
+<script src="${embedBase}/embed.js"></script>
+<div data-nexuswait-id="${projectId}"></div>`,
     basic: `<form action="${actionUrl}" method="POST">
   <input name="email" type="email" placeholder="your@email.com" required>
   <button type="submit">Join Waitlist</button>
@@ -58,6 +63,18 @@ export default function FormEmbed() {
 </form>`,
   }
 
+  const widgetFullExample = `<!-- NexusWait Widget — all options -->
+<script src="${embedBase}/embed.js"></script>
+<div
+  data-nexuswait-id="${projectId}"
+  data-nexuswait-name="true"
+  data-nexuswait-button-text="Get Early Access"
+  data-nexuswait-theme="dark"
+  data-nexuswait-accent="#00e8ff"
+  data-nexuswait-show-count="true"
+  data-nexuswait-api="${API_BASE}"
+></div>`
+
   const copyToClipboard = async (text: string, type: 'snippet' | 'url') => {
     await navigator.clipboard.writeText(text)
     if (type === 'snippet') {
@@ -70,6 +87,7 @@ export default function FormEmbed() {
   }
 
   const tabs: { id: Tab; label: string; icon: typeof Code }[] = [
+    { id: 'widget', label: 'Widget', icon: Zap },
     { id: 'basic', label: 'Basic', icon: Code },
     { id: 'full', label: 'Full', icon: FileCode2 },
     { id: 'styled', label: 'Styled', icon: Paintbrush },
@@ -172,9 +190,54 @@ export default function FormEmbed() {
           <pre className="text-xs font-mono text-nexus-200 bg-nexus-700/20 rounded-lg p-4 overflow-x-auto leading-relaxed">
             {snippets[activeTab]}
           </pre>
+
+          {activeTab === 'widget' && (
+            <>
+              {/* Configuration options reference */}
+              <div className="mt-5 mb-4">
+                <h4 className="text-xs font-mono text-nexus-400 tracking-wider uppercase mb-3">Configuration Options</h4>
+                <div className="overflow-x-auto">
+                  <table className="w-full text-xs">
+                    <thead>
+                      <tr className="border-b border-nexus-700/30">
+                        <th className="text-left py-2 pr-4 text-nexus-400 font-mono font-normal">Attribute</th>
+                        <th className="text-left py-2 pr-4 text-nexus-400 font-mono font-normal">Default</th>
+                        <th className="text-left py-2 text-nexus-400 font-mono font-normal">Description</th>
+                      </tr>
+                    </thead>
+                    <tbody className="text-nexus-300">
+                      {[
+                        ['data-nexuswait-id', '(required)', 'Your project ID'],
+                        ['data-nexuswait-name', '"false"', 'Show name input field'],
+                        ['data-nexuswait-button-text', '"Join Waitlist"', 'Submit button label'],
+                        ['data-nexuswait-theme', '"dark"', '"dark" or "light"'],
+                        ['data-nexuswait-accent', '"#00e8ff"', 'Accent color (hex)'],
+                        ['data-nexuswait-show-count', '"false"', 'Display subscriber count'],
+                        ['data-nexuswait-api', `"${API_BASE}"`, 'API base URL override'],
+                      ].map(([attr, def, desc]) => (
+                        <tr key={attr} className="border-b border-nexus-700/15">
+                          <td className="py-2 pr-4 font-mono text-cyan-glow whitespace-nowrap">{attr}</td>
+                          <td className="py-2 pr-4 text-nexus-500 whitespace-nowrap">{def}</td>
+                          <td className="py-2 text-nexus-400">{desc}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+
+              {/* Full example */}
+              <div>
+                <h4 className="text-xs font-mono text-nexus-400 tracking-wider uppercase mb-2">Full Example (all options)</h4>
+                <pre className="text-xs font-mono text-nexus-200 bg-nexus-700/20 rounded-lg p-4 overflow-x-auto leading-relaxed">
+                  {widgetFullExample}
+                </pre>
+              </div>
+            </>
+          )}
         </div>
 
-        {showPreview && (
+        {showPreview && activeTab !== 'widget' && (
           <div className="border-t border-cyan-glow/[0.06] p-6">
             <p className="text-xs font-mono text-nexus-500 uppercase tracking-wider mb-4">Live Preview</p>
             <div className="max-w-md mx-auto p-6 rounded-xl bg-nexus-700/15 border border-nexus-700/20">
