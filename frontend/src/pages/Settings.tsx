@@ -147,6 +147,7 @@ export default function Settings() {
   const [showUpgrade, setShowUpgrade] = useState(false)
   const [showCancelConfirm, setShowCancelConfirm] = useState(false)
   const [annual, setAnnual] = useState(true)
+  const [selectedTier, setSelectedTier] = useState<string | null>(null)
 
   return (
     <div className="animate-fade-in">
@@ -478,13 +479,26 @@ export default function Settings() {
                       <div className="grid gap-3">
                         {allPlans.map((p: PlanConfig) => {
                           const isCurrent = p.tier === (billing?.plan ?? 'spark')
+                          const isSelected = selectedTier === p.tier
                           const price = annual ? p.yearlyPriceCents : p.monthlyPriceCents
                           const productId = annual ? p.polarProductIdYearly : p.polarProductIdMonthly
+                          const isEnterprise = p.tier === 'enterprise'
+                          const canSelect = !isCurrent && !isEnterprise
                           return (
                             <div
                               key={p.tier}
-                              className={`flex items-center justify-between p-4 rounded-lg border transition-all ${
-                                isCurrent ? 'border-cyan-glow/25 bg-cyan-glow/[0.03]' : 'border-nexus-700/20 hover:border-nexus-600/30'
+                              role={canSelect ? 'button' : undefined}
+                              tabIndex={canSelect ? 0 : undefined}
+                              onClick={() => canSelect && setSelectedTier(isSelected ? null : p.tier)}
+                              onKeyDown={(e) => e.key === 'Enter' && canSelect && setSelectedTier(isSelected ? null : p.tier)}
+                              className={`flex items-center justify-between p-4 rounded-lg border-2 transition-all ${
+                                isCurrent
+                                  ? 'border-cyan-glow/25 bg-cyan-glow/[0.03]'
+                                  : isSelected
+                                    ? 'border-cyan-glow/60 bg-cyan-glow/[0.06] shadow-[0_0_20px_rgba(0,255,255,0.08)]'
+                                    : canSelect
+                                      ? 'border-nexus-700/20 hover:border-nexus-500/30 cursor-pointer'
+                                      : 'border-nexus-700/20 opacity-60'
                               }`}
                             >
                               <div className="flex-1">
@@ -493,9 +507,14 @@ export default function Settings() {
                                   {isCurrent && (
                                     <span className="text-[8px] font-mono bg-cyan-glow/10 text-cyan-glow px-1.5 py-0.5 rounded tracking-wider">CURRENT</span>
                                   )}
+                                  {isSelected && !isCurrent && (
+                                    <span className="text-[8px] font-mono bg-cyan-glow/15 text-cyan-glow px-1.5 py-0.5 rounded tracking-wider">SELECTED</span>
+                                  )}
                                 </div>
                                 <div className="flex items-center gap-3 mt-1">
-                                  <span className="text-sm font-mono font-bold text-nexus-100">${(price / 100).toFixed(0)}/mo</span>
+                                  <span className="text-sm font-mono font-bold text-nexus-100">
+                                    {price > 0 ? `$${(price / 100).toFixed(0)}/mo` : isEnterprise ? 'Custom' : 'Free'}
+                                  </span>
                                   <span className="text-xs text-nexus-500">
                                     {p.maxProjects != null ? `${p.maxProjects} projects` : 'Unlimited projects'}
                                     {' | '}
@@ -503,15 +522,22 @@ export default function Settings() {
                                   </span>
                                 </div>
                               </div>
-                              {!isCurrent && productId && (
+                              {isSelected && productId && (
                                 <button
                                   type="button"
-                                  onClick={() => checkout.mutate({ productId })}
+                                  onClick={(e) => { e.stopPropagation(); checkout.mutate({ productId }) }}
                                   disabled={checkout.isPending}
-                                  className="btn-primary text-xs py-1.5 px-4"
+                                  className="btn-primary text-xs py-1.5 px-4 flex items-center gap-1.5"
                                 >
-                                  {checkout.isPending ? 'Redirecting...' : p.ctaText}
+                                  {checkout.isPending ? <Loader2 size={12} className="animate-spin" /> : <ArrowUpRight size={12} />}
+                                  {checkout.isPending ? 'Redirecting...' : 'Confirm'}
                                 </button>
+                              )}
+                              {isSelected && !productId && !isEnterprise && (
+                                <span className="text-[10px] text-amber-glow font-mono">Syncing with Polar...</span>
+                              )}
+                              {isEnterprise && !isCurrent && (
+                                <a href="mailto:sales@nexuswait.io" className="btn-secondary text-xs py-1.5 px-4 no-underline">Contact Sales</a>
                               )}
                               {isCurrent && <Check size={16} className="text-cyan-glow" />}
                             </div>

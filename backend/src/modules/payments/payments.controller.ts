@@ -3,11 +3,15 @@ import { AuthGuard } from '@nestjs/passport';
 import { Request } from 'express';
 import { JwtPayloadDecorator } from '../auth/jwt-payload.decorator';
 import { PaymentsService } from './payments.service';
+import { PolarSyncService } from './polar-sync.service';
 import { CreateCheckoutDto } from './dto/create-checkout.dto';
 
 @Controller('payments')
 export class PaymentsController {
-  constructor(private payments: PaymentsService) {}
+  constructor(
+    private payments: PaymentsService,
+    private polarSync: PolarSyncService,
+  ) {}
 
   @Post('checkout/session')
   @UseGuards(AuthGuard('jwt'))
@@ -16,11 +20,14 @@ export class PaymentsController {
     @Body() dto: CreateCheckoutDto,
   ) {
     const productId = dto.productId || process.env.POLAR_PRODUCT_ID_PULSE || '';
+    const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:5173';
+    const successUrl = dto.successUrl || `${frontendUrl}/dashboard/settings?billing=1&checkout=success`;
+    const cancelUrl = dto.cancelUrl || `${frontendUrl}/dashboard/settings?billing=1&checkout=cancelled`;
     return this.payments.createCheckoutSession(
       payload.accountId,
       productId,
-      dto.successUrl,
-      dto.cancelUrl,
+      successUrl,
+      cancelUrl,
       dto.customerEmail,
     );
   }
@@ -31,6 +38,12 @@ export class PaymentsController {
     @JwtPayloadDecorator() payload: { accountId: string },
   ) {
     return this.payments.cancelSubscription(payload.accountId);
+  }
+
+  @Post('sync-products')
+  @UseGuards(AuthGuard('jwt'))
+  async syncProducts() {
+    return this.polarSync.syncProducts();
   }
 
   @Post('webhooks/polar')

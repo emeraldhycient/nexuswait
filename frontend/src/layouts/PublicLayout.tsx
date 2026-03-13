@@ -3,6 +3,7 @@ import Logo from '../components/Logo'
 import ThemeToggle from '../components/ThemeToggle'
 import { Menu, X } from 'lucide-react'
 import { useState } from 'react'
+import { useAuth } from '../contexts/AuthContext'
 
 const navLinks = [
   { to: '/pricing', label: 'Pricing' },
@@ -12,6 +13,7 @@ const navLinks = [
 export default function PublicLayout() {
   const [mobileOpen, setMobileOpen] = useState(false)
   const location = useLocation()
+  const { isAuthenticated, loading } = useAuth()
 
   return (
     <div className="min-h-screen flex flex-col">
@@ -45,8 +47,14 @@ export default function PublicLayout() {
 
           <div className="hidden md:flex items-center gap-3">
             <ThemeToggle compact />
-            <Link to="/login" className="btn-ghost no-underline">Log in</Link>
-            <Link to="/signup" className="btn-primary no-underline inline-block">Get Started</Link>
+            {!loading && isAuthenticated ? (
+              <Link to="/dashboard" className="btn-primary no-underline inline-block">Dashboard</Link>
+            ) : (
+              <>
+                <Link to="/login" className="btn-ghost no-underline">Log in</Link>
+                <Link to="/signup" className="btn-primary no-underline inline-block">Get Started</Link>
+              </>
+            )}
           </div>
 
           <button
@@ -71,8 +79,14 @@ export default function PublicLayout() {
             ))}
             <ThemeToggle />
             <div className="flex gap-3 pt-2">
-              <Link to="/login" className="btn-ghost no-underline" onClick={() => setMobileOpen(false)}>Log in</Link>
-              <Link to="/signup" className="btn-primary no-underline" onClick={() => setMobileOpen(false)}>Get Started</Link>
+              {!loading && isAuthenticated ? (
+                <Link to="/dashboard" className="btn-primary no-underline" onClick={() => setMobileOpen(false)}>Dashboard</Link>
+              ) : (
+                <>
+                  <Link to="/login" className="btn-ghost no-underline" onClick={() => setMobileOpen(false)}>Log in</Link>
+                  <Link to="/signup" className="btn-primary no-underline" onClick={() => setMobileOpen(false)}>Get Started</Link>
+                </>
+              )}
             </div>
           </div>
         )}

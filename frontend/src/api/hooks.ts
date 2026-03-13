@@ -233,7 +233,11 @@ export function useCheckoutSession() {
   const queryClient = useQueryClient()
   return useMutation({
     mutationFn: async (body: Record<string, unknown>) => {
-      const { data } = await api.post<{ url?: string }>('/payments/checkout/session', body)
+      const { data } = await api.post<{ url?: string }>('/payments/checkout/session', {
+        ...body,
+        successUrl: body.successUrl || `${window.location.origin}/dashboard/settings?billing=1&checkout=success`,
+        cancelUrl: body.cancelUrl || `${window.location.origin}/dashboard/settings?billing=1&checkout=cancelled`,
+      })
       return data
     },
     onSuccess: (data) => {

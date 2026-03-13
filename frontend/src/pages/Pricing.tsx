@@ -1,8 +1,9 @@
 import { Link } from 'react-router-dom'
 import { Check, Sparkles, HelpCircle, Loader2 } from 'lucide-react'
 import { useState } from 'react'
-import { usePlans } from '../api/hooks'
+import { usePlans, useBilling, useCheckoutSession } from '../api/hooks'
 import type { PlanConfig } from '../api/hooks'
+import { useAuth } from '../contexts/AuthContext'
 
 // Fallback plans used while API loads or if fetch fails
 const fallbackPlans = [
@@ -79,6 +80,9 @@ function mapApiPlan(p: PlanConfig) {
     highlight: p.highlight,
     badge: p.highlight ? 'MOST POPULAR' : undefined,
     features: p.features,
+    tier: p.tier,
+    polarProductIdMonthly: p.polarProductIdMonthly,
+    polarProductIdYearly: p.polarProductIdYearly,
   }
 }
 
@@ -86,6 +90,11 @@ export default function Pricing() {
   const [annual, setAnnual] = useState(true)
   const [openFaq, setOpenFaq] = useState<number | null>(null)
   const { data: apiPlans, isLoading } = usePlans()
+  const { isAuthenticated, loading: authLoading } = useAuth()
+  const { data: billing } = useBilling()
+  const checkout = useCheckoutSession()
+
+  const currentTier = (billing as { plan?: string })?.plan ?? 'spark'
 
   // Use API plans if available, otherwise fallback
   const plans = apiPlans && apiPlans.length > 0
@@ -159,16 +168,48 @@ export default function Pricing() {
                   <span className="text-nexus-500 text-sm ml-1">/ mo</span>
                 </div>
 
-                <Link
-                  to="/signup"
-                  className={`no-underline text-center rounded-lg py-3 font-display text-sm font-bold tracking-wider uppercase transition-all ${
-                    plan.highlight
-                      ? 'btn-primary'
-                      : 'btn-secondary'
-                  }`}
-                >
-                  {plan.cta}
-                </Link>
+                {(() => {
+                  const tier = 'tier' in plan ? plan.tier : undefined
+                  const productId = 'polarProductIdMonthly' in plan
+                    ? (annual ? plan.polarProductIdYearly : plan.polarProductIdMonthly) ?? undefined
+                    : undefined
+                  const isCurrent = !authLoading && isAuthenticated && tier === currentTier
+                  const canCheckout = !authLoading && isAuthenticated && productId && !isCurrent
+
+                  if (isCurrent) {
+                    return (
+                      <span className="text-center rounded-lg py-3 font-display text-sm font-bold tracking-wider uppercase bg-nexus-700/40 text-nexus-400 cursor-default">
+                        Current Plan
+                      </span>
+                    )
+                  }
+
+                  if (canCheckout) {
+                    return (
+                      <button
+                        type="button"
+                        onClick={() => checkout.mutate({ productId })}
+                        disabled={checkout.isPending}
+                        className={`text-center rounded-lg py-3 font-display text-sm font-bold tracking-wider uppercase transition-all ${
+                          plan.highlight ? 'btn-primary' : 'btn-secondary'
+                        } ${checkout.isPending ? 'opacity-60 cursor-wait' : ''}`}
+                      >
+                        {checkout.isPending ? 'Redirecting…' : `Upgrade to ${plan.name}`}
+                      </button>
+                    )
+                  }
+
+                  return (
+                    <Link
+                      to="/signup"
+                      className={`no-underline text-center rounded-lg py-3 font-display text-sm font-bold tracking-wider uppercase transition-all ${
+                        plan.highlight ? 'btn-primary' : 'btn-secondary'
+                      }`}
+                    >
+                      {plan.cta}
+                    </Link>
+                  )
+                })()}
 
                 <ul className="mt-7 space-y-3 flex-1">
                   {plan.features.map((f, j) => (
