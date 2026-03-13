@@ -126,8 +126,27 @@ export default function HostedPage() {
     }
   }, [pageData, selectedProjectId, pageDataLoaded])
 
+  // Reset all local state to defaults when project changes
   useEffect(() => {
-    if (selectedProjectId !== pageDataLoaded) setPageDataLoaded(undefined)
+    if (selectedProjectId !== pageDataLoaded) {
+      setPageDataLoaded(undefined)
+      // Reset to defaults so stale data from the previous project doesn't linger
+      setSections([
+        { id: 's1', type: 'hero', label: 'Hero Section', enabled: true, content: defaultContentForType('hero') } as Section,
+      ])
+      setFormConfig(defaultFormConfig())
+      setSuccessConfig(defaultSuccessConfig())
+      setSlug('')
+      setCustomDomain('')
+      setMetaDescription('')
+      setOgImage('')
+      setSelectedTheme('nexus-dark')
+      setPrimaryColor('#00e8ff')
+      setHeadingFont('Orbitron')
+      setBodyFont('Rajdhani')
+      setPublished(false)
+      setExpandedSectionId(null)
+    }
   }, [selectedProjectId, pageDataLoaded])
 
   // ─── Section operations ────────────────────────────
