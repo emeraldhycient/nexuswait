@@ -107,7 +107,7 @@ export default function AdminAccountDetail() {
                   <th className="text-left px-4 py-3 text-[10px] font-mono text-nexus-500 tracking-widest uppercase">Email</th>
                   <th className="text-left px-4 py-3 text-[10px] font-mono text-nexus-500 tracking-widest uppercase">First Name</th>
                   <th className="text-left px-4 py-3 text-[10px] font-mono text-nexus-500 tracking-widest uppercase">Last Name</th>
-                  <th className="text-left px-4 py-3 text-[10px] font-mono text-nexus-500 tracking-widest uppercase">Role</th>
+                  <th className="text-left px-4 py-3 text-[10px] font-mono text-nexus-500 tracking-widest uppercase">Roles</th>
                 </tr>
               </thead>
               <tbody>
@@ -116,10 +116,12 @@ export default function AdminAccountDetail() {
                     <td className="px-4 py-3 text-sm text-nexus-200 font-mono">{(u.email as string) ?? '—'}</td>
                     <td className="px-4 py-3 text-sm text-nexus-300">{(u.firstName as string) ?? '—'}</td>
                     <td className="px-4 py-3 text-sm text-nexus-300">{(u.lastName as string) ?? '—'}</td>
-                    <td className="px-4 py-3">
-                      <span className="text-[9px] font-mono font-bold tracking-wider uppercase px-1.5 py-0.5 rounded bg-nexus-700/30 text-nexus-400">
-                        {(u.role as string) ?? 'member'}
-                      </span>
+                    <td className="px-4 py-3 flex flex-wrap gap-1">
+                      {((u.roles as string[]) ?? ['member']).map((r: string) => (
+                        <span key={r} className="text-[9px] font-mono font-bold tracking-wider uppercase px-1.5 py-0.5 rounded bg-nexus-700/30 text-nexus-400">
+                          {r}
+                        </span>
+                      ))}
                     </td>
                   </tr>
                 ))}

@@ -18,9 +18,9 @@ describe('AdminGuard', () => {
     guard = new AdminGuard();
   });
 
-  it('should return true when user.role is admin', () => {
+  it('should return true when user.roles includes admin', () => {
     const context = createMockContext({
-      user: { role: 'admin', sub: 'user-1' },
+      user: { roles: ['admin'], sub: 'user-1' },
     });
 
     const result = guard.canActivate(context);
@@ -28,9 +28,19 @@ describe('AdminGuard', () => {
     expect(result).toBe(true);
   });
 
-  it('should throw ForbiddenException when user.role is not admin', () => {
+  it('should return true when user has multiple roles including admin', () => {
     const context = createMockContext({
-      user: { role: 'user', sub: 'user-1' },
+      user: { roles: ['user', 'admin'], sub: 'user-1' },
+    });
+
+    const result = guard.canActivate(context);
+
+    expect(result).toBe(true);
+  });
+
+  it('should throw ForbiddenException when user.roles does not include admin', () => {
+    const context = createMockContext({
+      user: { roles: ['user'], sub: 'user-1' },
     });
 
     expect(() => guard.canActivate(context)).toThrow(ForbiddenException);

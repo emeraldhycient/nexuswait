@@ -6,7 +6,7 @@ interface AuthUser {
   email?: string
   firstName?: string
   lastName?: string
-  role?: string
+  roles?: string[]
   accountId?: string
   account?: { id: string; plan: string }
   [key: string]: unknown
@@ -72,7 +72,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     logout,
     loading,
     isAuthenticated: !!token && !!user,
-    isAdmin: user?.role === 'admin',
+    isAdmin: user?.roles?.includes('admin') ?? false,
   }
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>
 }

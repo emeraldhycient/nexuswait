@@ -27,8 +27,8 @@ export class AuthService {
       },
       include: { account: true },
     });
-    const token = this.jwt.sign({ sub: user.id, accountId: user.accountId, role: user.role });
-    return { user: { id: user.id, email: user.email, accountId: user.accountId, role: user.role }, token };
+    const token = this.jwt.sign({ sub: user.id, accountId: user.accountId, roles: user.roles });
+    return { user: { id: user.id, email: user.email, accountId: user.accountId, roles: user.roles }, token };
   }
 
   async login(email: string, password: string) {
@@ -38,15 +38,15 @@ export class AuthService {
     });
     if (!user || !(await bcrypt.compare(password, user.passwordHash)))
       throw new UnauthorizedException('Invalid credentials');
-    const token = this.jwt.sign({ sub: user.id, accountId: user.accountId, role: user.role });
-    return { user: { id: user.id, email: user.email, accountId: user.accountId, role: user.role }, token };
+    const token = this.jwt.sign({ sub: user.id, accountId: user.accountId, roles: user.roles });
+    return { user: { id: user.id, email: user.email, accountId: user.accountId, roles: user.roles }, token };
   }
 
   async me(userId: string) {
     const user = await this.prisma.user.findUnique({
       where: { id: userId },
       select: {
-        id: true, email: true, firstName: true, lastName: true, role: true,
+        id: true, email: true, firstName: true, lastName: true, roles: true,
         accountId: true, account: { select: { id: true, plan: true } },
       },
     });
@@ -66,7 +66,7 @@ export class AuthService {
     return this.prisma.user.update({
       where: { id: userId },
       data,
-      select: { id: true, email: true, firstName: true, lastName: true, role: true, accountId: true },
+      select: { id: true, email: true, firstName: true, lastName: true, roles: true, accountId: true },
     });
   }
 

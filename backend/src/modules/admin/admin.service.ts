@@ -83,7 +83,7 @@ export class AdminService {
             select: { users: true, projects: true },
           },
           users: {
-            select: { email: true, firstName: true, lastName: true, role: true },
+            select: { email: true, firstName: true, lastName: true, roles: true },
             take: 5,
           },
         },
@@ -104,7 +104,7 @@ export class AdminService {
             email: true,
             firstName: true,
             lastName: true,
-            role: true,
+            roles: true,
             createdAt: true,
           },
         },

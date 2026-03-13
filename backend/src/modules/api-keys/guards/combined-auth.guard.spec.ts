@@ -90,7 +90,7 @@ describe('CombinedAuthGuard', () => {
       sub: 'acc-1',
       accountId: 'acc-1',
       userId: null,
-      role: 'user',
+      roles: ['user'],
       apiKeyType: ApiKeyType.secret,
     });
   });

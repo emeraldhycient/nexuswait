@@ -41,7 +41,7 @@ export class CombinedAuthGuard implements CanActivate {
         sub: apiKey.accountId,
         accountId: apiKey.accountId,
         userId: null,
-        role: 'user',
+        roles: ['user'],
         apiKeyType: apiKey.type,
       };
 

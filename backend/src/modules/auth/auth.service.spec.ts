@@ -43,6 +43,7 @@ describe('AuthService', () => {
         id: 'u1',
         email: 'new@test.com',
         accountId: 'acc-1',
+        roles: ['user'],
       });
       (bcrypt.hash as jest.Mock).mockResolvedValue('hashed');
       const result = await service.register('new@test.com', 'password');
@@ -75,11 +76,13 @@ describe('AuthService', () => {
         email: 'x@test.com',
         accountId: 'acc-1',
         passwordHash: 'hashed',
+        roles: ['user'],
       });
       (bcrypt.compare as jest.Mock).mockResolvedValue(true);
       const result = await service.login('x@test.com', 'pass');
       expect(result.token).toBe('mock-token');
       expect(result.user.email).toBe('x@test.com');
+      expect(result.user.roles).toEqual(['user']);
     });
   });
 });

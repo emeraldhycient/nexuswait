@@ -54,7 +54,7 @@ function buildMockPrisma() {
         const user = {
           id: nextId(),
           ...data,
-          role: 'user',
+          roles: ['user'],
           createdAt: new Date(),
           updatedAt: new Date(),
         };
@@ -514,7 +514,7 @@ describe('NexusWait API (e2e)', () => {
 
       // Promote user to admin in the store
       const adminUser = usersStore.find((u) => u.email === 'admin@example.com');
-      if (adminUser) adminUser.role = 'admin';
+      if (adminUser) adminUser.roles = ['admin'];
 
       // Re-login to get a token with admin role
       const loginRes = await request(app.getHttpServer())
