@@ -9,6 +9,10 @@ vi.mock('react-router-dom', async () => {
   return { ...actual, useNavigate: () => mockNavigate }
 })
 
+vi.mock('@react-oauth/google', () => ({
+  useGoogleLogin: () => vi.fn(),
+}))
+
 vi.mock('../api/hooks', () => ({
   useLogin: () => ({
     mutate: vi.fn((_, opts) => {
@@ -17,6 +21,12 @@ vi.mock('../api/hooks', () => ({
     isPending: false,
     error: null,
   }),
+  useGoogleAuth: () => ({
+    mutate: vi.fn(),
+    isPending: false,
+    error: null,
+  }),
+  getMutationErrorMessage: vi.fn((e) => e?.message ?? 'Error'),
 }))
 
 describe('Login', () => {

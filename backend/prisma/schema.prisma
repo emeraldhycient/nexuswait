@@ -75,15 +75,18 @@ model Account {
 }
 
 model User {
-  id        String   @id @default(uuid())
-  email     String   @unique
-  passwordHash String @map("password_hash")
-  firstName String?  @map("first_name")
-  lastName  String?  @map("last_name")
-  roles     UserRole[] @default([user])
-  accountId String   @map("account_id")
-  createdAt DateTime @default(now()) @map("created_at")
-  updatedAt DateTime @updatedAt @map("updated_at")
+  id           String     @id @default(uuid())
+  email        String     @unique
+  passwordHash String?    @map("password_hash")
+  firstName    String?    @map("first_name")
+  lastName     String?    @map("last_name")
+  googleId     String?    @unique @map("google_id")
+  provider     String     @default("local")
+  avatarUrl    String?    @map("avatar_url")
+  roles        UserRole[] @default([user])
+  accountId    String     @map("account_id")
+  createdAt    DateTime   @default(now()) @map("created_at")
+  updatedAt    DateTime   @updatedAt @map("updated_at")
 
   account Account @relation(fields: [accountId], references: [id], onDelete: Cascade)
 }

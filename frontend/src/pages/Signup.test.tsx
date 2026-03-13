@@ -6,12 +6,21 @@ import { useRegister, getMutationErrorMessage } from '../api/hooks'
 
 const mockMutate = vi.fn()
 
+vi.mock('@react-oauth/google', () => ({
+  useGoogleLogin: () => vi.fn(),
+}))
+
 vi.mock('../api/hooks', () => ({
   useRegister: vi.fn(() => ({
     mutate: mockMutate,
     isPending: false,
     error: null,
     isError: false,
+  })),
+  useGoogleAuth: vi.fn(() => ({
+    mutate: vi.fn(),
+    isPending: false,
+    error: null,
   })),
   getMutationErrorMessage: vi.fn((e: unknown) =>
     (e as { message?: string })?.message ?? 'Error',

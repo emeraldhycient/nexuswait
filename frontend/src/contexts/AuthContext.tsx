@@ -8,6 +8,8 @@ interface AuthUser {
   lastName?: string
   roles?: string[]
   accountId?: string
+  provider?: string
+  avatarUrl?: string
   account?: { id: string; plan: string }
   [key: string]: unknown
 }

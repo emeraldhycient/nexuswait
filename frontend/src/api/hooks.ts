@@ -172,6 +172,19 @@ export function useLogin() {
   })
 }
 
+export function useGoogleAuth() {
+  const { setToken } = useAuth()
+  return useMutation({
+    mutationFn: async (accessToken: string) => {
+      const { data } = await api.post<{ token?: string }>('/auth/google', { accessToken })
+      return data
+    },
+    onSuccess: (data) => {
+      if (data?.token) setToken(data.token)
+    },
+  })
+}
+
 export function useRegister() {
   const { setToken } = useAuth()
   return useMutation({

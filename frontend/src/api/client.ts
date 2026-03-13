@@ -25,7 +25,7 @@ api.interceptors.response.use(
     if (err.response?.status === 401) {
       const win = typeof window !== 'undefined' ? (window as Window & { __logout?: () => void }) : null
       if (win?.__logout) win.__logout()
-      if (typeof window !== 'undefined' && !err.config?.url?.includes('/auth/login') && !err.config?.url?.includes('/auth/register')) {
+      if (typeof window !== 'undefined' && !err.config?.url?.includes('/auth/login') && !err.config?.url?.includes('/auth/register') && !err.config?.url?.includes('/auth/google')) {
         window.location.href = '/login'
       }
     }

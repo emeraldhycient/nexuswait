@@ -29,6 +29,8 @@ vi.mock('../api/hooks', () => ({
   useRevokeApiKey: vi.fn(() => ({ mutate: vi.fn(), isPending: false, isError: false, error: null })),
   useBilling: vi.fn(() => ({ data: null, isLoading: false })),
   useCheckoutSession: vi.fn(() => ({ mutate: vi.fn(), isPending: false })),
+  usePlans: vi.fn(() => ({ data: [], isLoading: false })),
+  useCancelSubscription: vi.fn(() => ({ mutate: vi.fn(), isPending: false })),
   getMutationErrorMessage: vi.fn((e: unknown) => (e as Error)?.message ?? 'Error'),
 }))
 
