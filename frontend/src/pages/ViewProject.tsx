@@ -226,7 +226,7 @@ export default function ViewProject() {
           <button type="button" onClick={() => setShowEmbed(true)} className="btn-ghost flex items-center gap-1.5 text-xs">
             <Code size={13} /> Embed
           </button>
-          <button type="button" className="btn-ghost flex items-center gap-1.5 text-xs">
+          <button type="button" onClick={handleExportCsv} className="btn-ghost flex items-center gap-1.5 text-xs">
             <Download size={13} /> Export
           </button>
         </div>
