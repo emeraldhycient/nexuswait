@@ -23,10 +23,17 @@ api.interceptors.response.use(
   (res) => res,
   (err) => {
     if (err.response?.status === 401) {
-      const win = typeof window !== 'undefined' ? (window as Window & { __logout?: () => void }) : null
-      if (win?.__logout) win.__logout()
-      if (typeof window !== 'undefined' && !err.config?.url?.includes('/auth/login') && !err.config?.url?.includes('/auth/register') && !err.config?.url?.includes('/auth/google')) {
-        window.location.href = '/login'
+      const url = err.config?.url || ''
+      // Skip redirect for auth endpoints that handle 401 themselves
+      const isAuthEndpoint = ['/auth/login', '/auth/register', '/auth/google', '/auth/me'].some(
+        (p) => url.includes(p),
+      )
+      if (!isAuthEndpoint) {
+        const win = typeof window !== 'undefined' ? (window as Window & { __logout?: () => void }) : null
+        if (win?.__logout) win.__logout()
+        if (typeof window !== 'undefined') {
+          window.location.href = '/login'
+        }
       }
     }
     return Promise.reject(err)

@@ -1,4 +1,5 @@
 import { createContext, useContext, useState, useEffect, useCallback, type ReactNode } from 'react'
+import { isAxiosError } from 'axios'
 import { api, setApiTokenGetter } from '../api/client'
 
 interface AuthUser {
@@ -61,9 +62,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       .then((res) => {
         setUser(res.data)
       })
-      .catch(() => {
-        setToken(null)
-        setUser(null)
+      .catch((err: unknown) => {
+        // Only clear auth on genuine 401 (expired / invalid token).
+        // Network errors (backend down, timeout) should NOT log the user out —
+        // the token may still be perfectly valid once the server is reachable again.
+        if (isAxiosError(err) && err.response?.status === 401) {
+          setToken(null)
+          setUser(null)
+        }
       })
       .finally(() => setLoading(false))
   }, [token, setToken])
