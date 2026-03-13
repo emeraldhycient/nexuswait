@@ -18,7 +18,7 @@ describe('IntegrationsService', () => {
     displayName: 'My Webhook',
     config: { url: 'https://example.com/webhook' },
     fieldMapping: null,
-    events: ['subscriber.created'],
+    events: ['waitlist.signup.created'],
     enabled: true,
     lastTriggeredAt: null,
     failureCount: 0,
@@ -66,7 +66,7 @@ describe('IntegrationsService', () => {
         type: 'webhook',
         displayName: 'My Webhook',
         config: { url: 'https://example.com/webhook' },
-        events: ['subscriber.created'],
+        events: ['waitlist.signup.created'],
       };
 
       const result = await service.create('proj-1', 'acc-1', dto as any);

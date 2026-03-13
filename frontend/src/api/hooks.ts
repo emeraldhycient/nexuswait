@@ -405,10 +405,14 @@ export function useDeleteIntegration(projectId: string | undefined, integrationI
 }
 
 export function useTestIntegration(projectId: string | undefined, integrationId: string | undefined) {
+  const queryClient = useQueryClient()
   return useMutation({
     mutationFn: async () => {
       const { data } = await api.post(`/projects/${projectId}/integrations/${integrationId}/test`)
       return data
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['integrations', projectId] })
     },
   })
 }

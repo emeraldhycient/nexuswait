@@ -14,7 +14,7 @@ const sidebarItems: { to: string; icon: LucideIcon; label: string }[] = [
   { to: '/dashboard/hosted-page', icon: Globe, label: 'Hosted Page' },
   { to: '/dashboard/form-integrations', icon: Webhook, label: 'Form Integrations' },
   { to: '/dashboard/api', icon: Code, label: 'API & BYOUI' },
-  { to: '/dashboard/integrations', icon: Plug, label: 'Integrations' },
+  { to: '/dashboard/integrations', icon: Plug, label: 'Browse Integrations' },
   { to: '/dashboard/settings', icon: Settings, label: 'Settings' },
 ]
 

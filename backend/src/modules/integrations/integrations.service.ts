@@ -26,7 +26,7 @@ export class IntegrationsService {
         projectId,
         type: dto.type,
         displayName: dto.displayName,
-        config: dto.config,
+        config: dto.config ?? {},
         fieldMapping: dto.fieldMapping ?? undefined,
         events: dto.events,
       },

@@ -8,8 +8,9 @@ export class CreateIntegrationDto {
   @IsString()
   displayName: string;
 
+  @IsOptional()
   @IsObject()
-  config: object;
+  config?: object;
 
   @IsOptional()
   @IsObject()

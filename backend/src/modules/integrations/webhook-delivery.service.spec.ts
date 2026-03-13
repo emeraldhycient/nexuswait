@@ -17,7 +17,7 @@ describe('WebhookDeliveryService', () => {
     type: 'webhook',
     displayName: 'My Webhook',
     config: { url: 'https://example.com/webhook' },
-    events: ['subscriber.created'],
+    events: ['waitlist.signup.created'],
     enabled: true,
     lastTriggeredAt: null,
     failureCount: 0,
@@ -65,7 +65,7 @@ describe('WebhookDeliveryService', () => {
         where: {
           projectId: 'proj-1',
           enabled: true,
-          events: { has: 'subscriber.created' },
+          events: { has: 'waitlist.signup.created' },
         },
       });
       expect(mockedAxios.post).toHaveBeenCalledTimes(2);
@@ -77,7 +77,7 @@ describe('WebhookDeliveryService', () => {
       mockedAxios.post.mockResolvedValue({ status: 200 });
       (prisma.integration.update as jest.Mock).mockResolvedValue({});
 
-      const payload = { event: 'subscriber.created', data: { email: 'test@example.com' } };
+      const payload = { event: 'waitlist.signup.created', data: { email: 'test@example.com' } };
       await service.deliverWebhook(mockWebhookIntegration, payload);
 
       expect(mockedAxios.post).toHaveBeenCalledWith(
@@ -94,7 +94,7 @@ describe('WebhookDeliveryService', () => {
       mockedAxios.post.mockResolvedValue({ status: 200 });
       (prisma.integration.update as jest.Mock).mockResolvedValue({});
 
-      const payload = { event: 'subscriber.created', data: { email: 'test@example.com' } };
+      const payload = { event: 'waitlist.signup.created', data: { email: 'test@example.com' } };
       await service.deliverWebhook(mockWebhookWithSecret, payload);
 
       const expectedSignature = createHmac('sha256', 'my-secret-key')

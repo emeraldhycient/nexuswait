@@ -4,7 +4,7 @@ import type { LucideIcon } from 'lucide-react'
 import {
   ArrowLeft, Plus, Webhook, Mail, MessageCircle, Database,
   Zap, Globe, Check, X, ChevronDown, ChevronUp,
-  Play, AlertTriangle, Clock, ArrowRight, RefreshCw, Trash2, Loader2
+  Play, AlertTriangle, Clock, ArrowRight, Trash2, Loader2, Save,
 } from 'lucide-react'
 import {
   useProjects,
@@ -22,19 +22,88 @@ interface IntegrationDef {
   icon: LucideIcon
   color: string
   desc: string
+  configFields: { key: string; label: string; placeholder: string; type?: string }[]
 }
 
 const integrationDefs: IntegrationDef[] = [
-  { type: 'webhook', name: 'Custom Webhook', icon: Webhook, color: 'cyan', desc: 'HTTP POST to any URL with HMAC verification' },
-  { type: 'mailchimp', name: 'Mailchimp', icon: Mail, color: 'amber', desc: 'Add subscribers to your Mailchimp audience' },
-  { type: 'sendgrid', name: 'SendGrid', icon: Mail, color: 'cyan', desc: 'Trigger transactional emails on signup' },
-  { type: 'slack', name: 'Slack', icon: MessageCircle, color: 'violet', desc: 'Post signup notifications to a channel' },
-  { type: 'discord', name: 'Discord', icon: MessageCircle, color: 'violet', desc: 'Webhook notifications to Discord' },
-  { type: 'hubspot', name: 'HubSpot', icon: Globe, color: 'magenta', desc: 'Create contacts and deals in HubSpot' },
-  { type: 'zapier', name: 'Zapier', icon: Zap, color: 'amber', desc: 'Connect to 5,000+ apps with zero code' },
-  { type: 'google_sheets', name: 'Google Sheets', icon: Database, color: 'emerald', desc: 'Append rows to a spreadsheet on signup' },
-  { type: 'segment', name: 'Segment', icon: Database, color: 'emerald', desc: 'Send identify + track events to Segment' },
-  { type: 'supabase', name: 'Supabase', icon: Database, color: 'emerald', desc: 'Insert rows into your own Postgres DB' },
+  {
+    type: 'webhook', name: 'Custom Webhook', icon: Webhook, color: 'cyan',
+    desc: 'HTTP POST to any URL with HMAC verification',
+    configFields: [
+      { key: 'url', label: 'Webhook URL', placeholder: 'https://api.yoursite.com/webhook', type: 'url' },
+      { key: 'secret', label: 'HMAC Secret', placeholder: 'Enter HMAC secret...', type: 'password' },
+    ],
+  },
+  {
+    type: 'mailchimp', name: 'Mailchimp', icon: Mail, color: 'amber',
+    desc: 'Add subscribers to your Mailchimp audience',
+    configFields: [
+      { key: 'apiKey', label: 'API Key', placeholder: 'Enter Mailchimp API key...', type: 'password' },
+      { key: 'audience', label: 'Audience / List ID', placeholder: 'e.g. abc123def4' },
+    ],
+  },
+  {
+    type: 'sendgrid', name: 'SendGrid', icon: Mail, color: 'cyan',
+    desc: 'Trigger transactional emails on signup',
+    configFields: [
+      { key: 'apiKey', label: 'API Key', placeholder: 'Enter SendGrid API key...', type: 'password' },
+      { key: 'templateId', label: 'Template ID', placeholder: 'e.g. d-xxxxxxxxxxxx' },
+    ],
+  },
+  {
+    type: 'slack', name: 'Slack', icon: MessageCircle, color: 'violet',
+    desc: 'Post signup notifications to a channel',
+    configFields: [
+      { key: 'webhookUrl', label: 'Webhook URL', placeholder: 'https://hooks.slack.com/services/...', type: 'url' },
+      { key: 'channel', label: 'Channel', placeholder: '#your-channel' },
+    ],
+  },
+  {
+    type: 'discord', name: 'Discord', icon: MessageCircle, color: 'violet',
+    desc: 'Webhook notifications to Discord',
+    configFields: [
+      { key: 'webhookUrl', label: 'Webhook URL', placeholder: 'https://discord.com/api/webhooks/...', type: 'url' },
+    ],
+  },
+  {
+    type: 'hubspot', name: 'HubSpot', icon: Globe, color: 'magenta',
+    desc: 'Create contacts and deals in HubSpot',
+    configFields: [
+      { key: 'apiKey', label: 'Private App Token', placeholder: 'Enter HubSpot token...', type: 'password' },
+      { key: 'pipeline', label: 'Pipeline ID', placeholder: 'Optional pipeline ID' },
+    ],
+  },
+  {
+    type: 'zapier', name: 'Zapier', icon: Zap, color: 'amber',
+    desc: 'Connect to 5,000+ apps with zero code',
+    configFields: [
+      { key: 'webhookUrl', label: 'Zap Webhook URL', placeholder: 'https://hooks.zapier.com/hooks/catch/...', type: 'url' },
+    ],
+  },
+  {
+    type: 'google_sheets', name: 'Google Sheets', icon: Database, color: 'emerald',
+    desc: 'Append rows to a spreadsheet on signup',
+    configFields: [
+      { key: 'spreadsheetId', label: 'Spreadsheet ID', placeholder: 'e.g. 1BxiMVs0XRA5nFMdKvBdBZjgmUUqptlbs74OgVE2upms' },
+      { key: 'sheetName', label: 'Sheet Name', placeholder: 'e.g. Sheet1' },
+    ],
+  },
+  {
+    type: 'segment', name: 'Segment', icon: Database, color: 'emerald',
+    desc: 'Send identify + track events to Segment',
+    configFields: [
+      { key: 'writeKey', label: 'Write Key', placeholder: 'Enter Segment write key...', type: 'password' },
+    ],
+  },
+  {
+    type: 'supabase', name: 'Supabase', icon: Database, color: 'emerald',
+    desc: 'Insert rows into your own Postgres DB',
+    configFields: [
+      { key: 'url', label: 'Supabase URL', placeholder: 'https://xxxx.supabase.co', type: 'url' },
+      { key: 'anonKey', label: 'Anon Key', placeholder: 'Enter Supabase anon key...', type: 'password' },
+      { key: 'table', label: 'Table Name', placeholder: 'e.g. waitlist_signups' },
+    ],
+  },
 ]
 
 const eventTypes = [
@@ -63,6 +132,7 @@ interface ApiIntegration {
   lastTriggeredAt?: string
   failureCount?: number
   config?: Record<string, string | undefined>
+  fieldMapping?: Record<string, string>
 }
 
 export default function FormIntegrations() {
@@ -92,11 +162,18 @@ export default function FormIntegrations() {
   const [expandedId, setExpandedId] = useState<string | null>(null)
   const [testSentId, setTestSentId] = useState<string | null>(null)
 
+  // Reset UI state when switching projects
+  useEffect(() => {
+    setShowAdd(false)
+    setExpandedId(null)
+    setTestSentId(null)
+  }, [selectedProjectId])
+
   const addIntegration = (type: string) => {
     const def = integrationDefs.find(d => d.type === type)
     if (!def) return
     createIntegration.mutate(
-      { type, displayName: def.name, enabled: true, events: ['waitlist.signup.created'] },
+      { type, displayName: def.name, events: ['waitlist.signup.created'], config: {} },
       {
         onSuccess: (data: unknown) => {
           setShowAdd(false)
@@ -242,7 +319,7 @@ export default function FormIntegrations() {
   )
 }
 
-// ─── Integration row component (needs its own hooks for per-integration mutations) ──
+// ─── Integration row component ────────────────────────────────────────────────
 function IntegrationRow({
   int,
   def,
@@ -272,6 +349,33 @@ function IntegrationRow({
   const deleteInt = useDeleteIntegration(projectId, int.id)
   const testInt = useTestIntegration(projectId, int.id)
 
+  // ─── Local edit state ──────────────────────────────
+  const [editDisplayName, setEditDisplayName] = useState(displayName)
+  const [editConfig, setEditConfig] = useState<Record<string, string>>(
+    (int.config ?? {}) as Record<string, string>,
+  )
+  const [editEvents, setEditEvents] = useState<string[]>(events)
+  const [editFieldMapping, setEditFieldMapping] = useState<[string, string][]>(
+    int.fieldMapping
+      ? Object.entries(int.fieldMapping)
+      : [['email', 'email_address'], ['name', 'full_name']],
+  )
+  const [isDirty, setIsDirty] = useState(false)
+
+  // Reset local state when server data changes (e.g. after save or refetch)
+  useEffect(() => {
+    setEditDisplayName(displayName)
+    setEditConfig((int.config ?? {}) as Record<string, string>)
+    setEditEvents(events)
+    setEditFieldMapping(
+      int.fieldMapping
+        ? Object.entries(int.fieldMapping)
+        : [['email', 'email_address'], ['name', 'full_name']],
+    )
+    setIsDirty(false)
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [int.id, int.displayName, int.config, int.events, int.fieldMapping])
+
   const toggleEnabled = (e: React.MouseEvent) => {
     e.stopPropagation()
     updateInt.mutate({ enabled: !int.enabled })
@@ -290,8 +394,34 @@ function IntegrationRow({
     deleteInt.mutate()
   }
 
+  const handleSave = () => {
+    const fieldMappingObj = Object.fromEntries(
+      editFieldMapping.filter(([from, to]) => from.trim() && to.trim()),
+    )
+    updateInt.mutate(
+      {
+        displayName: editDisplayName,
+        config: editConfig,
+        events: editEvents,
+        fieldMapping: fieldMappingObj,
+      },
+      { onSuccess: () => setIsDirty(false) },
+    )
+  }
+
+  const updateConfigField = (key: string, value: string) => {
+    setEditConfig(prev => ({ ...prev, [key]: value }))
+    setIsDirty(true)
+  }
+
+  const toggleEvent = (evtId: string, checked: boolean) => {
+    setEditEvents(prev => checked ? [...prev, evtId] : prev.filter(id => id !== evtId))
+    setIsDirty(true)
+  }
+
   return (
     <div className={`card-surface overflow-hidden transition-all ${int.enabled ? 'border-cyan-glow/8' : 'opacity-60'}`}>
+      {/* Header row */}
       <div className="flex items-center gap-4 p-4 cursor-pointer" onClick={onToggleExpand} role="button" tabIndex={0} onKeyDown={e => e.key === 'Enter' && onToggleExpand()}>
         <div className={`w-9 h-9 rounded-lg border flex items-center justify-center shrink-0 ${colorMap[def.color]}`}>
           <DefIcon size={16} />
@@ -327,49 +457,51 @@ function IntegrationRow({
         </div>
       </div>
 
+      {/* Expanded config panel */}
       {isExpanded && (
         <div className="border-t border-cyan-glow/[0.06] p-5 space-y-4 animate-fade-in">
+          {/* Display Name */}
           <div>
             <label className="block text-xs font-mono text-nexus-400 tracking-wider uppercase mb-1.5">Display Name</label>
-            <input type="text" defaultValue={displayName} className="input-field text-sm" />
+            <input
+              type="text"
+              value={editDisplayName}
+              onChange={e => { setEditDisplayName(e.target.value); setIsDirty(true) }}
+              className="input-field text-sm"
+            />
           </div>
 
-          {int.type === 'webhook' && (
-            <>
-              <div>
-                <label className="block text-xs font-mono text-nexus-400 tracking-wider uppercase mb-1.5">Webhook URL</label>
-                <input type="url" defaultValue={int.config?.url ?? ''} className="input-field text-sm font-mono" placeholder="https://api.yoursite.com/webhook" />
-              </div>
-              <div>
-                <label className="block text-xs font-mono text-nexus-400 tracking-wider uppercase mb-1.5">HMAC Secret</label>
-                <input type="password" defaultValue="whsec_••••••••" className="input-field text-sm font-mono" />
+          {/* Type-specific config fields */}
+          {def.configFields.map(field => (
+            <div key={field.key}>
+              <label className="block text-xs font-mono text-nexus-400 tracking-wider uppercase mb-1.5">{field.label}</label>
+              <input
+                type={field.type ?? 'text'}
+                value={editConfig[field.key] ?? ''}
+                onChange={e => updateConfigField(field.key, e.target.value)}
+                className="input-field text-sm font-mono"
+                placeholder={field.placeholder}
+              />
+              {field.key === 'secret' && (
                 <p className="text-[10px] text-nexus-600 mt-1">Used to sign the X-NexusWait-Signature header for payload verification.</p>
-              </div>
-            </>
-          )}
-
-          {int.type === 'slack' && (
-            <div>
-              <label className="block text-xs font-mono text-nexus-400 tracking-wider uppercase mb-1.5">Channel</label>
-              <input type="text" defaultValue={int.config?.channel ?? ''} className="input-field text-sm" placeholder="#your-channel" />
+              )}
             </div>
-          )}
+          ))}
 
-          {int.type === 'mailchimp' && (
-            <div>
-              <label className="block text-xs font-mono text-nexus-400 tracking-wider uppercase mb-1.5">Audience / List</label>
-              <input type="text" defaultValue={int.config?.audience ?? ''} className="input-field text-sm" placeholder="Select audience..." />
-            </div>
-          )}
-
+          {/* Trigger Events */}
           <div>
             <label className="block text-xs font-mono text-nexus-400 tracking-wider uppercase mb-2">Trigger Events</label>
             <div className="space-y-2">
               {eventTypes.map(evt => {
-                const active = events.includes(evt.id)
+                const active = editEvents.includes(evt.id)
                 return (
                   <label key={evt.id} className="flex items-center gap-3 p-2.5 rounded-lg hover:bg-nexus-700/15 cursor-pointer transition-all">
-                    <input type="checkbox" defaultChecked={active} className="w-3.5 h-3.5 rounded accent-cyan-glow" />
+                    <input
+                      type="checkbox"
+                      checked={active}
+                      onChange={e => toggleEvent(evt.id, e.target.checked)}
+                      className="w-3.5 h-3.5 rounded accent-cyan-glow"
+                    />
                     <div>
                       <span className="text-sm text-nexus-200 font-semibold">{evt.label}</span>
                       <span className="text-[10px] text-nexus-600 ml-2">{evt.desc}</span>
@@ -380,27 +512,82 @@ function IntegrationRow({
             </div>
           </div>
 
+          {/* Field Mapping */}
           <div>
             <label className="block text-xs font-mono text-nexus-400 tracking-wider uppercase mb-2">Field Mapping</label>
             <div className="card-surface p-3 space-y-2">
-              {[['email', 'email_address'], ['name', 'full_name'], ['company', 'company_name']].map(([from, to]) => (
-                <div key={from} className="flex items-center gap-2">
-                  <span className="text-xs font-mono text-nexus-300 bg-nexus-700/30 px-2 py-0.5 rounded">{from}</span>
-                  <ArrowRight size={10} className="text-nexus-600" />
-                  <span className="text-xs font-mono text-cyan-glow/70 bg-cyan-glow/5 px-2 py-0.5 rounded">{to}</span>
+              {editFieldMapping.map(([from, to], idx) => (
+                <div key={idx} className="flex items-center gap-2">
+                  <input
+                    type="text"
+                    value={from}
+                    onChange={e => {
+                      const updated = [...editFieldMapping] as [string, string][]
+                      updated[idx] = [e.target.value, to]
+                      setEditFieldMapping(updated)
+                      setIsDirty(true)
+                    }}
+                    className="input-field text-xs font-mono flex-1"
+                    placeholder="source field"
+                  />
+                  <ArrowRight size={10} className="text-nexus-600 shrink-0" />
+                  <input
+                    type="text"
+                    value={to}
+                    onChange={e => {
+                      const updated = [...editFieldMapping] as [string, string][]
+                      updated[idx] = [from, e.target.value]
+                      setEditFieldMapping(updated)
+                      setIsDirty(true)
+                    }}
+                    className="input-field text-xs font-mono flex-1"
+                    placeholder="target field"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setEditFieldMapping(prev => prev.filter((_, i) => i !== idx))
+                      setIsDirty(true)
+                    }}
+                    className="text-nexus-500 hover:text-magenta-glow transition-colors"
+                  >
+                    <X size={12} />
+                  </button>
                 </div>
               ))}
+              <button
+                type="button"
+                onClick={() => {
+                  setEditFieldMapping(prev => [...prev, ['', '']])
+                  setIsDirty(true)
+                }}
+                className="text-xs text-cyan-glow hover:text-cyan-glow/80 flex items-center gap-1 mt-1"
+              >
+                <Plus size={12} /> Add Mapping
+              </button>
             </div>
           </div>
 
+          {/* Error messages */}
           {(updateInt.isError || deleteInt.isError || testInt.isError) && (
             <p className="text-magenta-glow text-xs">
               {getMutationErrorMessage(updateInt.error ?? deleteInt.error ?? testInt.error)}
             </p>
           )}
 
+          {/* Action buttons */}
           <div className="flex items-center justify-between pt-2">
             <div className="flex items-center gap-2">
+              <button
+                type="button"
+                onClick={handleSave}
+                disabled={updateInt.isPending || !isDirty}
+                className="btn-primary text-xs py-1.5 px-3 flex items-center gap-1.5 disabled:opacity-40"
+              >
+                {updateInt.isPending
+                  ? <><Loader2 size={12} className="animate-spin" /> Saving...</>
+                  : <><Save size={12} /> Save Changes</>}
+              </button>
               <button
                 type="button"
                 onClick={sendTest}
@@ -413,7 +600,6 @@ function IntegrationRow({
                     ? <><Check size={12} /> Sent!</>
                     : <><Play size={12} /> Send Test</>}
               </button>
-              <button type="button" className="btn-ghost text-xs flex items-center gap-1.5"><RefreshCw size={12} /> Retry Failed</button>
             </div>
             <button
               type="button"

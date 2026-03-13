@@ -16,7 +16,7 @@ export class WebhookDeliveryService {
       where: {
         projectId: payload.projectId,
         enabled: true,
-        events: { has: 'subscriber.created' },
+        events: { has: 'waitlist.signup.created' },
       },
     });
 
