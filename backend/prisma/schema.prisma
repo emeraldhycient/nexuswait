@@ -70,6 +70,8 @@ model Account {
   projects        Project[]
   apiKeys         ApiKey[]
   polarSubscription PolarSubscription?
+  inAppNotifications    InAppNotification[]
+  notificationPreferences NotificationPreference[]
 }
 
 model User {
@@ -193,6 +195,37 @@ model NotificationTemplate {
   updatedAt DateTime @updatedAt @map("updated_at")
 
   notifications Notification[]
+}
+
+model InAppNotification {
+  id        String    @id @default(uuid())
+  accountId String    @map("account_id")
+  title     String
+  body      String
+  type      String    @default("info")
+  actionUrl String?   @map("action_url")
+  readAt    DateTime? @map("read_at")
+  createdAt DateTime  @default(now()) @map("created_at")
+
+  account Account @relation(fields: [accountId], references: [id], onDelete: Cascade)
+
+  @@index([accountId, readAt])
+  @@map("in_app_notification")
+}
+
+model NotificationPreference {
+  id        String   @id @default(uuid())
+  accountId String   @map("account_id")
+  event     String
+  channels  String[]
+  enabled   Boolean  @default(true)
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  account Account @relation(fields: [accountId], references: [id], onDelete: Cascade)
+
+  @@unique([accountId, event])
+  @@map("notification_preference")
 }
 
 model ApiKey {

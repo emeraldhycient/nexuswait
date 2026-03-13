@@ -392,6 +392,8 @@ export const ModelName = {
   HostedPage: 'HostedPage',
   Notification: 'Notification',
   NotificationTemplate: 'NotificationTemplate',
+  InAppNotification: 'InAppNotification',
+  NotificationPreference: 'NotificationPreference',
   ApiKey: 'ApiKey',
   PolarSubscription: 'PolarSubscription',
   PlatformConfig: 'PlatformConfig'
@@ -410,7 +412,7 @@ export type TypeMap<ExtArgs extends runtime.Types.Extensions.InternalArgs = runt
     omit: GlobalOmitOptions
   }
   meta: {
-    modelProps: "account" | "user" | "project" | "subscriber" | "integration" | "hostedPage" | "notification" | "notificationTemplate" | "apiKey" | "polarSubscription" | "platformConfig"
+    modelProps: "account" | "user" | "project" | "subscriber" | "integration" | "hostedPage" | "notification" | "notificationTemplate" | "inAppNotification" | "notificationPreference" | "apiKey" | "polarSubscription" | "platformConfig"
     txIsolationLevel: TransactionIsolationLevel
   }
   model: {
@@ -1006,6 +1008,154 @@ export type TypeMap<ExtArgs extends runtime.Types.Extensions.InternalArgs = runt
         }
       }
     }
+    InAppNotification: {
+      payload: Prisma.$InAppNotificationPayload<ExtArgs>
+      fields: Prisma.InAppNotificationFieldRefs
+      operations: {
+        findUnique: {
+          args: Prisma.InAppNotificationFindUniqueArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$InAppNotificationPayload> | null
+        }
+        findUniqueOrThrow: {
+          args: Prisma.InAppNotificationFindUniqueOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$InAppNotificationPayload>
+        }
+        findFirst: {
+          args: Prisma.InAppNotificationFindFirstArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$InAppNotificationPayload> | null
+        }
+        findFirstOrThrow: {
+          args: Prisma.InAppNotificationFindFirstOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$InAppNotificationPayload>
+        }
+        findMany: {
+          args: Prisma.InAppNotificationFindManyArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$InAppNotificationPayload>[]
+        }
+        create: {
+          args: Prisma.InAppNotificationCreateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$InAppNotificationPayload>
+        }
+        createMany: {
+          args: Prisma.InAppNotificationCreateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        createManyAndReturn: {
+          args: Prisma.InAppNotificationCreateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$InAppNotificationPayload>[]
+        }
+        delete: {
+          args: Prisma.InAppNotificationDeleteArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$InAppNotificationPayload>
+        }
+        update: {
+          args: Prisma.InAppNotificationUpdateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$InAppNotificationPayload>
+        }
+        deleteMany: {
+          args: Prisma.InAppNotificationDeleteManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateMany: {
+          args: Prisma.InAppNotificationUpdateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateManyAndReturn: {
+          args: Prisma.InAppNotificationUpdateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$InAppNotificationPayload>[]
+        }
+        upsert: {
+          args: Prisma.InAppNotificationUpsertArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$InAppNotificationPayload>
+        }
+        aggregate: {
+          args: Prisma.InAppNotificationAggregateArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.AggregateInAppNotification>
+        }
+        groupBy: {
+          args: Prisma.InAppNotificationGroupByArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.InAppNotificationGroupByOutputType>[]
+        }
+        count: {
+          args: Prisma.InAppNotificationCountArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.InAppNotificationCountAggregateOutputType> | number
+        }
+      }
+    }
+    NotificationPreference: {
+      payload: Prisma.$NotificationPreferencePayload<ExtArgs>
+      fields: Prisma.NotificationPreferenceFieldRefs
+      operations: {
+        findUnique: {
+          args: Prisma.NotificationPreferenceFindUniqueArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$NotificationPreferencePayload> | null
+        }
+        findUniqueOrThrow: {
+          args: Prisma.NotificationPreferenceFindUniqueOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$NotificationPreferencePayload>
+        }
+        findFirst: {
+          args: Prisma.NotificationPreferenceFindFirstArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$NotificationPreferencePayload> | null
+        }
+        findFirstOrThrow: {
+          args: Prisma.NotificationPreferenceFindFirstOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$NotificationPreferencePayload>
+        }
+        findMany: {
+          args: Prisma.NotificationPreferenceFindManyArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$NotificationPreferencePayload>[]
+        }
+        create: {
+          args: Prisma.NotificationPreferenceCreateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$NotificationPreferencePayload>
+        }
+        createMany: {
+          args: Prisma.NotificationPreferenceCreateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        createManyAndReturn: {
+          args: Prisma.NotificationPreferenceCreateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$NotificationPreferencePayload>[]
+        }
+        delete: {
+          args: Prisma.NotificationPreferenceDeleteArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$NotificationPreferencePayload>
+        }
+        update: {
+          args: Prisma.NotificationPreferenceUpdateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$NotificationPreferencePayload>
+        }
+        deleteMany: {
+          args: Prisma.NotificationPreferenceDeleteManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateMany: {
+          args: Prisma.NotificationPreferenceUpdateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateManyAndReturn: {
+          args: Prisma.NotificationPreferenceUpdateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$NotificationPreferencePayload>[]
+        }
+        upsert: {
+          args: Prisma.NotificationPreferenceUpsertArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$NotificationPreferencePayload>
+        }
+        aggregate: {
+          args: Prisma.NotificationPreferenceAggregateArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.AggregateNotificationPreference>
+        }
+        groupBy: {
+          args: Prisma.NotificationPreferenceGroupByArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.NotificationPreferenceGroupByOutputType>[]
+        }
+        count: {
+          args: Prisma.NotificationPreferenceCountArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.NotificationPreferenceCountAggregateOutputType> | number
+        }
+      }
+    }
     ApiKey: {
       payload: Prisma.$ApiKeyPayload<ExtArgs>
       fields: Prisma.ApiKeyFieldRefs
@@ -1399,6 +1549,33 @@ export const NotificationTemplateScalarFieldEnum = {
 export type NotificationTemplateScalarFieldEnum = (typeof NotificationTemplateScalarFieldEnum)[keyof typeof NotificationTemplateScalarFieldEnum]
 
 
+export const InAppNotificationScalarFieldEnum = {
+  id: 'id',
+  accountId: 'accountId',
+  title: 'title',
+  body: 'body',
+  type: 'type',
+  actionUrl: 'actionUrl',
+  readAt: 'readAt',
+  createdAt: 'createdAt'
+} as const
+
+export type InAppNotificationScalarFieldEnum = (typeof InAppNotificationScalarFieldEnum)[keyof typeof InAppNotificationScalarFieldEnum]
+
+
+export const NotificationPreferenceScalarFieldEnum = {
+  id: 'id',
+  accountId: 'accountId',
+  event: 'event',
+  channels: 'channels',
+  enabled: 'enabled',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+} as const
+
+export type NotificationPreferenceScalarFieldEnum = (typeof NotificationPreferenceScalarFieldEnum)[keyof typeof NotificationPreferenceScalarFieldEnum]
+
+
 export const ApiKeyScalarFieldEnum = {
   id: 'id',
   keyHash: 'keyHash',
@@ -1768,6 +1945,8 @@ export type GlobalOmitConfig = {
   hostedPage?: Prisma.HostedPageOmit
   notification?: Prisma.NotificationOmit
   notificationTemplate?: Prisma.NotificationTemplateOmit
+  inAppNotification?: Prisma.InAppNotificationOmit
+  notificationPreference?: Prisma.NotificationPreferenceOmit
   apiKey?: Prisma.ApiKeyOmit
   polarSubscription?: Prisma.PolarSubscriptionOmit
   platformConfig?: Prisma.PlatformConfigOmit

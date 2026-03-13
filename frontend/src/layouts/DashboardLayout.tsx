@@ -4,9 +4,10 @@ import Logo from '../components/Logo'
 import type { LucideIcon } from 'lucide-react'
 import {
   LayoutDashboard, FolderPlus, Plug, Settings, LogOut, ChevronLeft,
-  ChevronRight, Bell, Search, User, Globe, Webhook, Code, ShieldCheck
+  ChevronRight, Search, User, Globe, Webhook, Code, ShieldCheck
 } from 'lucide-react'
 import { useAuth } from '../contexts/AuthContext'
+import NotificationBell from '../components/NotificationBell'
 
 const sidebarItems: { to: string; icon: LucideIcon; label: string }[] = [
   { to: '/dashboard', icon: LayoutDashboard, label: 'Overview' },
@@ -113,10 +114,7 @@ export default function DashboardLayout() {
             />
           </div>
           <div className="flex items-center gap-4">
-            <button className="relative p-2 text-nexus-400 hover:text-nexus-100 transition-colors">
-              <Bell size={18} />
-              <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-magenta-glow rounded-full" />
-            </button>
+            <NotificationBell />
             <div className="w-8 h-8 rounded-full bg-gradient-to-br from-cyan-glow/30 to-violet-glow/30 border border-cyan-glow/20 flex items-center justify-center">
               <User size={14} className="text-cyan-glow" />
             </div>

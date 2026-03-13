@@ -22,6 +22,7 @@ import Settings from './pages/Settings'
 import HostedPage from './pages/HostedPage'
 import FormIntegrations from './pages/FormIntegrations'
 import ApiDocs from './pages/ApiDocs'
+import NotificationPreferences from './pages/NotificationPreferences'
 import AdminOverview from './pages/admin/AdminOverview'
 import AdminAccounts from './pages/admin/AdminAccounts'
 import AdminAccountDetail from './pages/admin/AdminAccountDetail'
@@ -61,6 +62,7 @@ export default function App() {
         <Route path="/dashboard/hosted-page" element={<HostedPage />} />
         <Route path="/dashboard/form-integrations" element={<FormIntegrations />} />
         <Route path="/dashboard/api" element={<ApiDocs />} />
+        <Route path="/dashboard/notification-preferences" element={<NotificationPreferences />} />
       </Route>
       <Route element={<AdminLayout />}>
         <Route path="/admin" element={<AdminOverview />} />

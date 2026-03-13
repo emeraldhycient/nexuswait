@@ -454,6 +454,175 @@ export function useAnalyticsSources(projectId: string | undefined) {
   })
 }
 
+// ─── Notifications (In-App) ─────────────────────────────
+
+export interface InAppNotification {
+  id: string
+  accountId: string
+  title: string
+  body: string
+  type: string
+  actionUrl?: string
+  readAt: string | null
+  createdAt: string
+}
+
+export function useNotificationInbox(opts: { unreadOnly?: boolean } = {}) {
+  return useQuery<InAppNotification[]>({
+    queryKey: ['notifications', 'inbox', opts.unreadOnly ? 'unread' : 'all'],
+    queryFn: async () => {
+      const { data } = await api.get('/notifications/inbox', {
+        params: { unreadOnly: opts.unreadOnly ? 'true' : 'false' },
+      })
+      return data
+    },
+    refetchInterval: 30_000,
+  })
+}
+
+export function useUnreadCount() {
+  return useQuery<{ count: number }>({
+    queryKey: ['notifications', 'unread-count'],
+    queryFn: async () => {
+      const { data } = await api.get('/notifications/inbox/unread-count')
+      return data
+    },
+    refetchInterval: 15_000,
+  })
+}
+
+export function useMarkNotificationRead() {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: async (id: string) => {
+      const { data } = await api.patch(`/notifications/inbox/${id}/read`)
+      return data
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['notifications'] })
+    },
+  })
+}
+
+export function useMarkAllNotificationsRead() {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: async () => {
+      const { data } = await api.post('/notifications/inbox/read-all')
+      return data
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['notifications'] })
+    },
+  })
+}
+
+export function useDeleteNotification() {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: async (id: string) => {
+      await api.delete(`/notifications/inbox/${id}`)
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['notifications'] })
+    },
+  })
+}
+
+// ─── Notification Preferences ───────────────────────────
+
+export interface NotificationPreference {
+  id: string | null
+  event: string
+  label: string
+  channels: string[]
+  enabled: boolean
+}
+
+export function useNotificationPreferences() {
+  return useQuery<NotificationPreference[]>({
+    queryKey: ['notifications', 'preferences'],
+    queryFn: async () => {
+      const { data } = await api.get('/notifications/preferences')
+      return data
+    },
+  })
+}
+
+export function useUpsertNotificationPreference() {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: async (body: { event: string; channels: string[]; enabled?: boolean }) => {
+      const { data } = await api.post('/notifications/preferences', body)
+      return data
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['notifications', 'preferences'] })
+    },
+  })
+}
+
+// ─── Notification Templates ─────────────────────────────
+
+export interface NotificationTemplate {
+  id: string
+  name: string
+  channel: string
+  subject?: string
+  body: string
+  accountId?: string
+  createdAt: string
+  updatedAt: string
+}
+
+export function useNotificationTemplates() {
+  return useQuery<NotificationTemplate[]>({
+    queryKey: ['notifications', 'templates'],
+    queryFn: async () => {
+      const { data } = await api.get('/notifications/templates')
+      return data
+    },
+  })
+}
+
+export function useCreateNotificationTemplate() {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: async (body: { name: string; channel: string; subject?: string; body: string }) => {
+      const { data } = await api.post('/notifications/templates', body)
+      return data
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['notifications', 'templates'] })
+    },
+  })
+}
+
+export function useUpdateNotificationTemplate(id: string | undefined) {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: async (body: { name?: string; channel?: string; subject?: string; body?: string }) => {
+      const { data } = await api.patch(`/notifications/templates/${id}`, body)
+      return data
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['notifications', 'templates'] })
+    },
+  })
+}
+
+export function useDeleteNotificationTemplate() {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: async (id: string) => {
+      await api.delete(`/notifications/templates/${id}`)
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['notifications', 'templates'] })
+    },
+  })
+}
+
 // ─── Referrals ──────────────────────────────────────────
 
 export function useReferralLeaderboard(projectId: string | undefined) {

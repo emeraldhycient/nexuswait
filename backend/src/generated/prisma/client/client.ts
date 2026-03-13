@@ -80,6 +80,16 @@ export type Notification = Prisma.NotificationModel
  */
 export type NotificationTemplate = Prisma.NotificationTemplateModel
 /**
+ * Model InAppNotification
+ * 
+ */
+export type InAppNotification = Prisma.InAppNotificationModel
+/**
+ * Model NotificationPreference
+ * 
+ */
+export type NotificationPreference = Prisma.NotificationPreferenceModel
+/**
  * Model ApiKey
  * 
  */

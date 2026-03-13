@@ -59,6 +59,8 @@ export const ModelName = {
   HostedPage: 'HostedPage',
   Notification: 'Notification',
   NotificationTemplate: 'NotificationTemplate',
+  InAppNotification: 'InAppNotification',
+  NotificationPreference: 'NotificationPreference',
   ApiKey: 'ApiKey',
   PolarSubscription: 'PolarSubscription',
   PlatformConfig: 'PlatformConfig'
@@ -210,6 +212,33 @@ export const NotificationTemplateScalarFieldEnum = {
 } as const
 
 export type NotificationTemplateScalarFieldEnum = (typeof NotificationTemplateScalarFieldEnum)[keyof typeof NotificationTemplateScalarFieldEnum]
+
+
+export const InAppNotificationScalarFieldEnum = {
+  id: 'id',
+  accountId: 'accountId',
+  title: 'title',
+  body: 'body',
+  type: 'type',
+  actionUrl: 'actionUrl',
+  readAt: 'readAt',
+  createdAt: 'createdAt'
+} as const
+
+export type InAppNotificationScalarFieldEnum = (typeof InAppNotificationScalarFieldEnum)[keyof typeof InAppNotificationScalarFieldEnum]
+
+
+export const NotificationPreferenceScalarFieldEnum = {
+  id: 'id',
+  accountId: 'accountId',
+  event: 'event',
+  channels: 'channels',
+  enabled: 'enabled',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+} as const
+
+export type NotificationPreferenceScalarFieldEnum = (typeof NotificationPreferenceScalarFieldEnum)[keyof typeof NotificationPreferenceScalarFieldEnum]
 
 
 export const ApiKeyScalarFieldEnum = {

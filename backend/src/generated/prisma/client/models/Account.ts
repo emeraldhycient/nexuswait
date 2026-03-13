@@ -194,6 +194,8 @@ export type AccountWhereInput = {
   projects?: Prisma.ProjectListRelationFilter
   apiKeys?: Prisma.ApiKeyListRelationFilter
   polarSubscription?: Prisma.XOR<Prisma.PolarSubscriptionNullableScalarRelationFilter, Prisma.PolarSubscriptionWhereInput> | null
+  inAppNotifications?: Prisma.InAppNotificationListRelationFilter
+  notificationPreferences?: Prisma.NotificationPreferenceListRelationFilter
 }
 
 export type AccountOrderByWithRelationInput = {
@@ -207,6 +209,8 @@ export type AccountOrderByWithRelationInput = {
   projects?: Prisma.ProjectOrderByRelationAggregateInput
   apiKeys?: Prisma.ApiKeyOrderByRelationAggregateInput
   polarSubscription?: Prisma.PolarSubscriptionOrderByWithRelationInput
+  inAppNotifications?: Prisma.InAppNotificationOrderByRelationAggregateInput
+  notificationPreferences?: Prisma.NotificationPreferenceOrderByRelationAggregateInput
 }
 
 export type AccountWhereUniqueInput = Prisma.AtLeast<{
@@ -223,6 +227,8 @@ export type AccountWhereUniqueInput = Prisma.AtLeast<{
   projects?: Prisma.ProjectListRelationFilter
   apiKeys?: Prisma.ApiKeyListRelationFilter
   polarSubscription?: Prisma.XOR<Prisma.PolarSubscriptionNullableScalarRelationFilter, Prisma.PolarSubscriptionWhereInput> | null
+  inAppNotifications?: Prisma.InAppNotificationListRelationFilter
+  notificationPreferences?: Prisma.NotificationPreferenceListRelationFilter
 }, "id">
 
 export type AccountOrderByWithAggregationInput = {
@@ -260,6 +266,8 @@ export type AccountCreateInput = {
   projects?: Prisma.ProjectCreateNestedManyWithoutAccountInput
   apiKeys?: Prisma.ApiKeyCreateNestedManyWithoutAccountInput
   polarSubscription?: Prisma.PolarSubscriptionCreateNestedOneWithoutAccountInput
+  inAppNotifications?: Prisma.InAppNotificationCreateNestedManyWithoutAccountInput
+  notificationPreferences?: Prisma.NotificationPreferenceCreateNestedManyWithoutAccountInput
 }
 
 export type AccountUncheckedCreateInput = {
@@ -273,6 +281,8 @@ export type AccountUncheckedCreateInput = {
   projects?: Prisma.ProjectUncheckedCreateNestedManyWithoutAccountInput
   apiKeys?: Prisma.ApiKeyUncheckedCreateNestedManyWithoutAccountInput
   polarSubscription?: Prisma.PolarSubscriptionUncheckedCreateNestedOneWithoutAccountInput
+  inAppNotifications?: Prisma.InAppNotificationUncheckedCreateNestedManyWithoutAccountInput
+  notificationPreferences?: Prisma.NotificationPreferenceUncheckedCreateNestedManyWithoutAccountInput
 }
 
 export type AccountUpdateInput = {
@@ -286,6 +296,8 @@ export type AccountUpdateInput = {
   projects?: Prisma.ProjectUpdateManyWithoutAccountNestedInput
   apiKeys?: Prisma.ApiKeyUpdateManyWithoutAccountNestedInput
   polarSubscription?: Prisma.PolarSubscriptionUpdateOneWithoutAccountNestedInput
+  inAppNotifications?: Prisma.InAppNotificationUpdateManyWithoutAccountNestedInput
+  notificationPreferences?: Prisma.NotificationPreferenceUpdateManyWithoutAccountNestedInput
 }
 
 export type AccountUncheckedUpdateInput = {
@@ -299,6 +311,8 @@ export type AccountUncheckedUpdateInput = {
   projects?: Prisma.ProjectUncheckedUpdateManyWithoutAccountNestedInput
   apiKeys?: Prisma.ApiKeyUncheckedUpdateManyWithoutAccountNestedInput
   polarSubscription?: Prisma.PolarSubscriptionUncheckedUpdateOneWithoutAccountNestedInput
+  inAppNotifications?: Prisma.InAppNotificationUncheckedUpdateManyWithoutAccountNestedInput
+  notificationPreferences?: Prisma.NotificationPreferenceUncheckedUpdateManyWithoutAccountNestedInput
 }
 
 export type AccountCreateManyInput = {
@@ -404,6 +418,34 @@ export type AccountUpdateOneRequiredWithoutProjectsNestedInput = {
   update?: Prisma.XOR<Prisma.XOR<Prisma.AccountUpdateToOneWithWhereWithoutProjectsInput, Prisma.AccountUpdateWithoutProjectsInput>, Prisma.AccountUncheckedUpdateWithoutProjectsInput>
 }
 
+export type AccountCreateNestedOneWithoutInAppNotificationsInput = {
+  create?: Prisma.XOR<Prisma.AccountCreateWithoutInAppNotificationsInput, Prisma.AccountUncheckedCreateWithoutInAppNotificationsInput>
+  connectOrCreate?: Prisma.AccountCreateOrConnectWithoutInAppNotificationsInput
+  connect?: Prisma.AccountWhereUniqueInput
+}
+
+export type AccountUpdateOneRequiredWithoutInAppNotificationsNestedInput = {
+  create?: Prisma.XOR<Prisma.AccountCreateWithoutInAppNotificationsInput, Prisma.AccountUncheckedCreateWithoutInAppNotificationsInput>
+  connectOrCreate?: Prisma.AccountCreateOrConnectWithoutInAppNotificationsInput
+  upsert?: Prisma.AccountUpsertWithoutInAppNotificationsInput
+  connect?: Prisma.AccountWhereUniqueInput
+  update?: Prisma.XOR<Prisma.XOR<Prisma.AccountUpdateToOneWithWhereWithoutInAppNotificationsInput, Prisma.AccountUpdateWithoutInAppNotificationsInput>, Prisma.AccountUncheckedUpdateWithoutInAppNotificationsInput>
+}
+
+export type AccountCreateNestedOneWithoutNotificationPreferencesInput = {
+  create?: Prisma.XOR<Prisma.AccountCreateWithoutNotificationPreferencesInput, Prisma.AccountUncheckedCreateWithoutNotificationPreferencesInput>
+  connectOrCreate?: Prisma.AccountCreateOrConnectWithoutNotificationPreferencesInput
+  connect?: Prisma.AccountWhereUniqueInput
+}
+
+export type AccountUpdateOneRequiredWithoutNotificationPreferencesNestedInput = {
+  create?: Prisma.XOR<Prisma.AccountCreateWithoutNotificationPreferencesInput, Prisma.AccountUncheckedCreateWithoutNotificationPreferencesInput>
+  connectOrCreate?: Prisma.AccountCreateOrConnectWithoutNotificationPreferencesInput
+  upsert?: Prisma.AccountUpsertWithoutNotificationPreferencesInput
+  connect?: Prisma.AccountWhereUniqueInput
+  update?: Prisma.XOR<Prisma.XOR<Prisma.AccountUpdateToOneWithWhereWithoutNotificationPreferencesInput, Prisma.AccountUpdateWithoutNotificationPreferencesInput>, Prisma.AccountUncheckedUpdateWithoutNotificationPreferencesInput>
+}
+
 export type AccountCreateNestedOneWithoutApiKeysInput = {
   create?: Prisma.XOR<Prisma.AccountCreateWithoutApiKeysInput, Prisma.AccountUncheckedCreateWithoutApiKeysInput>
   connectOrCreate?: Prisma.AccountCreateOrConnectWithoutApiKeysInput
@@ -442,6 +484,8 @@ export type AccountCreateWithoutUsersInput = {
   projects?: Prisma.ProjectCreateNestedManyWithoutAccountInput
   apiKeys?: Prisma.ApiKeyCreateNestedManyWithoutAccountInput
   polarSubscription?: Prisma.PolarSubscriptionCreateNestedOneWithoutAccountInput
+  inAppNotifications?: Prisma.InAppNotificationCreateNestedManyWithoutAccountInput
+  notificationPreferences?: Prisma.NotificationPreferenceCreateNestedManyWithoutAccountInput
 }
 
 export type AccountUncheckedCreateWithoutUsersInput = {
@@ -454,6 +498,8 @@ export type AccountUncheckedCreateWithoutUsersInput = {
   projects?: Prisma.ProjectUncheckedCreateNestedManyWithoutAccountInput
   apiKeys?: Prisma.ApiKeyUncheckedCreateNestedManyWithoutAccountInput
   polarSubscription?: Prisma.PolarSubscriptionUncheckedCreateNestedOneWithoutAccountInput
+  inAppNotifications?: Prisma.InAppNotificationUncheckedCreateNestedManyWithoutAccountInput
+  notificationPreferences?: Prisma.NotificationPreferenceUncheckedCreateNestedManyWithoutAccountInput
 }
 
 export type AccountCreateOrConnectWithoutUsersInput = {
@@ -482,6 +528,8 @@ export type AccountUpdateWithoutUsersInput = {
   projects?: Prisma.ProjectUpdateManyWithoutAccountNestedInput
   apiKeys?: Prisma.ApiKeyUpdateManyWithoutAccountNestedInput
   polarSubscription?: Prisma.PolarSubscriptionUpdateOneWithoutAccountNestedInput
+  inAppNotifications?: Prisma.InAppNotificationUpdateManyWithoutAccountNestedInput
+  notificationPreferences?: Prisma.NotificationPreferenceUpdateManyWithoutAccountNestedInput
 }
 
 export type AccountUncheckedUpdateWithoutUsersInput = {
@@ -494,6 +542,8 @@ export type AccountUncheckedUpdateWithoutUsersInput = {
   projects?: Prisma.ProjectUncheckedUpdateManyWithoutAccountNestedInput
   apiKeys?: Prisma.ApiKeyUncheckedUpdateManyWithoutAccountNestedInput
   polarSubscription?: Prisma.PolarSubscriptionUncheckedUpdateOneWithoutAccountNestedInput
+  inAppNotifications?: Prisma.InAppNotificationUncheckedUpdateManyWithoutAccountNestedInput
+  notificationPreferences?: Prisma.NotificationPreferenceUncheckedUpdateManyWithoutAccountNestedInput
 }
 
 export type AccountCreateWithoutProjectsInput = {
@@ -506,6 +556,8 @@ export type AccountCreateWithoutProjectsInput = {
   users?: Prisma.UserCreateNestedManyWithoutAccountInput
   apiKeys?: Prisma.ApiKeyCreateNestedManyWithoutAccountInput
   polarSubscription?: Prisma.PolarSubscriptionCreateNestedOneWithoutAccountInput
+  inAppNotifications?: Prisma.InAppNotificationCreateNestedManyWithoutAccountInput
+  notificationPreferences?: Prisma.NotificationPreferenceCreateNestedManyWithoutAccountInput
 }
 
 export type AccountUncheckedCreateWithoutProjectsInput = {
@@ -518,6 +570,8 @@ export type AccountUncheckedCreateWithoutProjectsInput = {
   users?: Prisma.UserUncheckedCreateNestedManyWithoutAccountInput
   apiKeys?: Prisma.ApiKeyUncheckedCreateNestedManyWithoutAccountInput
   polarSubscription?: Prisma.PolarSubscriptionUncheckedCreateNestedOneWithoutAccountInput
+  inAppNotifications?: Prisma.InAppNotificationUncheckedCreateNestedManyWithoutAccountInput
+  notificationPreferences?: Prisma.NotificationPreferenceUncheckedCreateNestedManyWithoutAccountInput
 }
 
 export type AccountCreateOrConnectWithoutProjectsInput = {
@@ -546,6 +600,8 @@ export type AccountUpdateWithoutProjectsInput = {
   users?: Prisma.UserUpdateManyWithoutAccountNestedInput
   apiKeys?: Prisma.ApiKeyUpdateManyWithoutAccountNestedInput
   polarSubscription?: Prisma.PolarSubscriptionUpdateOneWithoutAccountNestedInput
+  inAppNotifications?: Prisma.InAppNotificationUpdateManyWithoutAccountNestedInput
+  notificationPreferences?: Prisma.NotificationPreferenceUpdateManyWithoutAccountNestedInput
 }
 
 export type AccountUncheckedUpdateWithoutProjectsInput = {
@@ -558,6 +614,152 @@ export type AccountUncheckedUpdateWithoutProjectsInput = {
   users?: Prisma.UserUncheckedUpdateManyWithoutAccountNestedInput
   apiKeys?: Prisma.ApiKeyUncheckedUpdateManyWithoutAccountNestedInput
   polarSubscription?: Prisma.PolarSubscriptionUncheckedUpdateOneWithoutAccountNestedInput
+  inAppNotifications?: Prisma.InAppNotificationUncheckedUpdateManyWithoutAccountNestedInput
+  notificationPreferences?: Prisma.NotificationPreferenceUncheckedUpdateManyWithoutAccountNestedInput
+}
+
+export type AccountCreateWithoutInAppNotificationsInput = {
+  id?: string
+  plan?: $Enums.PlanTier
+  polarCustomerId?: string | null
+  polarSubscriptionId?: string | null
+  createdAt?: Date | string
+  updatedAt?: Date | string
+  users?: Prisma.UserCreateNestedManyWithoutAccountInput
+  projects?: Prisma.ProjectCreateNestedManyWithoutAccountInput
+  apiKeys?: Prisma.ApiKeyCreateNestedManyWithoutAccountInput
+  polarSubscription?: Prisma.PolarSubscriptionCreateNestedOneWithoutAccountInput
+  notificationPreferences?: Prisma.NotificationPreferenceCreateNestedManyWithoutAccountInput
+}
+
+export type AccountUncheckedCreateWithoutInAppNotificationsInput = {
+  id?: string
+  plan?: $Enums.PlanTier
+  polarCustomerId?: string | null
+  polarSubscriptionId?: string | null
+  createdAt?: Date | string
+  updatedAt?: Date | string
+  users?: Prisma.UserUncheckedCreateNestedManyWithoutAccountInput
+  projects?: Prisma.ProjectUncheckedCreateNestedManyWithoutAccountInput
+  apiKeys?: Prisma.ApiKeyUncheckedCreateNestedManyWithoutAccountInput
+  polarSubscription?: Prisma.PolarSubscriptionUncheckedCreateNestedOneWithoutAccountInput
+  notificationPreferences?: Prisma.NotificationPreferenceUncheckedCreateNestedManyWithoutAccountInput
+}
+
+export type AccountCreateOrConnectWithoutInAppNotificationsInput = {
+  where: Prisma.AccountWhereUniqueInput
+  create: Prisma.XOR<Prisma.AccountCreateWithoutInAppNotificationsInput, Prisma.AccountUncheckedCreateWithoutInAppNotificationsInput>
+}
+
+export type AccountUpsertWithoutInAppNotificationsInput = {
+  update: Prisma.XOR<Prisma.AccountUpdateWithoutInAppNotificationsInput, Prisma.AccountUncheckedUpdateWithoutInAppNotificationsInput>
+  create: Prisma.XOR<Prisma.AccountCreateWithoutInAppNotificationsInput, Prisma.AccountUncheckedCreateWithoutInAppNotificationsInput>
+  where?: Prisma.AccountWhereInput
+}
+
+export type AccountUpdateToOneWithWhereWithoutInAppNotificationsInput = {
+  where?: Prisma.AccountWhereInput
+  data: Prisma.XOR<Prisma.AccountUpdateWithoutInAppNotificationsInput, Prisma.AccountUncheckedUpdateWithoutInAppNotificationsInput>
+}
+
+export type AccountUpdateWithoutInAppNotificationsInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  plan?: Prisma.EnumPlanTierFieldUpdateOperationsInput | $Enums.PlanTier
+  polarCustomerId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  polarSubscriptionId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  users?: Prisma.UserUpdateManyWithoutAccountNestedInput
+  projects?: Prisma.ProjectUpdateManyWithoutAccountNestedInput
+  apiKeys?: Prisma.ApiKeyUpdateManyWithoutAccountNestedInput
+  polarSubscription?: Prisma.PolarSubscriptionUpdateOneWithoutAccountNestedInput
+  notificationPreferences?: Prisma.NotificationPreferenceUpdateManyWithoutAccountNestedInput
+}
+
+export type AccountUncheckedUpdateWithoutInAppNotificationsInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  plan?: Prisma.EnumPlanTierFieldUpdateOperationsInput | $Enums.PlanTier
+  polarCustomerId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  polarSubscriptionId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  users?: Prisma.UserUncheckedUpdateManyWithoutAccountNestedInput
+  projects?: Prisma.ProjectUncheckedUpdateManyWithoutAccountNestedInput
+  apiKeys?: Prisma.ApiKeyUncheckedUpdateManyWithoutAccountNestedInput
+  polarSubscription?: Prisma.PolarSubscriptionUncheckedUpdateOneWithoutAccountNestedInput
+  notificationPreferences?: Prisma.NotificationPreferenceUncheckedUpdateManyWithoutAccountNestedInput
+}
+
+export type AccountCreateWithoutNotificationPreferencesInput = {
+  id?: string
+  plan?: $Enums.PlanTier
+  polarCustomerId?: string | null
+  polarSubscriptionId?: string | null
+  createdAt?: Date | string
+  updatedAt?: Date | string
+  users?: Prisma.UserCreateNestedManyWithoutAccountInput
+  projects?: Prisma.ProjectCreateNestedManyWithoutAccountInput
+  apiKeys?: Prisma.ApiKeyCreateNestedManyWithoutAccountInput
+  polarSubscription?: Prisma.PolarSubscriptionCreateNestedOneWithoutAccountInput
+  inAppNotifications?: Prisma.InAppNotificationCreateNestedManyWithoutAccountInput
+}
+
+export type AccountUncheckedCreateWithoutNotificationPreferencesInput = {
+  id?: string
+  plan?: $Enums.PlanTier
+  polarCustomerId?: string | null
+  polarSubscriptionId?: string | null
+  createdAt?: Date | string
+  updatedAt?: Date | string
+  users?: Prisma.UserUncheckedCreateNestedManyWithoutAccountInput
+  projects?: Prisma.ProjectUncheckedCreateNestedManyWithoutAccountInput
+  apiKeys?: Prisma.ApiKeyUncheckedCreateNestedManyWithoutAccountInput
+  polarSubscription?: Prisma.PolarSubscriptionUncheckedCreateNestedOneWithoutAccountInput
+  inAppNotifications?: Prisma.InAppNotificationUncheckedCreateNestedManyWithoutAccountInput
+}
+
+export type AccountCreateOrConnectWithoutNotificationPreferencesInput = {
+  where: Prisma.AccountWhereUniqueInput
+  create: Prisma.XOR<Prisma.AccountCreateWithoutNotificationPreferencesInput, Prisma.AccountUncheckedCreateWithoutNotificationPreferencesInput>
+}
+
+export type AccountUpsertWithoutNotificationPreferencesInput = {
+  update: Prisma.XOR<Prisma.AccountUpdateWithoutNotificationPreferencesInput, Prisma.AccountUncheckedUpdateWithoutNotificationPreferencesInput>
+  create: Prisma.XOR<Prisma.AccountCreateWithoutNotificationPreferencesInput, Prisma.AccountUncheckedCreateWithoutNotificationPreferencesInput>
+  where?: Prisma.AccountWhereInput
+}
+
+export type AccountUpdateToOneWithWhereWithoutNotificationPreferencesInput = {
+  where?: Prisma.AccountWhereInput
+  data: Prisma.XOR<Prisma.AccountUpdateWithoutNotificationPreferencesInput, Prisma.AccountUncheckedUpdateWithoutNotificationPreferencesInput>
+}
+
+export type AccountUpdateWithoutNotificationPreferencesInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  plan?: Prisma.EnumPlanTierFieldUpdateOperationsInput | $Enums.PlanTier
+  polarCustomerId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  polarSubscriptionId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  users?: Prisma.UserUpdateManyWithoutAccountNestedInput
+  projects?: Prisma.ProjectUpdateManyWithoutAccountNestedInput
+  apiKeys?: Prisma.ApiKeyUpdateManyWithoutAccountNestedInput
+  polarSubscription?: Prisma.PolarSubscriptionUpdateOneWithoutAccountNestedInput
+  inAppNotifications?: Prisma.InAppNotificationUpdateManyWithoutAccountNestedInput
+}
+
+export type AccountUncheckedUpdateWithoutNotificationPreferencesInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  plan?: Prisma.EnumPlanTierFieldUpdateOperationsInput | $Enums.PlanTier
+  polarCustomerId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  polarSubscriptionId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  users?: Prisma.UserUncheckedUpdateManyWithoutAccountNestedInput
+  projects?: Prisma.ProjectUncheckedUpdateManyWithoutAccountNestedInput
+  apiKeys?: Prisma.ApiKeyUncheckedUpdateManyWithoutAccountNestedInput
+  polarSubscription?: Prisma.PolarSubscriptionUncheckedUpdateOneWithoutAccountNestedInput
+  inAppNotifications?: Prisma.InAppNotificationUncheckedUpdateManyWithoutAccountNestedInput
 }
 
 export type AccountCreateWithoutApiKeysInput = {
@@ -570,6 +772,8 @@ export type AccountCreateWithoutApiKeysInput = {
   users?: Prisma.UserCreateNestedManyWithoutAccountInput
   projects?: Prisma.ProjectCreateNestedManyWithoutAccountInput
   polarSubscription?: Prisma.PolarSubscriptionCreateNestedOneWithoutAccountInput
+  inAppNotifications?: Prisma.InAppNotificationCreateNestedManyWithoutAccountInput
+  notificationPreferences?: Prisma.NotificationPreferenceCreateNestedManyWithoutAccountInput
 }
 
 export type AccountUncheckedCreateWithoutApiKeysInput = {
@@ -582,6 +786,8 @@ export type AccountUncheckedCreateWithoutApiKeysInput = {
   users?: Prisma.UserUncheckedCreateNestedManyWithoutAccountInput
   projects?: Prisma.ProjectUncheckedCreateNestedManyWithoutAccountInput
   polarSubscription?: Prisma.PolarSubscriptionUncheckedCreateNestedOneWithoutAccountInput
+  inAppNotifications?: Prisma.InAppNotificationUncheckedCreateNestedManyWithoutAccountInput
+  notificationPreferences?: Prisma.NotificationPreferenceUncheckedCreateNestedManyWithoutAccountInput
 }
 
 export type AccountCreateOrConnectWithoutApiKeysInput = {
@@ -610,6 +816,8 @@ export type AccountUpdateWithoutApiKeysInput = {
   users?: Prisma.UserUpdateManyWithoutAccountNestedInput
   projects?: Prisma.ProjectUpdateManyWithoutAccountNestedInput
   polarSubscription?: Prisma.PolarSubscriptionUpdateOneWithoutAccountNestedInput
+  inAppNotifications?: Prisma.InAppNotificationUpdateManyWithoutAccountNestedInput
+  notificationPreferences?: Prisma.NotificationPreferenceUpdateManyWithoutAccountNestedInput
 }
 
 export type AccountUncheckedUpdateWithoutApiKeysInput = {
@@ -622,6 +830,8 @@ export type AccountUncheckedUpdateWithoutApiKeysInput = {
   users?: Prisma.UserUncheckedUpdateManyWithoutAccountNestedInput
   projects?: Prisma.ProjectUncheckedUpdateManyWithoutAccountNestedInput
   polarSubscription?: Prisma.PolarSubscriptionUncheckedUpdateOneWithoutAccountNestedInput
+  inAppNotifications?: Prisma.InAppNotificationUncheckedUpdateManyWithoutAccountNestedInput
+  notificationPreferences?: Prisma.NotificationPreferenceUncheckedUpdateManyWithoutAccountNestedInput
 }
 
 export type AccountCreateWithoutPolarSubscriptionInput = {
@@ -634,6 +844,8 @@ export type AccountCreateWithoutPolarSubscriptionInput = {
   users?: Prisma.UserCreateNestedManyWithoutAccountInput
   projects?: Prisma.ProjectCreateNestedManyWithoutAccountInput
   apiKeys?: Prisma.ApiKeyCreateNestedManyWithoutAccountInput
+  inAppNotifications?: Prisma.InAppNotificationCreateNestedManyWithoutAccountInput
+  notificationPreferences?: Prisma.NotificationPreferenceCreateNestedManyWithoutAccountInput
 }
 
 export type AccountUncheckedCreateWithoutPolarSubscriptionInput = {
@@ -646,6 +858,8 @@ export type AccountUncheckedCreateWithoutPolarSubscriptionInput = {
   users?: Prisma.UserUncheckedCreateNestedManyWithoutAccountInput
   projects?: Prisma.ProjectUncheckedCreateNestedManyWithoutAccountInput
   apiKeys?: Prisma.ApiKeyUncheckedCreateNestedManyWithoutAccountInput
+  inAppNotifications?: Prisma.InAppNotificationUncheckedCreateNestedManyWithoutAccountInput
+  notificationPreferences?: Prisma.NotificationPreferenceUncheckedCreateNestedManyWithoutAccountInput
 }
 
 export type AccountCreateOrConnectWithoutPolarSubscriptionInput = {
@@ -674,6 +888,8 @@ export type AccountUpdateWithoutPolarSubscriptionInput = {
   users?: Prisma.UserUpdateManyWithoutAccountNestedInput
   projects?: Prisma.ProjectUpdateManyWithoutAccountNestedInput
   apiKeys?: Prisma.ApiKeyUpdateManyWithoutAccountNestedInput
+  inAppNotifications?: Prisma.InAppNotificationUpdateManyWithoutAccountNestedInput
+  notificationPreferences?: Prisma.NotificationPreferenceUpdateManyWithoutAccountNestedInput
 }
 
 export type AccountUncheckedUpdateWithoutPolarSubscriptionInput = {
@@ -686,6 +902,8 @@ export type AccountUncheckedUpdateWithoutPolarSubscriptionInput = {
   users?: Prisma.UserUncheckedUpdateManyWithoutAccountNestedInput
   projects?: Prisma.ProjectUncheckedUpdateManyWithoutAccountNestedInput
   apiKeys?: Prisma.ApiKeyUncheckedUpdateManyWithoutAccountNestedInput
+  inAppNotifications?: Prisma.InAppNotificationUncheckedUpdateManyWithoutAccountNestedInput
+  notificationPreferences?: Prisma.NotificationPreferenceUncheckedUpdateManyWithoutAccountNestedInput
 }
 
 
@@ -697,12 +915,16 @@ export type AccountCountOutputType = {
   users: number
   projects: number
   apiKeys: number
+  inAppNotifications: number
+  notificationPreferences: number
 }
 
 export type AccountCountOutputTypeSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   users?: boolean | AccountCountOutputTypeCountUsersArgs
   projects?: boolean | AccountCountOutputTypeCountProjectsArgs
   apiKeys?: boolean | AccountCountOutputTypeCountApiKeysArgs
+  inAppNotifications?: boolean | AccountCountOutputTypeCountInAppNotificationsArgs
+  notificationPreferences?: boolean | AccountCountOutputTypeCountNotificationPreferencesArgs
 }
 
 /**
@@ -736,6 +958,20 @@ export type AccountCountOutputTypeCountApiKeysArgs<ExtArgs extends runtime.Types
   where?: Prisma.ApiKeyWhereInput
 }
 
+/**
+ * AccountCountOutputType without action
+ */
+export type AccountCountOutputTypeCountInAppNotificationsArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  where?: Prisma.InAppNotificationWhereInput
+}
+
+/**
+ * AccountCountOutputType without action
+ */
+export type AccountCountOutputTypeCountNotificationPreferencesArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  where?: Prisma.NotificationPreferenceWhereInput
+}
+
 
 export type AccountSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
   id?: boolean
@@ -748,6 +984,8 @@ export type AccountSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs 
   projects?: boolean | Prisma.Account$projectsArgs<ExtArgs>
   apiKeys?: boolean | Prisma.Account$apiKeysArgs<ExtArgs>
   polarSubscription?: boolean | Prisma.Account$polarSubscriptionArgs<ExtArgs>
+  inAppNotifications?: boolean | Prisma.Account$inAppNotificationsArgs<ExtArgs>
+  notificationPreferences?: boolean | Prisma.Account$notificationPreferencesArgs<ExtArgs>
   _count?: boolean | Prisma.AccountCountOutputTypeDefaultArgs<ExtArgs>
 }, ExtArgs["result"]["account"]>
 
@@ -784,6 +1022,8 @@ export type AccountInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs
   projects?: boolean | Prisma.Account$projectsArgs<ExtArgs>
   apiKeys?: boolean | Prisma.Account$apiKeysArgs<ExtArgs>
   polarSubscription?: boolean | Prisma.Account$polarSubscriptionArgs<ExtArgs>
+  inAppNotifications?: boolean | Prisma.Account$inAppNotificationsArgs<ExtArgs>
+  notificationPreferences?: boolean | Prisma.Account$notificationPreferencesArgs<ExtArgs>
   _count?: boolean | Prisma.AccountCountOutputTypeDefaultArgs<ExtArgs>
 }
 export type AccountIncludeCreateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {}
@@ -796,6 +1036,8 @@ export type $AccountPayload<ExtArgs extends runtime.Types.Extensions.InternalArg
     projects: Prisma.$ProjectPayload<ExtArgs>[]
     apiKeys: Prisma.$ApiKeyPayload<ExtArgs>[]
     polarSubscription: Prisma.$PolarSubscriptionPayload<ExtArgs> | null
+    inAppNotifications: Prisma.$InAppNotificationPayload<ExtArgs>[]
+    notificationPreferences: Prisma.$NotificationPreferencePayload<ExtArgs>[]
   }
   scalars: runtime.Types.Extensions.GetPayloadResult<{
     id: string
@@ -1202,6 +1444,8 @@ export interface Prisma__AccountClient<T, Null = never, ExtArgs extends runtime.
   projects<T extends Prisma.Account$projectsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Account$projectsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$ProjectPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   apiKeys<T extends Prisma.Account$apiKeysArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Account$apiKeysArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$ApiKeyPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   polarSubscription<T extends Prisma.Account$polarSubscriptionArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Account$polarSubscriptionArgs<ExtArgs>>): Prisma.Prisma__PolarSubscriptionClient<runtime.Types.Result.GetResult<Prisma.$PolarSubscriptionPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+  inAppNotifications<T extends Prisma.Account$inAppNotificationsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Account$inAppNotificationsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$InAppNotificationPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
+  notificationPreferences<T extends Prisma.Account$notificationPreferencesArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Account$notificationPreferencesArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$NotificationPreferencePayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   /**
    * Attaches callbacks for the resolution and/or rejection of the Promise.
    * @param onfulfilled The callback to execute when the Promise is resolved.
@@ -1718,6 +1962,54 @@ export type Account$polarSubscriptionArgs<ExtArgs extends runtime.Types.Extensio
    */
   include?: Prisma.PolarSubscriptionInclude<ExtArgs> | null
   where?: Prisma.PolarSubscriptionWhereInput
+}
+
+/**
+ * Account.inAppNotifications
+ */
+export type Account$inAppNotificationsArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  /**
+   * Select specific fields to fetch from the InAppNotification
+   */
+  select?: Prisma.InAppNotificationSelect<ExtArgs> | null
+  /**
+   * Omit specific fields from the InAppNotification
+   */
+  omit?: Prisma.InAppNotificationOmit<ExtArgs> | null
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.InAppNotificationInclude<ExtArgs> | null
+  where?: Prisma.InAppNotificationWhereInput
+  orderBy?: Prisma.InAppNotificationOrderByWithRelationInput | Prisma.InAppNotificationOrderByWithRelationInput[]
+  cursor?: Prisma.InAppNotificationWhereUniqueInput
+  take?: number
+  skip?: number
+  distinct?: Prisma.InAppNotificationScalarFieldEnum | Prisma.InAppNotificationScalarFieldEnum[]
+}
+
+/**
+ * Account.notificationPreferences
+ */
+export type Account$notificationPreferencesArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  /**
+   * Select specific fields to fetch from the NotificationPreference
+   */
+  select?: Prisma.NotificationPreferenceSelect<ExtArgs> | null
+  /**
+   * Omit specific fields from the NotificationPreference
+   */
+  omit?: Prisma.NotificationPreferenceOmit<ExtArgs> | null
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.NotificationPreferenceInclude<ExtArgs> | null
+  where?: Prisma.NotificationPreferenceWhereInput
+  orderBy?: Prisma.NotificationPreferenceOrderByWithRelationInput | Prisma.NotificationPreferenceOrderByWithRelationInput[]
+  cursor?: Prisma.NotificationPreferenceWhereUniqueInput
+  take?: number
+  skip?: number
+  distinct?: Prisma.NotificationPreferenceScalarFieldEnum | Prisma.NotificationPreferenceScalarFieldEnum[]
 }
 
 /**
