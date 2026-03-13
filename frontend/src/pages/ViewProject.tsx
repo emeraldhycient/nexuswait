@@ -1,9 +1,9 @@
 import { useParams, Link, useNavigate } from 'react-router-dom'
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import type { LucideIcon } from 'lucide-react'
 import {
   ArrowLeft, Users, TrendingUp, Share2, Eye, Copy,
-  Download, Filter, Pause, Play, Code, Globe, ArrowUpRight, Loader2, Save, Trash2, X, Check, Terminal, FileCode, Zap
+  Download, Pause, Play, Code, Globe, ArrowUpRight, Loader2, Save, Trash2, X, Check, Terminal, FileCode, Zap, Search
 } from 'lucide-react'
 import {
   useProject,
@@ -17,6 +17,7 @@ import {
   usePlatformConfig,
   getMutationErrorMessage,
 } from '../api/hooks'
+import { api } from '../api/client'
 import { CustomFieldsBuilder } from './CustomFieldsBuilder'
 import type { CustomFieldDefinition } from '../shared/hosted-page-types'
 
@@ -45,6 +46,17 @@ export default function ViewProject() {
   const [showEmbed, setShowEmbed] = useState(false)
   const [copiedSnippet, setCopiedSnippet] = useState<string | null>(null)
 
+  // ─── Subscriber filter state ─────────────────────────
+  const [subSearch, setSubSearch] = useState('')
+  const [subSource, setSubSource] = useState('')
+  const [subSort, setSubSort] = useState('newest')
+
+  const [debouncedSearch, setDebouncedSearch] = useState('')
+  useEffect(() => {
+    const timer = setTimeout(() => setDebouncedSearch(subSearch), 300)
+    return () => clearTimeout(timer)
+  }, [subSearch])
+
   // ─── Data hooks ────────────────────────────────────
   const { data: project, isLoading: projectLoading, error: projectError } = useProject(id)
   const updateProject = useUpdateProject(id)
@@ -53,7 +65,7 @@ export default function ViewProject() {
   const { data: overview } = useAnalyticsOverview(id)
   const { data: timeseries } = useAnalyticsTimeseries(id, period)
   const { data: sourcesData } = useAnalyticsSources(id)
-  const { data: subscribersData, isLoading: subsLoading } = useSubscribers(id)
+  const { data: subscribersData, isLoading: subsLoading } = useSubscribers(id, { search: debouncedSearch || undefined, source: subSource || undefined, sort: subSort })
   const { data: referralData } = useReferralLeaderboard(id)
   const { data: platformConfig } = usePlatformConfig()
   const apiUrl = platformConfig?.apiBaseUrl ?? 'https://api.nexuswait.io'
@@ -137,6 +149,28 @@ export default function ViewProject() {
     deleteProject.mutate(undefined, {
       onSuccess: () => navigate('/dashboard'),
     })
+  }
+
+  const handleExportCsv = async () => {
+    try {
+      const params = new URLSearchParams()
+      if (debouncedSearch) params.set('search', debouncedSearch)
+      if (subSource) params.set('source', subSource)
+      const { data } = await api.get(
+        `/projects/${id}/subscribers/export?${params}`,
+        { responseType: 'blob' },
+      )
+      const url = URL.createObjectURL(data as Blob)
+      const a = document.createElement('a')
+      a.href = url
+      a.download = `subscribers-${project?.slug ?? id}.csv`
+      document.body.appendChild(a)
+      a.click()
+      a.remove()
+      URL.revokeObjectURL(url)
+    } catch {
+      // silently fail — user can try again
+    }
   }
 
   // ─── Loading / Error ───────────────────────────────
@@ -302,12 +336,65 @@ export default function ViewProject() {
 
       {activeTab === 'Subscribers' && (
         <div className="animate-fade-in">
-          <div className="flex items-center justify-between mb-4">
-            <div className="flex items-center gap-2">
-              <button type="button" className="btn-ghost text-xs flex items-center gap-1.5"><Filter size={13} /> Filter</button>
-              <button type="button" className="btn-ghost text-xs flex items-center gap-1.5"><Download size={13} /> Export CSV</button>
+          {/* Filter bar */}
+          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 mb-4">
+            <div className="flex flex-wrap items-center gap-2">
+              {/* Search input */}
+              <div className="relative">
+                <Search size={13} className="absolute left-2.5 top-1/2 -translate-y-1/2 text-nexus-500" />
+                <input
+                  type="text"
+                  placeholder="Search name or email…"
+                  value={subSearch}
+                  onChange={e => setSubSearch(e.target.value)}
+                  className="pl-8 pr-3 py-1.5 text-xs font-mono bg-nexus-800/50 border border-nexus-700/30 rounded-lg text-nexus-200 placeholder:text-nexus-600 focus:outline-none focus:border-cyan-glow/30 w-52"
+                />
+              </div>
+              {/* Source filter */}
+              <select
+                value={subSource}
+                onChange={e => setSubSource(e.target.value)}
+                className="text-xs font-mono bg-nexus-800/50 border border-nexus-700/30 rounded-lg text-nexus-300 px-2.5 py-1.5 focus:outline-none focus:border-cyan-glow/30 appearance-none cursor-pointer"
+              >
+                <option value="">All Sources</option>
+                <option value="direct">Direct</option>
+                <option value="referral">Referral</option>
+                <option value="twitter">Twitter</option>
+                <option value="producthunt">ProductHunt</option>
+                <option value="embed_widget">Embed Widget</option>
+                <option value="api">API</option>
+              </select>
+              {/* Sort */}
+              <select
+                value={subSort}
+                onChange={e => setSubSort(e.target.value)}
+                className="text-xs font-mono bg-nexus-800/50 border border-nexus-700/30 rounded-lg text-nexus-300 px-2.5 py-1.5 focus:outline-none focus:border-cyan-glow/30 appearance-none cursor-pointer"
+              >
+                <option value="newest">Newest First</option>
+                <option value="oldest">Oldest First</option>
+                <option value="name">Name A–Z</option>
+              </select>
+              {/* Clear filters */}
+              {(subSearch || subSource || subSort !== 'newest') && (
+                <button
+                  type="button"
+                  onClick={() => { setSubSearch(''); setSubSource(''); setSubSort('newest') }}
+                  className="text-[10px] font-mono text-nexus-500 hover:text-magenta-glow transition-colors flex items-center gap-1"
+                >
+                  <X size={11} /> Clear
+                </button>
+              )}
             </div>
-            <span className="text-xs font-mono text-nexus-500">{subscribers.length.toLocaleString()} subscribers</span>
+            <div className="flex items-center gap-3">
+              <span className="text-xs font-mono text-nexus-500">{subscribers.length.toLocaleString()} subscribers</span>
+              <button
+                type="button"
+                onClick={handleExportCsv}
+                className="btn-ghost text-xs flex items-center gap-1.5"
+              >
+                <Download size={13} /> Export CSV
+              </button>
+            </div>
           </div>
 
           {subsLoading && <p className="text-nexus-500 text-sm">Loading subscribers...</p>}
@@ -326,7 +413,9 @@ export default function ViewProject() {
                   <tbody>
                     {subscribers.length === 0 && (
                       <tr>
-                        <td colSpan={6} className="px-4 py-8 text-center text-xs text-nexus-500">No subscribers yet.</td>
+                        <td colSpan={6} className="px-4 py-8 text-center text-xs text-nexus-500">
+                          {subSearch || subSource ? 'No subscribers match your filters.' : 'No subscribers yet.'}
+                        </td>
                       </tr>
                     )}
                     {subscribers.map((s, i) => {

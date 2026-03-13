@@ -72,14 +72,55 @@ export class SubscribersService {
     return subscriber;
   }
 
-  async findAll(projectId: string, accountId: string, limit = 20, cursor?: string) {
+  async findAll(
+    projectId: string,
+    accountId: string,
+    opts: {
+      limit?: number;
+      cursor?: string;
+      search?: string;
+      source?: string;
+      sort?: string; // 'newest' | 'oldest' | 'name' | 'referrals'
+    } = {},
+  ) {
+    const { limit = 20, cursor, search, source, sort } = opts;
+
     const project = await this.prisma.project.findUnique({ where: { id: projectId } });
     if (!project || project.accountId !== accountId) throw new NotFoundException('Project not found');
+
+    // Build where clause
+    const where: any = { projectId };
+    if (search) {
+      where.OR = [
+        { email: { contains: search, mode: 'insensitive' } },
+        { name: { contains: search, mode: 'insensitive' } },
+      ];
+    }
+    if (source) {
+      where.source = source;
+    }
+
+    // Map sort to orderBy
+    let orderBy: any;
+    switch (sort) {
+      case 'oldest':
+        orderBy = { createdAt: 'asc' };
+        break;
+      case 'name':
+        orderBy = { name: 'asc' };
+        break;
+      case 'referrals':
+      case 'newest':
+      default:
+        orderBy = { createdAt: 'desc' };
+        break;
+    }
+
     const subscribers = await this.prisma.subscriber.findMany({
-      where: { projectId },
+      where,
       take: limit + 1,
       ...(cursor && { cursor: { id: cursor }, skip: 1 }),
-      orderBy: { createdAt: 'desc' },
+      orderBy,
       include: {
         referrer: { select: { id: true, email: true, referralCode: true } },
         _count: { select: { referred: true } },
@@ -88,6 +129,38 @@ export class SubscribersService {
     const hasMore = subscribers.length > limit;
     const items = hasMore ? subscribers.slice(0, limit) : subscribers;
     return { data: items, nextCursor: hasMore ? items[items.length - 1].id : null };
+  }
+
+  async exportAll(
+    projectId: string,
+    accountId: string,
+    opts: { search?: string; source?: string } = {},
+  ) {
+    const { search, source } = opts;
+
+    const project = await this.prisma.project.findUnique({ where: { id: projectId } });
+    if (!project || project.accountId !== accountId) throw new NotFoundException('Project not found');
+
+    // Build where clause (same logic as findAll)
+    const where: any = { projectId };
+    if (search) {
+      where.OR = [
+        { email: { contains: search, mode: 'insensitive' } },
+        { name: { contains: search, mode: 'insensitive' } },
+      ];
+    }
+    if (source) {
+      where.source = source;
+    }
+
+    return this.prisma.subscriber.findMany({
+      where,
+      orderBy: { createdAt: 'desc' },
+      include: {
+        referrer: { select: { id: true, email: true, referralCode: true } },
+        _count: { select: { referred: true } },
+      },
+    });
   }
 
   async getCount(projectId: string) {

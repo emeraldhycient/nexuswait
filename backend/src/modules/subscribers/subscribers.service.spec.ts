@@ -169,7 +169,7 @@ describe('SubscribersService', () => {
         mockSubscribers,
       );
 
-      const result = await service.findAll('p1', 'acc-1', 2);
+      const result = await service.findAll('p1', 'acc-1', { limit: 2 });
 
       expect(result.data).toHaveLength(2);
       expect(result.nextCursor).toBe('s2');
@@ -187,7 +187,7 @@ describe('SubscribersService', () => {
         mockSubscribers,
       );
 
-      const result = await service.findAll('p1', 'acc-1', 20);
+      const result = await service.findAll('p1', 'acc-1', { limit: 20 });
 
       expect(result.data).toHaveLength(1);
       expect(result.nextCursor).toBeNull();
@@ -198,6 +198,216 @@ describe('SubscribersService', () => {
 
       await expect(
         service.findAll('unknown', 'acc-1'),
+      ).rejects.toThrow(NotFoundException);
+    });
+
+    it('should apply search filter on email and name', async () => {
+      (prisma.project.findUnique as jest.Mock).mockResolvedValue({
+        id: 'p1',
+        accountId: 'acc-1',
+      });
+      (prisma.subscriber.findMany as jest.Mock).mockResolvedValue([]);
+
+      await service.findAll('p1', 'acc-1', { search: 'john' });
+
+      expect(prisma.subscriber.findMany).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: {
+            projectId: 'p1',
+            OR: [
+              { email: { contains: 'john', mode: 'insensitive' } },
+              { name: { contains: 'john', mode: 'insensitive' } },
+            ],
+          },
+        }),
+      );
+    });
+
+    it('should apply source filter', async () => {
+      (prisma.project.findUnique as jest.Mock).mockResolvedValue({
+        id: 'p1',
+        accountId: 'acc-1',
+      });
+      (prisma.subscriber.findMany as jest.Mock).mockResolvedValue([]);
+
+      await service.findAll('p1', 'acc-1', { source: 'twitter' });
+
+      expect(prisma.subscriber.findMany).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: {
+            projectId: 'p1',
+            source: 'twitter',
+          },
+        }),
+      );
+    });
+
+    it('should combine search and source filters', async () => {
+      (prisma.project.findUnique as jest.Mock).mockResolvedValue({
+        id: 'p1',
+        accountId: 'acc-1',
+      });
+      (prisma.subscriber.findMany as jest.Mock).mockResolvedValue([]);
+
+      await service.findAll('p1', 'acc-1', { search: 'test', source: 'api' });
+
+      expect(prisma.subscriber.findMany).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: {
+            projectId: 'p1',
+            OR: [
+              { email: { contains: 'test', mode: 'insensitive' } },
+              { name: { contains: 'test', mode: 'insensitive' } },
+            ],
+            source: 'api',
+          },
+        }),
+      );
+    });
+
+    it('should sort by oldest (createdAt asc)', async () => {
+      (prisma.project.findUnique as jest.Mock).mockResolvedValue({
+        id: 'p1',
+        accountId: 'acc-1',
+      });
+      (prisma.subscriber.findMany as jest.Mock).mockResolvedValue([]);
+
+      await service.findAll('p1', 'acc-1', { sort: 'oldest' });
+
+      expect(prisma.subscriber.findMany).toHaveBeenCalledWith(
+        expect.objectContaining({
+          orderBy: { createdAt: 'asc' },
+        }),
+      );
+    });
+
+    it('should sort by name (name asc)', async () => {
+      (prisma.project.findUnique as jest.Mock).mockResolvedValue({
+        id: 'p1',
+        accountId: 'acc-1',
+      });
+      (prisma.subscriber.findMany as jest.Mock).mockResolvedValue([]);
+
+      await service.findAll('p1', 'acc-1', { sort: 'name' });
+
+      expect(prisma.subscriber.findMany).toHaveBeenCalledWith(
+        expect.objectContaining({
+          orderBy: { name: 'asc' },
+        }),
+      );
+    });
+
+    it('should default sort to newest (createdAt desc)', async () => {
+      (prisma.project.findUnique as jest.Mock).mockResolvedValue({
+        id: 'p1',
+        accountId: 'acc-1',
+      });
+      (prisma.subscriber.findMany as jest.Mock).mockResolvedValue([]);
+
+      await service.findAll('p1', 'acc-1');
+
+      expect(prisma.subscriber.findMany).toHaveBeenCalledWith(
+        expect.objectContaining({
+          orderBy: { createdAt: 'desc' },
+        }),
+      );
+    });
+
+    it('should use createdAt desc for referrals sort', async () => {
+      (prisma.project.findUnique as jest.Mock).mockResolvedValue({
+        id: 'p1',
+        accountId: 'acc-1',
+      });
+      (prisma.subscriber.findMany as jest.Mock).mockResolvedValue([]);
+
+      await service.findAll('p1', 'acc-1', { sort: 'referrals' });
+
+      expect(prisma.subscriber.findMany).toHaveBeenCalledWith(
+        expect.objectContaining({
+          orderBy: { createdAt: 'desc' },
+        }),
+      );
+    });
+  });
+
+  describe('exportAll', () => {
+    it('should return all subscribers without pagination', async () => {
+      (prisma.project.findUnique as jest.Mock).mockResolvedValue({
+        id: 'p1',
+        accountId: 'acc-1',
+      });
+      const mockSubscribers = [
+        { id: 's1', email: 'a@test.com' },
+        { id: 's2', email: 'b@test.com' },
+      ];
+      (prisma.subscriber.findMany as jest.Mock).mockResolvedValue(mockSubscribers);
+
+      const result = await service.exportAll('p1', 'acc-1');
+
+      expect(result).toEqual(mockSubscribers);
+      // Should not have take/cursor (no pagination)
+      expect(prisma.subscriber.findMany).toHaveBeenCalledWith(
+        expect.not.objectContaining({ take: expect.anything() }),
+      );
+    });
+
+    it('should apply search filter in exportAll', async () => {
+      (prisma.project.findUnique as jest.Mock).mockResolvedValue({
+        id: 'p1',
+        accountId: 'acc-1',
+      });
+      (prisma.subscriber.findMany as jest.Mock).mockResolvedValue([]);
+
+      await service.exportAll('p1', 'acc-1', { search: 'alice' });
+
+      expect(prisma.subscriber.findMany).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: {
+            projectId: 'p1',
+            OR: [
+              { email: { contains: 'alice', mode: 'insensitive' } },
+              { name: { contains: 'alice', mode: 'insensitive' } },
+            ],
+          },
+        }),
+      );
+    });
+
+    it('should apply source filter in exportAll', async () => {
+      (prisma.project.findUnique as jest.Mock).mockResolvedValue({
+        id: 'p1',
+        accountId: 'acc-1',
+      });
+      (prisma.subscriber.findMany as jest.Mock).mockResolvedValue([]);
+
+      await service.exportAll('p1', 'acc-1', { source: 'landing-page' });
+
+      expect(prisma.subscriber.findMany).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: {
+            projectId: 'p1',
+            source: 'landing-page',
+          },
+        }),
+      );
+    });
+
+    it('should throw NotFoundException for wrong project in exportAll', async () => {
+      (prisma.project.findUnique as jest.Mock).mockResolvedValue(null);
+
+      await expect(
+        service.exportAll('unknown', 'acc-1'),
+      ).rejects.toThrow(NotFoundException);
+    });
+
+    it('should throw NotFoundException when account does not own project in exportAll', async () => {
+      (prisma.project.findUnique as jest.Mock).mockResolvedValue({
+        id: 'p1',
+        accountId: 'other-acc',
+      });
+
+      await expect(
+        service.exportAll('p1', 'acc-1'),
       ).rejects.toThrow(NotFoundException);
     });
   });

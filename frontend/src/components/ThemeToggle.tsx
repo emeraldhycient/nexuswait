@@ -1,4 +1,4 @@
-import { Sun, Moon, Monitor } from 'lucide-react'
+import { Sun, Moon } from 'lucide-react'
 import { useTheme } from '../contexts/ThemeContext'
 
 interface ThemeToggleProps {
@@ -9,18 +9,16 @@ interface ThemeToggleProps {
 export default function ThemeToggle({ compact = false }: ThemeToggleProps) {
   const { mode, setMode } = useTheme()
 
-  // Cycle: dark -> light -> system -> dark
+  // Toggle: dark <-> light
   function cycle() {
-    const next = mode === 'dark' ? 'light' : mode === 'light' ? 'system' : 'dark'
-    setMode(next)
+    setMode(mode === 'dark' ? 'light' : 'dark')
   }
 
-  const icon =
-    mode === 'dark' ? <Moon size={compact ? 16 : 18} /> :
-    mode === 'light' ? <Sun size={compact ? 16 : 18} /> :
-    <Monitor size={compact ? 16 : 18} />
+  const icon = mode === 'dark'
+    ? <Moon size={compact ? 16 : 18} />
+    : <Sun size={compact ? 16 : 18} />
 
-  const label = mode === 'dark' ? 'Dark' : mode === 'light' ? 'Light' : 'System'
+  const label = mode === 'dark' ? 'Dark' : 'Light'
 
   return (
     <button

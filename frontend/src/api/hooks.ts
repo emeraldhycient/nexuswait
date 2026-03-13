@@ -95,11 +95,20 @@ export function useDeleteProject(id: string | undefined) {
 
 // ─── Subscribers ────────────────────────────────────────
 
-export function useSubscribers(projectId: string | undefined, opts: { enabled?: boolean } = {}) {
+export function useSubscribers(
+  projectId: string | undefined,
+  filters: { search?: string; source?: string; sort?: string } = {},
+  opts: { enabled?: boolean } = {},
+) {
   return useQuery({
-    queryKey: ['subscribers', projectId],
+    queryKey: ['subscribers', projectId, filters],
     queryFn: async () => {
-      const { data } = await api.get(`/projects/${projectId}/subscribers`)
+      const params = new URLSearchParams()
+      params.set('limit', '200')
+      if (filters.search) params.set('search', filters.search)
+      if (filters.source) params.set('source', filters.source)
+      if (filters.sort) params.set('sort', filters.sort)
+      const { data } = await api.get(`/projects/${projectId}/subscribers?${params}`)
       return data
     },
     enabled: !!projectId && (opts.enabled !== false),
