@@ -1,12 +1,17 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../../infrastructure/prisma/prisma.service';
 import { CreateProjectDto } from './dto/create-project.dto';
+import { PlanEnforcementService } from '../plan-config/plan-enforcement.service';
 
 @Injectable()
 export class ProjectsService {
-  constructor(private prisma: PrismaService) {}
+  constructor(
+    private prisma: PrismaService,
+    private planEnforcement: PlanEnforcementService,
+  ) {}
 
   async create(accountId: string, dto: CreateProjectDto) {
+    await this.planEnforcement.checkProjectLimit(accountId);
     const slug = dto.slug || dto.name.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '');
     return this.prisma.project.create({
       data: {

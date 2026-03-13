@@ -1,8 +1,11 @@
 import { Link } from 'react-router-dom'
-import { Check, Sparkles, HelpCircle } from 'lucide-react'
+import { Check, Sparkles, HelpCircle, Loader2 } from 'lucide-react'
 import { useState } from 'react'
+import { usePlans } from '../api/hooks'
+import type { PlanConfig } from '../api/hooks'
 
-const plans = [
+// Fallback plans used while API loads or if fetch fails
+const fallbackPlans = [
   {
     name: 'Spark',
     desc: 'Perfect for side projects and experiments.',
@@ -66,9 +69,28 @@ const faqs = [
   { q: 'Do you offer refunds?', a: 'We offer a 30-day money-back guarantee on all paid plans. If you\'re not satisfied, reach out and we\'ll process your refund.' },
 ]
 
+function mapApiPlan(p: PlanConfig) {
+  return {
+    name: p.displayName,
+    desc: p.description ?? '',
+    monthlyPrice: p.monthlyPriceCents / 100,
+    yearlyPrice: p.yearlyPriceCents / 100,
+    cta: p.ctaText,
+    highlight: p.highlight,
+    badge: p.highlight ? 'MOST POPULAR' : undefined,
+    features: p.features,
+  }
+}
+
 export default function Pricing() {
   const [annual, setAnnual] = useState(true)
   const [openFaq, setOpenFaq] = useState<number | null>(null)
+  const { data: apiPlans, isLoading } = usePlans()
+
+  // Use API plans if available, otherwise fallback
+  const plans = apiPlans && apiPlans.length > 0
+    ? apiPlans.filter(p => p.tier !== 'enterprise').map(mapApiPlan)
+    : fallbackPlans
 
   return (
     <div className="grid-bg min-h-screen">
@@ -103,57 +125,63 @@ export default function Pricing() {
         </div>
 
         {/* Plans */}
-        <div className="grid md:grid-cols-3 gap-5">
-          {plans.map((plan, i) => (
-            <div
-              key={plan.name}
-              className={`animate-slide-up relative card-surface p-7 flex flex-col ${
-                plan.highlight ? 'border-cyan-glow/25 box-glow-cyan' : ''
-              }`}
-              style={{ animationDelay: `${i * 0.1}s` }}
-            >
-              {'badge' in plan && plan.badge && (
-                <div className="absolute -top-3 left-1/2 -translate-x-1/2">
-                  <span className="inline-flex items-center gap-1 px-3 py-1 rounded-full bg-cyan-glow text-nexus-900 font-display text-[10px] font-bold tracking-widest">
-                    <Sparkles size={10} /> {plan.badge}
-                  </span>
-                </div>
-              )}
-
-              <div>
-                <h3 className="font-display text-lg font-bold text-nexus-100 tracking-wider">{plan.name}</h3>
-                <p className="text-sm text-nexus-400 mt-1">{plan.desc}</p>
-              </div>
-
-              <div className="mt-6 mb-6">
-                <span className="font-display text-4xl font-black text-nexus-50">
-                  ${annual ? plan.yearlyPrice : plan.monthlyPrice}
-                </span>
-                <span className="text-nexus-500 text-sm ml-1">/ mo</span>
-              </div>
-
-              <Link
-                to="/signup"
-                className={`no-underline text-center rounded-lg py-3 font-display text-sm font-bold tracking-wider uppercase transition-all ${
-                  plan.highlight
-                    ? 'btn-primary'
-                    : 'btn-secondary'
+        {isLoading ? (
+          <div className="flex justify-center py-16">
+            <Loader2 size={24} className="animate-spin text-nexus-500" />
+          </div>
+        ) : (
+          <div className={`grid gap-5 ${plans.length >= 3 ? 'md:grid-cols-3' : plans.length === 2 ? 'md:grid-cols-2 max-w-3xl mx-auto' : 'max-w-md mx-auto'}`}>
+            {plans.map((plan, i) => (
+              <div
+                key={plan.name}
+                className={`animate-slide-up relative card-surface p-7 flex flex-col ${
+                  plan.highlight ? 'border-cyan-glow/25 box-glow-cyan' : ''
                 }`}
+                style={{ animationDelay: `${i * 0.1}s` }}
               >
-                {plan.cta}
-              </Link>
+                {'badge' in plan && plan.badge && (
+                  <div className="absolute -top-3 left-1/2 -translate-x-1/2">
+                    <span className="inline-flex items-center gap-1 px-3 py-1 rounded-full bg-cyan-glow text-nexus-900 font-display text-[10px] font-bold tracking-widest">
+                      <Sparkles size={10} /> {plan.badge}
+                    </span>
+                  </div>
+                )}
 
-              <ul className="mt-7 space-y-3 flex-1">
-                {plan.features.map((f, j) => (
-                  <li key={j} className="flex items-start gap-2.5 text-sm text-nexus-300">
-                    <Check size={15} className="text-cyan-glow mt-0.5 shrink-0" />
-                    {f}
-                  </li>
-                ))}
-              </ul>
-            </div>
-          ))}
-        </div>
+                <div>
+                  <h3 className="font-display text-lg font-bold text-nexus-100 tracking-wider">{plan.name}</h3>
+                  <p className="text-sm text-nexus-400 mt-1">{plan.desc}</p>
+                </div>
+
+                <div className="mt-6 mb-6">
+                  <span className="font-display text-4xl font-black text-nexus-50">
+                    ${annual ? plan.yearlyPrice : plan.monthlyPrice}
+                  </span>
+                  <span className="text-nexus-500 text-sm ml-1">/ mo</span>
+                </div>
+
+                <Link
+                  to="/signup"
+                  className={`no-underline text-center rounded-lg py-3 font-display text-sm font-bold tracking-wider uppercase transition-all ${
+                    plan.highlight
+                      ? 'btn-primary'
+                      : 'btn-secondary'
+                  }`}
+                >
+                  {plan.cta}
+                </Link>
+
+                <ul className="mt-7 space-y-3 flex-1">
+                  {plan.features.map((f, j) => (
+                    <li key={j} className="flex items-start gap-2.5 text-sm text-nexus-300">
+                      <Check size={15} className="text-cyan-glow mt-0.5 shrink-0" />
+                      {f}
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            ))}
+          </div>
+        )}
 
         {/* FAQ */}
         <div className="mt-28 max-w-2xl mx-auto">

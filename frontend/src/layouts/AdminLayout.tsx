@@ -5,6 +5,7 @@ import type { LucideIcon } from 'lucide-react'
 import {
   LayoutDashboard, Users, FolderOpen, UserPlus, Plug, Bell, Server,
   LogOut, ChevronLeft, ChevronRight, Search, User, ArrowLeft,
+  CreditCard, FileText,
 } from 'lucide-react'
 import { useAuth } from '../contexts/AuthContext'
 
@@ -14,6 +15,8 @@ const sidebarItems: { to: string; icon: LucideIcon; label: string }[] = [
   { to: '/admin/projects', icon: FolderOpen, label: 'Projects' },
   { to: '/admin/subscribers', icon: UserPlus, label: 'Subscribers' },
   { to: '/admin/integrations', icon: Plug, label: 'Integrations' },
+  { to: '/admin/plans', icon: CreditCard, label: 'Plans' },
+  { to: '/admin/webhook-logs', icon: FileText, label: 'Webhook Logs' },
   { to: '/admin/notifications', icon: Bell, label: 'Notifications' },
   { to: '/admin/system', icon: Server, label: 'System' },
 ]

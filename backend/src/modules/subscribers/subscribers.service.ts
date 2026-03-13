@@ -4,12 +4,14 @@ import { PrismaService } from '../../infrastructure/prisma/prisma.service';
 import { randomBytes } from 'crypto';
 import { CreateSubscriberDto } from './dto/create-subscriber.dto';
 import { UpdateSubscriberDto } from './dto/update-subscriber.dto';
+import { PlanEnforcementService } from '../plan-config/plan-enforcement.service';
 
 @Injectable()
 export class SubscribersService {
   constructor(
     private prisma: PrismaService,
     private eventEmitter: EventEmitter2,
+    private planEnforcement: PlanEnforcementService,
   ) {}
 
   private generateReferralCode(): string {
@@ -19,6 +21,9 @@ export class SubscribersService {
   async create(projectId: string, dto: CreateSubscriberDto, ref?: string) {
     const project = await this.prisma.project.findUnique({ where: { id: projectId } });
     if (!project) throw new NotFoundException('Project not found');
+
+    // Check subscriber limit for the account's plan
+    await this.planEnforcement.checkSubscriberLimit(project.accountId);
 
     // Validate required custom fields
     const customFields = (project.customFields ?? []) as { fieldKey?: string; label?: string; required?: boolean }[];

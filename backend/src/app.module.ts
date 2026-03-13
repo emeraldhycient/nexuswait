@@ -17,6 +17,7 @@ import { ReferralsModule } from './modules/referrals/referrals.module';
 import { IntegrationsModule } from './modules/integrations/integrations.module';
 import { AdminModule } from './modules/admin/admin.module';
 import { PlatformConfigModule } from './modules/platform-config/platform-config.module';
+import { PlanConfigModule } from './modules/plan-config/plan-config.module';
 
 @Module({
   imports: [
@@ -37,6 +38,7 @@ import { PlatformConfigModule } from './modules/platform-config/platform-config.
     IntegrationsModule,
     AdminModule,
     PlatformConfigModule,
+    PlanConfigModule,
   ],
   controllers: [HealthController],
 })

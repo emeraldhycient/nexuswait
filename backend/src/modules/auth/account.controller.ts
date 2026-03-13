@@ -2,11 +2,15 @@ import { Controller, Get, UseGuards } from '@nestjs/common';
 import { AuthGuard } from '@nestjs/passport';
 import { JwtPayloadDecorator } from './jwt-payload.decorator';
 import { PrismaService } from '../../infrastructure/prisma/prisma.service';
+import { PlanEnforcementService } from '../plan-config/plan-enforcement.service';
 
 @Controller('account')
 @UseGuards(AuthGuard('jwt'))
 export class AccountController {
-  constructor(private prisma: PrismaService) {}
+  constructor(
+    private prisma: PrismaService,
+    private planEnforcement: PlanEnforcementService,
+  ) {}
 
   @Get()
   async getAccount(@JwtPayloadDecorator() payload: { accountId: string }) {
@@ -24,16 +28,19 @@ export class AccountController {
       where: { id: payload.accountId },
       select: { id: true, plan: true, polarSubscriptionId: true },
     });
-    if (!account) return { plan: 'spark', usage: { projects: 0, signups: 0 } };
-    const [projectsCount, signupsCount] = await Promise.all([
-      this.prisma.project.count({ where: { accountId: payload.accountId } }),
-      this.prisma.subscriber.count({
-        where: { project: { accountId: payload.accountId } },
-      }),
+    if (!account) return { plan: 'spark', usage: { projects: { used: 0, limit: null }, signups: { used: 0, limit: null }, integrations: { used: 0, limit: null } } };
+
+    const [usage, planConfig, polarSubscription] = await Promise.all([
+      this.planEnforcement.getUsage(payload.accountId),
+      this.prisma.planConfig.findUnique({ where: { tier: account.plan } }),
+      this.prisma.polarSubscription.findUnique({ where: { accountId: payload.accountId } }),
     ]);
+
     return {
       plan: account.plan,
-      usage: { projects: projectsCount, signups: signupsCount },
+      planConfig,
+      usage,
+      polarSubscription,
       nextBillingDate: null,
     };
   }

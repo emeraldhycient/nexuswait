@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 import type { LucideIcon } from 'lucide-react'
-import { User, Bell, Shield, CreditCard, Key, Save, Plus, Trash2, Loader2 } from 'lucide-react'
+import { User, Bell, Shield, CreditCard, Key, Save, Plus, Trash2, Loader2, AlertTriangle, ArrowUpRight, Check } from 'lucide-react'
 import { useAuth } from '../contexts/AuthContext'
 import {
   useUpdateProfile,
@@ -10,8 +10,11 @@ import {
   useRevokeApiKey,
   useBilling,
   useCheckoutSession,
+  usePlans,
+  useCancelSubscription,
   getMutationErrorMessage,
 } from '../api/hooks'
+import type { PlanConfig } from '../api/hooks'
 
 type SettingsTabId = 'profile' | 'notifications' | 'security' | 'billing'
 
@@ -126,16 +129,24 @@ export default function Settings() {
   const billing = billingData as
     | {
         plan?: string
+        planConfig?: PlanConfig
         price?: number
         interval?: string
         nextBillingDate?: string
         usage?: {
-          signups?: { used?: number; limit?: number }
-          projects?: { used?: number; limit?: number }
+          signups?: { used?: number; limit?: number | null }
+          projects?: { used?: number; limit?: number | null }
+          integrations?: { used?: number; limit?: number | null }
         }
+        polarSubscription?: Record<string, unknown>
       }
     | undefined
   const checkout = useCheckoutSession()
+  const { data: allPlans } = usePlans()
+  const cancelSub = useCancelSubscription()
+  const [showUpgrade, setShowUpgrade] = useState(false)
+  const [showCancelConfirm, setShowCancelConfirm] = useState(false)
+  const [annual, setAnnual] = useState(true)
 
   return (
     <div className="animate-fade-in">
@@ -373,6 +384,7 @@ export default function Settings() {
 
               {!billingLoading && (
                 <>
+                  {/* Current Plan */}
                   <div className="card-surface p-6">
                     <div className="flex items-center justify-between mb-4">
                       <h2 className="font-display text-sm font-bold text-nexus-200 tracking-widest uppercase">Current Plan</h2>
@@ -394,54 +406,171 @@ export default function Settings() {
                     <div className="flex gap-2">
                       <button
                         type="button"
-                        onClick={() => checkout.mutate({})}
-                        disabled={checkout.isPending}
-                        className="btn-secondary text-xs py-1.5 px-3"
+                        onClick={() => setShowUpgrade(!showUpgrade)}
+                        className="btn-secondary text-xs py-1.5 px-3 flex items-center gap-1.5"
                       >
-                        {checkout.isPending ? 'Redirecting...' : 'Change Plan'}
+                        <ArrowUpRight size={12} /> Change Plan
                       </button>
-                      <button type="button" className="btn-ghost text-xs text-nexus-500">Cancel Subscription</button>
+                      {billing?.plan && billing.plan !== 'spark' && (
+                        <button
+                          type="button"
+                          onClick={() => setShowCancelConfirm(true)}
+                          className="btn-ghost text-xs text-nexus-500 hover:text-magenta-glow"
+                        >
+                          Cancel Subscription
+                        </button>
+                      )}
                     </div>
+
+                    {/* Cancel confirmation */}
+                    {showCancelConfirm && (
+                      <div className="mt-4 p-4 rounded-lg bg-magenta-glow/5 border border-magenta-glow/20">
+                        <p className="text-sm text-nexus-200 mb-3">
+                          Are you sure you want to cancel? Your plan will be downgraded at the end of the current billing period.
+                        </p>
+                        <div className="flex gap-2">
+                          <button
+                            type="button"
+                            onClick={() => cancelSub.mutate(undefined, { onSuccess: () => setShowCancelConfirm(false) })}
+                            disabled={cancelSub.isPending}
+                            className="btn-primary text-xs bg-magenta-glow hover:bg-magenta-glow/80 flex items-center gap-1.5"
+                          >
+                            {cancelSub.isPending ? <Loader2 size={12} className="animate-spin" /> : null}
+                            {cancelSub.isPending ? 'Cancelling...' : 'Yes, Cancel'}
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => setShowCancelConfirm(false)}
+                            className="btn-ghost text-xs"
+                          >
+                            Keep Plan
+                          </button>
+                        </div>
+                        {cancelSub.isError && (
+                          <p className="text-magenta-glow text-xs mt-2">{getMutationErrorMessage(cancelSub.error)}</p>
+                        )}
+                      </div>
+                    )}
                   </div>
 
+                  {/* Upgrade selector */}
+                  {showUpgrade && allPlans && allPlans.length > 0 && (
+                    <div className="card-surface p-6">
+                      <div className="flex items-center justify-between mb-4">
+                        <h2 className="font-display text-sm font-bold text-nexus-200 tracking-widest uppercase">Choose a Plan</h2>
+                        <div className="flex gap-1 p-0.5 rounded-full bg-nexus-800/50 border border-nexus-700/20">
+                          <button
+                            type="button"
+                            onClick={() => setAnnual(false)}
+                            className={`px-3 py-1 rounded-full text-[10px] font-semibold transition-all ${!annual ? 'bg-cyan-glow/10 text-cyan-glow' : 'text-nexus-500'}`}
+                          >
+                            Monthly
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => setAnnual(true)}
+                            className={`px-3 py-1 rounded-full text-[10px] font-semibold transition-all ${annual ? 'bg-cyan-glow/10 text-cyan-glow' : 'text-nexus-500'}`}
+                          >
+                            Annual
+                          </button>
+                        </div>
+                      </div>
+                      <div className="grid gap-3">
+                        {allPlans.map((p: PlanConfig) => {
+                          const isCurrent = p.tier === (billing?.plan ?? 'spark')
+                          const price = annual ? p.yearlyPriceCents : p.monthlyPriceCents
+                          const productId = annual ? p.polarProductIdYearly : p.polarProductIdMonthly
+                          return (
+                            <div
+                              key={p.tier}
+                              className={`flex items-center justify-between p-4 rounded-lg border transition-all ${
+                                isCurrent ? 'border-cyan-glow/25 bg-cyan-glow/[0.03]' : 'border-nexus-700/20 hover:border-nexus-600/30'
+                              }`}
+                            >
+                              <div className="flex-1">
+                                <div className="flex items-center gap-2">
+                                  <span className="text-sm font-bold text-nexus-200">{p.displayName}</span>
+                                  {isCurrent && (
+                                    <span className="text-[8px] font-mono bg-cyan-glow/10 text-cyan-glow px-1.5 py-0.5 rounded tracking-wider">CURRENT</span>
+                                  )}
+                                </div>
+                                <div className="flex items-center gap-3 mt-1">
+                                  <span className="text-sm font-mono font-bold text-nexus-100">${(price / 100).toFixed(0)}/mo</span>
+                                  <span className="text-xs text-nexus-500">
+                                    {p.maxProjects != null ? `${p.maxProjects} projects` : 'Unlimited projects'}
+                                    {' | '}
+                                    {p.maxSubscribersMonth != null ? `${p.maxSubscribersMonth.toLocaleString()} signups/mo` : 'Unlimited signups'}
+                                  </span>
+                                </div>
+                              </div>
+                              {!isCurrent && productId && (
+                                <button
+                                  type="button"
+                                  onClick={() => checkout.mutate({ productId })}
+                                  disabled={checkout.isPending}
+                                  className="btn-primary text-xs py-1.5 px-4"
+                                >
+                                  {checkout.isPending ? 'Redirecting...' : p.ctaText}
+                                </button>
+                              )}
+                              {isCurrent && <Check size={16} className="text-cyan-glow" />}
+                            </div>
+                          )
+                        })}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Usage */}
                   <div className="card-surface p-6">
                     <h2 className="font-display text-sm font-bold text-nexus-200 tracking-widest uppercase mb-4">Usage This Month</h2>
                     <div className="space-y-4">
-                      <div>
-                        <div className="flex items-center justify-between mb-1.5">
-                          <span className="text-xs text-nexus-400">Signups</span>
-                          <span className="text-xs font-mono text-nexus-400">
-                            {(billing?.usage?.signups?.used ?? 0).toLocaleString()} / {(billing?.usage?.signups?.limit ?? 0).toLocaleString()}
-                          </span>
-                        </div>
-                        <div className="h-2 bg-nexus-700/30 rounded-full overflow-hidden">
-                          <div
-                            className="h-full rounded-full bg-cyan-glow/60"
-                            style={{
-                              width: `${billing?.usage?.signups?.limit ? Math.min(((billing.usage.signups.used ?? 0) / billing.usage.signups.limit) * 100, 100) : 0}%`,
-                            }}
-                          />
-                        </div>
-                      </div>
-                      <div>
-                        <div className="flex items-center justify-between mb-1.5">
-                          <span className="text-xs text-nexus-400">Projects</span>
-                          <span className="text-xs font-mono text-nexus-400">
-                            {(billing?.usage?.projects?.used ?? 0).toLocaleString()} / {(billing?.usage?.projects?.limit ?? 0).toLocaleString()}
-                          </span>
-                        </div>
-                        <div className="h-2 bg-nexus-700/30 rounded-full overflow-hidden">
-                          <div
-                            className="h-full rounded-full bg-violet-glow/60"
-                            style={{
-                              width: `${billing?.usage?.projects?.limit ? Math.min(((billing.usage.projects.used ?? 0) / billing.usage.projects.limit) * 100, 100) : 0}%`,
-                            }}
-                          />
-                        </div>
-                      </div>
+                      {[
+                        { label: 'Signups', data: billing?.usage?.signups, color: 'cyan-glow' },
+                        { label: 'Projects', data: billing?.usage?.projects, color: 'violet-glow' },
+                        { label: 'Integrations', data: billing?.usage?.integrations, color: 'magenta-glow' },
+                      ].map(item => {
+                        const used = item.data?.used ?? 0
+                        const limit = item.data?.limit
+                        const pct = limit ? Math.min((used / limit) * 100, 100) : 0
+                        const isWarning = limit != null && pct >= 80 && pct < 100
+                        const isMaxed = limit != null && pct >= 100
+                        return (
+                          <div key={item.label}>
+                            <div className="flex items-center justify-between mb-1.5">
+                              <span className="text-xs text-nexus-400">{item.label}</span>
+                              <span className="text-xs font-mono text-nexus-400">
+                                {used.toLocaleString()} / {limit != null ? limit.toLocaleString() : 'Unlimited'}
+                              </span>
+                            </div>
+                            <div className="h-2 bg-nexus-700/30 rounded-full overflow-hidden">
+                              <div
+                                className={`h-full rounded-full transition-all ${
+                                  isMaxed ? 'bg-magenta-glow' : isWarning ? 'bg-amber-glow' : `bg-${item.color}/60`
+                                }`}
+                                style={{ width: limit ? `${pct}%` : '0%' }}
+                              />
+                            </div>
+                            {isWarning && (
+                              <p className="flex items-center gap-1 text-[10px] text-amber-glow mt-1">
+                                <AlertTriangle size={10} /> Approaching limit ({pct.toFixed(0)}% used)
+                              </p>
+                            )}
+                            {isMaxed && (
+                              <p className="flex items-center gap-1 text-[10px] text-magenta-glow mt-1">
+                                <AlertTriangle size={10} /> Limit reached!{' '}
+                                <button type="button" onClick={() => setShowUpgrade(true)} className="underline hover:text-magenta-glow/80">
+                                  Upgrade now
+                                </button>
+                              </p>
+                            )}
+                          </div>
+                        )
+                      })}
                     </div>
                   </div>
 
+                  {/* Payment Method */}
                   <div className="card-surface p-6">
                     <h2 className="font-display text-sm font-bold text-nexus-200 tracking-widest uppercase mb-4">Payment Method</h2>
                     <div className="flex items-center gap-3 p-3 rounded-lg bg-nexus-900/50 border border-nexus-700/30">

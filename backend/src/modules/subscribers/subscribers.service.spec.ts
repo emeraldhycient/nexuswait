@@ -3,6 +3,7 @@ import { NotFoundException } from '@nestjs/common';
 import { EventEmitter2 } from '@nestjs/event-emitter';
 import { SubscribersService } from './subscribers.service';
 import { PrismaService } from '../../infrastructure/prisma/prisma.service';
+import { PlanEnforcementService } from '../plan-config/plan-enforcement.service';
 
 describe('SubscribersService', () => {
   let service: SubscribersService;
@@ -27,11 +28,18 @@ describe('SubscribersService', () => {
 
     eventEmitter = { emit: jest.fn() };
 
+    const mockPlanEnforcement = {
+      checkProjectLimit: jest.fn().mockResolvedValue(undefined),
+      checkSubscriberLimit: jest.fn().mockResolvedValue(undefined),
+      checkIntegrationLimit: jest.fn().mockResolvedValue(undefined),
+    };
+
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         SubscribersService,
         { provide: PrismaService, useValue: mockPrisma },
         { provide: EventEmitter2, useValue: eventEmitter },
+        { provide: PlanEnforcementService, useValue: mockPlanEnforcement },
       ],
     }).compile();
 

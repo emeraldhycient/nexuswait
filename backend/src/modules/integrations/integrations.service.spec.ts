@@ -3,6 +3,7 @@ import { NotFoundException } from '@nestjs/common';
 import { IntegrationsService } from './integrations.service';
 import { PrismaService } from '../../infrastructure/prisma/prisma.service';
 import { WebhookDeliveryService } from './webhook-delivery.service';
+import { PlanEnforcementService } from '../plan-config/plan-enforcement.service';
 
 describe('IntegrationsService', () => {
   let service: IntegrationsService;
@@ -44,11 +45,18 @@ describe('IntegrationsService', () => {
       deliverTest: jest.fn(),
     };
 
+    const mockPlanEnforcement = {
+      checkProjectLimit: jest.fn().mockResolvedValue(undefined),
+      checkSubscriberLimit: jest.fn().mockResolvedValue(undefined),
+      checkIntegrationLimit: jest.fn().mockResolvedValue(undefined),
+    };
+
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         IntegrationsService,
         { provide: PrismaService, useValue: mockPrisma },
         { provide: WebhookDeliveryService, useValue: mockWebhookDelivery },
+        { provide: PlanEnforcementService, useValue: mockPlanEnforcement },
       ],
     }).compile();
 

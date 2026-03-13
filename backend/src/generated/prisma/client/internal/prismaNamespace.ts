@@ -396,7 +396,10 @@ export const ModelName = {
   NotificationPreference: 'NotificationPreference',
   ApiKey: 'ApiKey',
   PolarSubscription: 'PolarSubscription',
-  PlatformConfig: 'PlatformConfig'
+  PlatformConfig: 'PlatformConfig',
+  PlanConfig: 'PlanConfig',
+  WebhookEvent: 'WebhookEvent',
+  WebhookDeliveryLog: 'WebhookDeliveryLog'
 } as const
 
 export type ModelName = (typeof ModelName)[keyof typeof ModelName]
@@ -412,7 +415,7 @@ export type TypeMap<ExtArgs extends runtime.Types.Extensions.InternalArgs = runt
     omit: GlobalOmitOptions
   }
   meta: {
-    modelProps: "account" | "user" | "project" | "subscriber" | "integration" | "hostedPage" | "notification" | "notificationTemplate" | "inAppNotification" | "notificationPreference" | "apiKey" | "polarSubscription" | "platformConfig"
+    modelProps: "account" | "user" | "project" | "subscriber" | "integration" | "hostedPage" | "notification" | "notificationTemplate" | "inAppNotification" | "notificationPreference" | "apiKey" | "polarSubscription" | "platformConfig" | "planConfig" | "webhookEvent" | "webhookDeliveryLog"
     txIsolationLevel: TransactionIsolationLevel
   }
   model: {
@@ -1378,6 +1381,228 @@ export type TypeMap<ExtArgs extends runtime.Types.Extensions.InternalArgs = runt
         }
       }
     }
+    PlanConfig: {
+      payload: Prisma.$PlanConfigPayload<ExtArgs>
+      fields: Prisma.PlanConfigFieldRefs
+      operations: {
+        findUnique: {
+          args: Prisma.PlanConfigFindUniqueArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$PlanConfigPayload> | null
+        }
+        findUniqueOrThrow: {
+          args: Prisma.PlanConfigFindUniqueOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$PlanConfigPayload>
+        }
+        findFirst: {
+          args: Prisma.PlanConfigFindFirstArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$PlanConfigPayload> | null
+        }
+        findFirstOrThrow: {
+          args: Prisma.PlanConfigFindFirstOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$PlanConfigPayload>
+        }
+        findMany: {
+          args: Prisma.PlanConfigFindManyArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$PlanConfigPayload>[]
+        }
+        create: {
+          args: Prisma.PlanConfigCreateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$PlanConfigPayload>
+        }
+        createMany: {
+          args: Prisma.PlanConfigCreateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        createManyAndReturn: {
+          args: Prisma.PlanConfigCreateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$PlanConfigPayload>[]
+        }
+        delete: {
+          args: Prisma.PlanConfigDeleteArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$PlanConfigPayload>
+        }
+        update: {
+          args: Prisma.PlanConfigUpdateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$PlanConfigPayload>
+        }
+        deleteMany: {
+          args: Prisma.PlanConfigDeleteManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateMany: {
+          args: Prisma.PlanConfigUpdateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateManyAndReturn: {
+          args: Prisma.PlanConfigUpdateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$PlanConfigPayload>[]
+        }
+        upsert: {
+          args: Prisma.PlanConfigUpsertArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$PlanConfigPayload>
+        }
+        aggregate: {
+          args: Prisma.PlanConfigAggregateArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.AggregatePlanConfig>
+        }
+        groupBy: {
+          args: Prisma.PlanConfigGroupByArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.PlanConfigGroupByOutputType>[]
+        }
+        count: {
+          args: Prisma.PlanConfigCountArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.PlanConfigCountAggregateOutputType> | number
+        }
+      }
+    }
+    WebhookEvent: {
+      payload: Prisma.$WebhookEventPayload<ExtArgs>
+      fields: Prisma.WebhookEventFieldRefs
+      operations: {
+        findUnique: {
+          args: Prisma.WebhookEventFindUniqueArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$WebhookEventPayload> | null
+        }
+        findUniqueOrThrow: {
+          args: Prisma.WebhookEventFindUniqueOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$WebhookEventPayload>
+        }
+        findFirst: {
+          args: Prisma.WebhookEventFindFirstArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$WebhookEventPayload> | null
+        }
+        findFirstOrThrow: {
+          args: Prisma.WebhookEventFindFirstOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$WebhookEventPayload>
+        }
+        findMany: {
+          args: Prisma.WebhookEventFindManyArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$WebhookEventPayload>[]
+        }
+        create: {
+          args: Prisma.WebhookEventCreateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$WebhookEventPayload>
+        }
+        createMany: {
+          args: Prisma.WebhookEventCreateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        createManyAndReturn: {
+          args: Prisma.WebhookEventCreateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$WebhookEventPayload>[]
+        }
+        delete: {
+          args: Prisma.WebhookEventDeleteArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$WebhookEventPayload>
+        }
+        update: {
+          args: Prisma.WebhookEventUpdateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$WebhookEventPayload>
+        }
+        deleteMany: {
+          args: Prisma.WebhookEventDeleteManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateMany: {
+          args: Prisma.WebhookEventUpdateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateManyAndReturn: {
+          args: Prisma.WebhookEventUpdateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$WebhookEventPayload>[]
+        }
+        upsert: {
+          args: Prisma.WebhookEventUpsertArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$WebhookEventPayload>
+        }
+        aggregate: {
+          args: Prisma.WebhookEventAggregateArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.AggregateWebhookEvent>
+        }
+        groupBy: {
+          args: Prisma.WebhookEventGroupByArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.WebhookEventGroupByOutputType>[]
+        }
+        count: {
+          args: Prisma.WebhookEventCountArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.WebhookEventCountAggregateOutputType> | number
+        }
+      }
+    }
+    WebhookDeliveryLog: {
+      payload: Prisma.$WebhookDeliveryLogPayload<ExtArgs>
+      fields: Prisma.WebhookDeliveryLogFieldRefs
+      operations: {
+        findUnique: {
+          args: Prisma.WebhookDeliveryLogFindUniqueArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$WebhookDeliveryLogPayload> | null
+        }
+        findUniqueOrThrow: {
+          args: Prisma.WebhookDeliveryLogFindUniqueOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$WebhookDeliveryLogPayload>
+        }
+        findFirst: {
+          args: Prisma.WebhookDeliveryLogFindFirstArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$WebhookDeliveryLogPayload> | null
+        }
+        findFirstOrThrow: {
+          args: Prisma.WebhookDeliveryLogFindFirstOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$WebhookDeliveryLogPayload>
+        }
+        findMany: {
+          args: Prisma.WebhookDeliveryLogFindManyArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$WebhookDeliveryLogPayload>[]
+        }
+        create: {
+          args: Prisma.WebhookDeliveryLogCreateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$WebhookDeliveryLogPayload>
+        }
+        createMany: {
+          args: Prisma.WebhookDeliveryLogCreateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        createManyAndReturn: {
+          args: Prisma.WebhookDeliveryLogCreateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$WebhookDeliveryLogPayload>[]
+        }
+        delete: {
+          args: Prisma.WebhookDeliveryLogDeleteArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$WebhookDeliveryLogPayload>
+        }
+        update: {
+          args: Prisma.WebhookDeliveryLogUpdateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$WebhookDeliveryLogPayload>
+        }
+        deleteMany: {
+          args: Prisma.WebhookDeliveryLogDeleteManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateMany: {
+          args: Prisma.WebhookDeliveryLogUpdateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateManyAndReturn: {
+          args: Prisma.WebhookDeliveryLogUpdateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$WebhookDeliveryLogPayload>[]
+        }
+        upsert: {
+          args: Prisma.WebhookDeliveryLogUpsertArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$WebhookDeliveryLogPayload>
+        }
+        aggregate: {
+          args: Prisma.WebhookDeliveryLogAggregateArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.AggregateWebhookDeliveryLog>
+        }
+        groupBy: {
+          args: Prisma.WebhookDeliveryLogGroupByArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.WebhookDeliveryLogGroupByOutputType>[]
+        }
+        count: {
+          args: Prisma.WebhookDeliveryLogCountArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.WebhookDeliveryLogCountAggregateOutputType> | number
+        }
+      }
+    }
   }
 } & {
   other: {
@@ -1487,6 +1712,7 @@ export const IntegrationScalarFieldEnum = {
   enabled: 'enabled',
   lastTriggeredAt: 'lastTriggeredAt',
   failureCount: 'failureCount',
+  maxRetryAttempts: 'maxRetryAttempts',
   projectId: 'projectId',
   createdAt: 'createdAt',
   updatedAt: 'updatedAt'
@@ -1612,6 +1838,59 @@ export const PlatformConfigScalarFieldEnum = {
 } as const
 
 export type PlatformConfigScalarFieldEnum = (typeof PlatformConfigScalarFieldEnum)[keyof typeof PlatformConfigScalarFieldEnum]
+
+
+export const PlanConfigScalarFieldEnum = {
+  id: 'id',
+  tier: 'tier',
+  displayName: 'displayName',
+  description: 'description',
+  monthlyPriceCents: 'monthlyPriceCents',
+  yearlyPriceCents: 'yearlyPriceCents',
+  maxProjects: 'maxProjects',
+  maxSubscribersMonth: 'maxSubscribersMonth',
+  maxIntegrations: 'maxIntegrations',
+  features: 'features',
+  polarProductIdMonthly: 'polarProductIdMonthly',
+  polarProductIdYearly: 'polarProductIdYearly',
+  highlight: 'highlight',
+  ctaText: 'ctaText',
+  sortOrder: 'sortOrder',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+} as const
+
+export type PlanConfigScalarFieldEnum = (typeof PlanConfigScalarFieldEnum)[keyof typeof PlanConfigScalarFieldEnum]
+
+
+export const WebhookEventScalarFieldEnum = {
+  id: 'id',
+  eventId: 'eventId',
+  eventType: 'eventType',
+  payload: 'payload',
+  status: 'status',
+  error: 'error',
+  createdAt: 'createdAt'
+} as const
+
+export type WebhookEventScalarFieldEnum = (typeof WebhookEventScalarFieldEnum)[keyof typeof WebhookEventScalarFieldEnum]
+
+
+export const WebhookDeliveryLogScalarFieldEnum = {
+  id: 'id',
+  integrationId: 'integrationId',
+  event: 'event',
+  payload: 'payload',
+  idempotencyKey: 'idempotencyKey',
+  responseStatus: 'responseStatus',
+  responseBody: 'responseBody',
+  durationMs: 'durationMs',
+  error: 'error',
+  success: 'success',
+  createdAt: 'createdAt'
+} as const
+
+export type WebhookDeliveryLogScalarFieldEnum = (typeof WebhookDeliveryLogScalarFieldEnum)[keyof typeof WebhookDeliveryLogScalarFieldEnum]
 
 
 export const SortOrder = {
@@ -1950,6 +2229,9 @@ export type GlobalOmitConfig = {
   apiKey?: Prisma.ApiKeyOmit
   polarSubscription?: Prisma.PolarSubscriptionOmit
   platformConfig?: Prisma.PlatformConfigOmit
+  planConfig?: Prisma.PlanConfigOmit
+  webhookEvent?: Prisma.WebhookEventOmit
+  webhookDeliveryLog?: Prisma.WebhookDeliveryLogOmit
 }
 
 /* Types for Logging */

@@ -63,7 +63,10 @@ export const ModelName = {
   NotificationPreference: 'NotificationPreference',
   ApiKey: 'ApiKey',
   PolarSubscription: 'PolarSubscription',
-  PlatformConfig: 'PlatformConfig'
+  PlatformConfig: 'PlatformConfig',
+  PlanConfig: 'PlanConfig',
+  WebhookEvent: 'WebhookEvent',
+  WebhookDeliveryLog: 'WebhookDeliveryLog'
 } as const
 
 export type ModelName = (typeof ModelName)[keyof typeof ModelName]
@@ -152,6 +155,7 @@ export const IntegrationScalarFieldEnum = {
   enabled: 'enabled',
   lastTriggeredAt: 'lastTriggeredAt',
   failureCount: 'failureCount',
+  maxRetryAttempts: 'maxRetryAttempts',
   projectId: 'projectId',
   createdAt: 'createdAt',
   updatedAt: 'updatedAt'
@@ -277,6 +281,59 @@ export const PlatformConfigScalarFieldEnum = {
 } as const
 
 export type PlatformConfigScalarFieldEnum = (typeof PlatformConfigScalarFieldEnum)[keyof typeof PlatformConfigScalarFieldEnum]
+
+
+export const PlanConfigScalarFieldEnum = {
+  id: 'id',
+  tier: 'tier',
+  displayName: 'displayName',
+  description: 'description',
+  monthlyPriceCents: 'monthlyPriceCents',
+  yearlyPriceCents: 'yearlyPriceCents',
+  maxProjects: 'maxProjects',
+  maxSubscribersMonth: 'maxSubscribersMonth',
+  maxIntegrations: 'maxIntegrations',
+  features: 'features',
+  polarProductIdMonthly: 'polarProductIdMonthly',
+  polarProductIdYearly: 'polarProductIdYearly',
+  highlight: 'highlight',
+  ctaText: 'ctaText',
+  sortOrder: 'sortOrder',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+} as const
+
+export type PlanConfigScalarFieldEnum = (typeof PlanConfigScalarFieldEnum)[keyof typeof PlanConfigScalarFieldEnum]
+
+
+export const WebhookEventScalarFieldEnum = {
+  id: 'id',
+  eventId: 'eventId',
+  eventType: 'eventType',
+  payload: 'payload',
+  status: 'status',
+  error: 'error',
+  createdAt: 'createdAt'
+} as const
+
+export type WebhookEventScalarFieldEnum = (typeof WebhookEventScalarFieldEnum)[keyof typeof WebhookEventScalarFieldEnum]
+
+
+export const WebhookDeliveryLogScalarFieldEnum = {
+  id: 'id',
+  integrationId: 'integrationId',
+  event: 'event',
+  payload: 'payload',
+  idempotencyKey: 'idempotencyKey',
+  responseStatus: 'responseStatus',
+  responseBody: 'responseBody',
+  durationMs: 'durationMs',
+  error: 'error',
+  success: 'success',
+  createdAt: 'createdAt'
+} as const
+
+export type WebhookDeliveryLogScalarFieldEnum = (typeof WebhookDeliveryLogScalarFieldEnum)[keyof typeof WebhookDeliveryLogScalarFieldEnum]
 
 
 export const SortOrder = {

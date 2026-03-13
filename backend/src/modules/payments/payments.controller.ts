@@ -1,4 +1,4 @@
-import { Body, Controller, Post, Req, UseGuards } from '@nestjs/common';
+import { Body, Controller, Post, Req, UnauthorizedException, UseGuards } from '@nestjs/common';
 import { AuthGuard } from '@nestjs/passport';
 import { Request } from 'express';
 import { JwtPayloadDecorator } from '../auth/jwt-payload.decorator';
@@ -25,9 +25,23 @@ export class PaymentsController {
     );
   }
 
+  @Post('cancel')
+  @UseGuards(AuthGuard('jwt'))
+  async cancelSubscription(
+    @JwtPayloadDecorator() payload: { accountId: string },
+  ) {
+    return this.payments.cancelSubscription(payload.accountId);
+  }
+
   @Post('webhooks/polar')
   async polarWebhook(@Body() body: Record<string, unknown>, @Req() req: Request) {
-    // In production verify X-Polar-Signature with POLAR_WEBHOOK_SECRET
+    const signature = req.headers['x-polar-signature'] as string;
+    const rawBody = (req as any).rawBody as Buffer;
+
+    if (rawBody && !this.payments.verifyWebhookSignature(rawBody, signature)) {
+      throw new UnauthorizedException('Invalid webhook signature');
+    }
+
     await this.payments.handlePolarWebhook(body);
     return { received: true };
   }

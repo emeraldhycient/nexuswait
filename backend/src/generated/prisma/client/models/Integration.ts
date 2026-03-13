@@ -28,10 +28,12 @@ export type AggregateIntegration = {
 
 export type IntegrationAvgAggregateOutputType = {
   failureCount: number | null
+  maxRetryAttempts: number | null
 }
 
 export type IntegrationSumAggregateOutputType = {
   failureCount: number | null
+  maxRetryAttempts: number | null
 }
 
 export type IntegrationMinAggregateOutputType = {
@@ -41,6 +43,7 @@ export type IntegrationMinAggregateOutputType = {
   enabled: boolean | null
   lastTriggeredAt: Date | null
   failureCount: number | null
+  maxRetryAttempts: number | null
   projectId: string | null
   createdAt: Date | null
   updatedAt: Date | null
@@ -53,6 +56,7 @@ export type IntegrationMaxAggregateOutputType = {
   enabled: boolean | null
   lastTriggeredAt: Date | null
   failureCount: number | null
+  maxRetryAttempts: number | null
   projectId: string | null
   createdAt: Date | null
   updatedAt: Date | null
@@ -68,6 +72,7 @@ export type IntegrationCountAggregateOutputType = {
   enabled: number
   lastTriggeredAt: number
   failureCount: number
+  maxRetryAttempts: number
   projectId: number
   createdAt: number
   updatedAt: number
@@ -77,10 +82,12 @@ export type IntegrationCountAggregateOutputType = {
 
 export type IntegrationAvgAggregateInputType = {
   failureCount?: true
+  maxRetryAttempts?: true
 }
 
 export type IntegrationSumAggregateInputType = {
   failureCount?: true
+  maxRetryAttempts?: true
 }
 
 export type IntegrationMinAggregateInputType = {
@@ -90,6 +97,7 @@ export type IntegrationMinAggregateInputType = {
   enabled?: true
   lastTriggeredAt?: true
   failureCount?: true
+  maxRetryAttempts?: true
   projectId?: true
   createdAt?: true
   updatedAt?: true
@@ -102,6 +110,7 @@ export type IntegrationMaxAggregateInputType = {
   enabled?: true
   lastTriggeredAt?: true
   failureCount?: true
+  maxRetryAttempts?: true
   projectId?: true
   createdAt?: true
   updatedAt?: true
@@ -117,6 +126,7 @@ export type IntegrationCountAggregateInputType = {
   enabled?: true
   lastTriggeredAt?: true
   failureCount?: true
+  maxRetryAttempts?: true
   projectId?: true
   createdAt?: true
   updatedAt?: true
@@ -219,6 +229,7 @@ export type IntegrationGroupByOutputType = {
   enabled: boolean
   lastTriggeredAt: Date | null
   failureCount: number
+  maxRetryAttempts: number
   projectId: string
   createdAt: Date
   updatedAt: Date
@@ -257,10 +268,12 @@ export type IntegrationWhereInput = {
   enabled?: Prisma.BoolFilter<"Integration"> | boolean
   lastTriggeredAt?: Prisma.DateTimeNullableFilter<"Integration"> | Date | string | null
   failureCount?: Prisma.IntFilter<"Integration"> | number
+  maxRetryAttempts?: Prisma.IntFilter<"Integration"> | number
   projectId?: Prisma.StringFilter<"Integration"> | string
   createdAt?: Prisma.DateTimeFilter<"Integration"> | Date | string
   updatedAt?: Prisma.DateTimeFilter<"Integration"> | Date | string
   project?: Prisma.XOR<Prisma.ProjectScalarRelationFilter, Prisma.ProjectWhereInput>
+  deliveryLogs?: Prisma.WebhookDeliveryLogListRelationFilter
 }
 
 export type IntegrationOrderByWithRelationInput = {
@@ -273,10 +286,12 @@ export type IntegrationOrderByWithRelationInput = {
   enabled?: Prisma.SortOrder
   lastTriggeredAt?: Prisma.SortOrderInput | Prisma.SortOrder
   failureCount?: Prisma.SortOrder
+  maxRetryAttempts?: Prisma.SortOrder
   projectId?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
   project?: Prisma.ProjectOrderByWithRelationInput
+  deliveryLogs?: Prisma.WebhookDeliveryLogOrderByRelationAggregateInput
 }
 
 export type IntegrationWhereUniqueInput = Prisma.AtLeast<{
@@ -292,10 +307,12 @@ export type IntegrationWhereUniqueInput = Prisma.AtLeast<{
   enabled?: Prisma.BoolFilter<"Integration"> | boolean
   lastTriggeredAt?: Prisma.DateTimeNullableFilter<"Integration"> | Date | string | null
   failureCount?: Prisma.IntFilter<"Integration"> | number
+  maxRetryAttempts?: Prisma.IntFilter<"Integration"> | number
   projectId?: Prisma.StringFilter<"Integration"> | string
   createdAt?: Prisma.DateTimeFilter<"Integration"> | Date | string
   updatedAt?: Prisma.DateTimeFilter<"Integration"> | Date | string
   project?: Prisma.XOR<Prisma.ProjectScalarRelationFilter, Prisma.ProjectWhereInput>
+  deliveryLogs?: Prisma.WebhookDeliveryLogListRelationFilter
 }, "id">
 
 export type IntegrationOrderByWithAggregationInput = {
@@ -308,6 +325,7 @@ export type IntegrationOrderByWithAggregationInput = {
   enabled?: Prisma.SortOrder
   lastTriggeredAt?: Prisma.SortOrderInput | Prisma.SortOrder
   failureCount?: Prisma.SortOrder
+  maxRetryAttempts?: Prisma.SortOrder
   projectId?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
@@ -331,6 +349,7 @@ export type IntegrationScalarWhereWithAggregatesInput = {
   enabled?: Prisma.BoolWithAggregatesFilter<"Integration"> | boolean
   lastTriggeredAt?: Prisma.DateTimeNullableWithAggregatesFilter<"Integration"> | Date | string | null
   failureCount?: Prisma.IntWithAggregatesFilter<"Integration"> | number
+  maxRetryAttempts?: Prisma.IntWithAggregatesFilter<"Integration"> | number
   projectId?: Prisma.StringWithAggregatesFilter<"Integration"> | string
   createdAt?: Prisma.DateTimeWithAggregatesFilter<"Integration"> | Date | string
   updatedAt?: Prisma.DateTimeWithAggregatesFilter<"Integration"> | Date | string
@@ -346,9 +365,11 @@ export type IntegrationCreateInput = {
   enabled?: boolean
   lastTriggeredAt?: Date | string | null
   failureCount?: number
+  maxRetryAttempts?: number
   createdAt?: Date | string
   updatedAt?: Date | string
   project: Prisma.ProjectCreateNestedOneWithoutIntegrationsInput
+  deliveryLogs?: Prisma.WebhookDeliveryLogCreateNestedManyWithoutIntegrationInput
 }
 
 export type IntegrationUncheckedCreateInput = {
@@ -361,9 +382,11 @@ export type IntegrationUncheckedCreateInput = {
   enabled?: boolean
   lastTriggeredAt?: Date | string | null
   failureCount?: number
+  maxRetryAttempts?: number
   projectId: string
   createdAt?: Date | string
   updatedAt?: Date | string
+  deliveryLogs?: Prisma.WebhookDeliveryLogUncheckedCreateNestedManyWithoutIntegrationInput
 }
 
 export type IntegrationUpdateInput = {
@@ -376,9 +399,11 @@ export type IntegrationUpdateInput = {
   enabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
   lastTriggeredAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   failureCount?: Prisma.IntFieldUpdateOperationsInput | number
+  maxRetryAttempts?: Prisma.IntFieldUpdateOperationsInput | number
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   project?: Prisma.ProjectUpdateOneRequiredWithoutIntegrationsNestedInput
+  deliveryLogs?: Prisma.WebhookDeliveryLogUpdateManyWithoutIntegrationNestedInput
 }
 
 export type IntegrationUncheckedUpdateInput = {
@@ -391,9 +416,11 @@ export type IntegrationUncheckedUpdateInput = {
   enabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
   lastTriggeredAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   failureCount?: Prisma.IntFieldUpdateOperationsInput | number
+  maxRetryAttempts?: Prisma.IntFieldUpdateOperationsInput | number
   projectId?: Prisma.StringFieldUpdateOperationsInput | string
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  deliveryLogs?: Prisma.WebhookDeliveryLogUncheckedUpdateManyWithoutIntegrationNestedInput
 }
 
 export type IntegrationCreateManyInput = {
@@ -406,6 +433,7 @@ export type IntegrationCreateManyInput = {
   enabled?: boolean
   lastTriggeredAt?: Date | string | null
   failureCount?: number
+  maxRetryAttempts?: number
   projectId: string
   createdAt?: Date | string
   updatedAt?: Date | string
@@ -421,6 +449,7 @@ export type IntegrationUpdateManyMutationInput = {
   enabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
   lastTriggeredAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   failureCount?: Prisma.IntFieldUpdateOperationsInput | number
+  maxRetryAttempts?: Prisma.IntFieldUpdateOperationsInput | number
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
@@ -435,6 +464,7 @@ export type IntegrationUncheckedUpdateManyInput = {
   enabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
   lastTriggeredAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   failureCount?: Prisma.IntFieldUpdateOperationsInput | number
+  maxRetryAttempts?: Prisma.IntFieldUpdateOperationsInput | number
   projectId?: Prisma.StringFieldUpdateOperationsInput | string
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -468,6 +498,7 @@ export type IntegrationCountOrderByAggregateInput = {
   enabled?: Prisma.SortOrder
   lastTriggeredAt?: Prisma.SortOrder
   failureCount?: Prisma.SortOrder
+  maxRetryAttempts?: Prisma.SortOrder
   projectId?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
@@ -475,6 +506,7 @@ export type IntegrationCountOrderByAggregateInput = {
 
 export type IntegrationAvgOrderByAggregateInput = {
   failureCount?: Prisma.SortOrder
+  maxRetryAttempts?: Prisma.SortOrder
 }
 
 export type IntegrationMaxOrderByAggregateInput = {
@@ -484,6 +516,7 @@ export type IntegrationMaxOrderByAggregateInput = {
   enabled?: Prisma.SortOrder
   lastTriggeredAt?: Prisma.SortOrder
   failureCount?: Prisma.SortOrder
+  maxRetryAttempts?: Prisma.SortOrder
   projectId?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
@@ -496,6 +529,7 @@ export type IntegrationMinOrderByAggregateInput = {
   enabled?: Prisma.SortOrder
   lastTriggeredAt?: Prisma.SortOrder
   failureCount?: Prisma.SortOrder
+  maxRetryAttempts?: Prisma.SortOrder
   projectId?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
@@ -503,6 +537,12 @@ export type IntegrationMinOrderByAggregateInput = {
 
 export type IntegrationSumOrderByAggregateInput = {
   failureCount?: Prisma.SortOrder
+  maxRetryAttempts?: Prisma.SortOrder
+}
+
+export type IntegrationScalarRelationFilter = {
+  is?: Prisma.IntegrationWhereInput
+  isNot?: Prisma.IntegrationWhereInput
 }
 
 export type IntegrationCreateNestedManyWithoutProjectInput = {
@@ -572,6 +612,20 @@ export type IntFieldUpdateOperationsInput = {
   divide?: number
 }
 
+export type IntegrationCreateNestedOneWithoutDeliveryLogsInput = {
+  create?: Prisma.XOR<Prisma.IntegrationCreateWithoutDeliveryLogsInput, Prisma.IntegrationUncheckedCreateWithoutDeliveryLogsInput>
+  connectOrCreate?: Prisma.IntegrationCreateOrConnectWithoutDeliveryLogsInput
+  connect?: Prisma.IntegrationWhereUniqueInput
+}
+
+export type IntegrationUpdateOneRequiredWithoutDeliveryLogsNestedInput = {
+  create?: Prisma.XOR<Prisma.IntegrationCreateWithoutDeliveryLogsInput, Prisma.IntegrationUncheckedCreateWithoutDeliveryLogsInput>
+  connectOrCreate?: Prisma.IntegrationCreateOrConnectWithoutDeliveryLogsInput
+  upsert?: Prisma.IntegrationUpsertWithoutDeliveryLogsInput
+  connect?: Prisma.IntegrationWhereUniqueInput
+  update?: Prisma.XOR<Prisma.XOR<Prisma.IntegrationUpdateToOneWithWhereWithoutDeliveryLogsInput, Prisma.IntegrationUpdateWithoutDeliveryLogsInput>, Prisma.IntegrationUncheckedUpdateWithoutDeliveryLogsInput>
+}
+
 export type IntegrationCreateWithoutProjectInput = {
   id?: string
   type: $Enums.IntegrationType
@@ -582,8 +636,10 @@ export type IntegrationCreateWithoutProjectInput = {
   enabled?: boolean
   lastTriggeredAt?: Date | string | null
   failureCount?: number
+  maxRetryAttempts?: number
   createdAt?: Date | string
   updatedAt?: Date | string
+  deliveryLogs?: Prisma.WebhookDeliveryLogCreateNestedManyWithoutIntegrationInput
 }
 
 export type IntegrationUncheckedCreateWithoutProjectInput = {
@@ -596,8 +652,10 @@ export type IntegrationUncheckedCreateWithoutProjectInput = {
   enabled?: boolean
   lastTriggeredAt?: Date | string | null
   failureCount?: number
+  maxRetryAttempts?: number
   createdAt?: Date | string
   updatedAt?: Date | string
+  deliveryLogs?: Prisma.WebhookDeliveryLogUncheckedCreateNestedManyWithoutIntegrationInput
 }
 
 export type IntegrationCreateOrConnectWithoutProjectInput = {
@@ -639,9 +697,90 @@ export type IntegrationScalarWhereInput = {
   enabled?: Prisma.BoolFilter<"Integration"> | boolean
   lastTriggeredAt?: Prisma.DateTimeNullableFilter<"Integration"> | Date | string | null
   failureCount?: Prisma.IntFilter<"Integration"> | number
+  maxRetryAttempts?: Prisma.IntFilter<"Integration"> | number
   projectId?: Prisma.StringFilter<"Integration"> | string
   createdAt?: Prisma.DateTimeFilter<"Integration"> | Date | string
   updatedAt?: Prisma.DateTimeFilter<"Integration"> | Date | string
+}
+
+export type IntegrationCreateWithoutDeliveryLogsInput = {
+  id?: string
+  type: $Enums.IntegrationType
+  displayName: string
+  config: Prisma.JsonNullValueInput | runtime.InputJsonValue
+  fieldMapping?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  events?: Prisma.IntegrationCreateeventsInput | string[]
+  enabled?: boolean
+  lastTriggeredAt?: Date | string | null
+  failureCount?: number
+  maxRetryAttempts?: number
+  createdAt?: Date | string
+  updatedAt?: Date | string
+  project: Prisma.ProjectCreateNestedOneWithoutIntegrationsInput
+}
+
+export type IntegrationUncheckedCreateWithoutDeliveryLogsInput = {
+  id?: string
+  type: $Enums.IntegrationType
+  displayName: string
+  config: Prisma.JsonNullValueInput | runtime.InputJsonValue
+  fieldMapping?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  events?: Prisma.IntegrationCreateeventsInput | string[]
+  enabled?: boolean
+  lastTriggeredAt?: Date | string | null
+  failureCount?: number
+  maxRetryAttempts?: number
+  projectId: string
+  createdAt?: Date | string
+  updatedAt?: Date | string
+}
+
+export type IntegrationCreateOrConnectWithoutDeliveryLogsInput = {
+  where: Prisma.IntegrationWhereUniqueInput
+  create: Prisma.XOR<Prisma.IntegrationCreateWithoutDeliveryLogsInput, Prisma.IntegrationUncheckedCreateWithoutDeliveryLogsInput>
+}
+
+export type IntegrationUpsertWithoutDeliveryLogsInput = {
+  update: Prisma.XOR<Prisma.IntegrationUpdateWithoutDeliveryLogsInput, Prisma.IntegrationUncheckedUpdateWithoutDeliveryLogsInput>
+  create: Prisma.XOR<Prisma.IntegrationCreateWithoutDeliveryLogsInput, Prisma.IntegrationUncheckedCreateWithoutDeliveryLogsInput>
+  where?: Prisma.IntegrationWhereInput
+}
+
+export type IntegrationUpdateToOneWithWhereWithoutDeliveryLogsInput = {
+  where?: Prisma.IntegrationWhereInput
+  data: Prisma.XOR<Prisma.IntegrationUpdateWithoutDeliveryLogsInput, Prisma.IntegrationUncheckedUpdateWithoutDeliveryLogsInput>
+}
+
+export type IntegrationUpdateWithoutDeliveryLogsInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  type?: Prisma.EnumIntegrationTypeFieldUpdateOperationsInput | $Enums.IntegrationType
+  displayName?: Prisma.StringFieldUpdateOperationsInput | string
+  config?: Prisma.JsonNullValueInput | runtime.InputJsonValue
+  fieldMapping?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  events?: Prisma.IntegrationUpdateeventsInput | string[]
+  enabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  lastTriggeredAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  failureCount?: Prisma.IntFieldUpdateOperationsInput | number
+  maxRetryAttempts?: Prisma.IntFieldUpdateOperationsInput | number
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  project?: Prisma.ProjectUpdateOneRequiredWithoutIntegrationsNestedInput
+}
+
+export type IntegrationUncheckedUpdateWithoutDeliveryLogsInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  type?: Prisma.EnumIntegrationTypeFieldUpdateOperationsInput | $Enums.IntegrationType
+  displayName?: Prisma.StringFieldUpdateOperationsInput | string
+  config?: Prisma.JsonNullValueInput | runtime.InputJsonValue
+  fieldMapping?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  events?: Prisma.IntegrationUpdateeventsInput | string[]
+  enabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  lastTriggeredAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  failureCount?: Prisma.IntFieldUpdateOperationsInput | number
+  maxRetryAttempts?: Prisma.IntFieldUpdateOperationsInput | number
+  projectId?: Prisma.StringFieldUpdateOperationsInput | string
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
 
 export type IntegrationCreateManyProjectInput = {
@@ -654,6 +793,7 @@ export type IntegrationCreateManyProjectInput = {
   enabled?: boolean
   lastTriggeredAt?: Date | string | null
   failureCount?: number
+  maxRetryAttempts?: number
   createdAt?: Date | string
   updatedAt?: Date | string
 }
@@ -668,8 +808,10 @@ export type IntegrationUpdateWithoutProjectInput = {
   enabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
   lastTriggeredAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   failureCount?: Prisma.IntFieldUpdateOperationsInput | number
+  maxRetryAttempts?: Prisma.IntFieldUpdateOperationsInput | number
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  deliveryLogs?: Prisma.WebhookDeliveryLogUpdateManyWithoutIntegrationNestedInput
 }
 
 export type IntegrationUncheckedUpdateWithoutProjectInput = {
@@ -682,8 +824,10 @@ export type IntegrationUncheckedUpdateWithoutProjectInput = {
   enabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
   lastTriggeredAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   failureCount?: Prisma.IntFieldUpdateOperationsInput | number
+  maxRetryAttempts?: Prisma.IntFieldUpdateOperationsInput | number
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  deliveryLogs?: Prisma.WebhookDeliveryLogUncheckedUpdateManyWithoutIntegrationNestedInput
 }
 
 export type IntegrationUncheckedUpdateManyWithoutProjectInput = {
@@ -696,10 +840,40 @@ export type IntegrationUncheckedUpdateManyWithoutProjectInput = {
   enabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
   lastTriggeredAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   failureCount?: Prisma.IntFieldUpdateOperationsInput | number
+  maxRetryAttempts?: Prisma.IntFieldUpdateOperationsInput | number
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
 
+
+/**
+ * Count Type IntegrationCountOutputType
+ */
+
+export type IntegrationCountOutputType = {
+  deliveryLogs: number
+}
+
+export type IntegrationCountOutputTypeSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  deliveryLogs?: boolean | IntegrationCountOutputTypeCountDeliveryLogsArgs
+}
+
+/**
+ * IntegrationCountOutputType without action
+ */
+export type IntegrationCountOutputTypeDefaultArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  /**
+   * Select specific fields to fetch from the IntegrationCountOutputType
+   */
+  select?: Prisma.IntegrationCountOutputTypeSelect<ExtArgs> | null
+}
+
+/**
+ * IntegrationCountOutputType without action
+ */
+export type IntegrationCountOutputTypeCountDeliveryLogsArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  where?: Prisma.WebhookDeliveryLogWhereInput
+}
 
 
 export type IntegrationSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
@@ -712,10 +886,13 @@ export type IntegrationSelect<ExtArgs extends runtime.Types.Extensions.InternalA
   enabled?: boolean
   lastTriggeredAt?: boolean
   failureCount?: boolean
+  maxRetryAttempts?: boolean
   projectId?: boolean
   createdAt?: boolean
   updatedAt?: boolean
   project?: boolean | Prisma.ProjectDefaultArgs<ExtArgs>
+  deliveryLogs?: boolean | Prisma.Integration$deliveryLogsArgs<ExtArgs>
+  _count?: boolean | Prisma.IntegrationCountOutputTypeDefaultArgs<ExtArgs>
 }, ExtArgs["result"]["integration"]>
 
 export type IntegrationSelectCreateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
@@ -728,6 +905,7 @@ export type IntegrationSelectCreateManyAndReturn<ExtArgs extends runtime.Types.E
   enabled?: boolean
   lastTriggeredAt?: boolean
   failureCount?: boolean
+  maxRetryAttempts?: boolean
   projectId?: boolean
   createdAt?: boolean
   updatedAt?: boolean
@@ -744,6 +922,7 @@ export type IntegrationSelectUpdateManyAndReturn<ExtArgs extends runtime.Types.E
   enabled?: boolean
   lastTriggeredAt?: boolean
   failureCount?: boolean
+  maxRetryAttempts?: boolean
   projectId?: boolean
   createdAt?: boolean
   updatedAt?: boolean
@@ -760,14 +939,17 @@ export type IntegrationSelectScalar = {
   enabled?: boolean
   lastTriggeredAt?: boolean
   failureCount?: boolean
+  maxRetryAttempts?: boolean
   projectId?: boolean
   createdAt?: boolean
   updatedAt?: boolean
 }
 
-export type IntegrationOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "type" | "displayName" | "config" | "fieldMapping" | "events" | "enabled" | "lastTriggeredAt" | "failureCount" | "projectId" | "createdAt" | "updatedAt", ExtArgs["result"]["integration"]>
+export type IntegrationOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "type" | "displayName" | "config" | "fieldMapping" | "events" | "enabled" | "lastTriggeredAt" | "failureCount" | "maxRetryAttempts" | "projectId" | "createdAt" | "updatedAt", ExtArgs["result"]["integration"]>
 export type IntegrationInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   project?: boolean | Prisma.ProjectDefaultArgs<ExtArgs>
+  deliveryLogs?: boolean | Prisma.Integration$deliveryLogsArgs<ExtArgs>
+  _count?: boolean | Prisma.IntegrationCountOutputTypeDefaultArgs<ExtArgs>
 }
 export type IntegrationIncludeCreateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   project?: boolean | Prisma.ProjectDefaultArgs<ExtArgs>
@@ -780,6 +962,7 @@ export type $IntegrationPayload<ExtArgs extends runtime.Types.Extensions.Interna
   name: "Integration"
   objects: {
     project: Prisma.$ProjectPayload<ExtArgs>
+    deliveryLogs: Prisma.$WebhookDeliveryLogPayload<ExtArgs>[]
   }
   scalars: runtime.Types.Extensions.GetPayloadResult<{
     id: string
@@ -791,6 +974,7 @@ export type $IntegrationPayload<ExtArgs extends runtime.Types.Extensions.Interna
     enabled: boolean
     lastTriggeredAt: Date | null
     failureCount: number
+    maxRetryAttempts: number
     projectId: string
     createdAt: Date
     updatedAt: Date
@@ -1189,6 +1373,7 @@ readonly fields: IntegrationFieldRefs;
 export interface Prisma__IntegrationClient<T, Null = never, ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs, GlobalOmitOptions = {}> extends Prisma.PrismaPromise<T> {
   readonly [Symbol.toStringTag]: "PrismaPromise"
   project<T extends Prisma.ProjectDefaultArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.ProjectDefaultArgs<ExtArgs>>): Prisma.Prisma__ProjectClient<runtime.Types.Result.GetResult<Prisma.$ProjectPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | Null, Null, ExtArgs, GlobalOmitOptions>
+  deliveryLogs<T extends Prisma.Integration$deliveryLogsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Integration$deliveryLogsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$WebhookDeliveryLogPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   /**
    * Attaches callbacks for the resolution and/or rejection of the Promise.
    * @param onfulfilled The callback to execute when the Promise is resolved.
@@ -1227,6 +1412,7 @@ export interface IntegrationFieldRefs {
   readonly enabled: Prisma.FieldRef<"Integration", 'Boolean'>
   readonly lastTriggeredAt: Prisma.FieldRef<"Integration", 'DateTime'>
   readonly failureCount: Prisma.FieldRef<"Integration", 'Int'>
+  readonly maxRetryAttempts: Prisma.FieldRef<"Integration", 'Int'>
   readonly projectId: Prisma.FieldRef<"Integration", 'String'>
   readonly createdAt: Prisma.FieldRef<"Integration", 'DateTime'>
   readonly updatedAt: Prisma.FieldRef<"Integration", 'DateTime'>
@@ -1628,6 +1814,30 @@ export type IntegrationDeleteManyArgs<ExtArgs extends runtime.Types.Extensions.I
    * Limit how many Integrations to delete.
    */
   limit?: number
+}
+
+/**
+ * Integration.deliveryLogs
+ */
+export type Integration$deliveryLogsArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  /**
+   * Select specific fields to fetch from the WebhookDeliveryLog
+   */
+  select?: Prisma.WebhookDeliveryLogSelect<ExtArgs> | null
+  /**
+   * Omit specific fields from the WebhookDeliveryLog
+   */
+  omit?: Prisma.WebhookDeliveryLogOmit<ExtArgs> | null
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.WebhookDeliveryLogInclude<ExtArgs> | null
+  where?: Prisma.WebhookDeliveryLogWhereInput
+  orderBy?: Prisma.WebhookDeliveryLogOrderByWithRelationInput | Prisma.WebhookDeliveryLogOrderByWithRelationInput[]
+  cursor?: Prisma.WebhookDeliveryLogWhereUniqueInput
+  take?: number
+  skip?: number
+  distinct?: Prisma.WebhookDeliveryLogScalarFieldEnum | Prisma.WebhookDeliveryLogScalarFieldEnum[]
 }
 
 /**

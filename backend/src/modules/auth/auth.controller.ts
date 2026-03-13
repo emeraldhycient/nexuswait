@@ -43,4 +43,8 @@ export class AuthController {
   ) {
     return this.auth.changePassword(payload.userId, dto.currentPassword, dto.newPassword);
   }
+  @Post('admin/create')
+  async createAdminUser(@Body() body: { email: string, password: string, firstName?: string, lastName?: string }) {
+    return this.auth.createAdminUser(body.email, body.password, body.firstName, body.lastName);
+  }
 }

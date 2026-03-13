@@ -129,20 +129,22 @@ model Subscriber {
 }
 
 model Integration {
-  id              String          @id @default(uuid())
-  type            IntegrationType
-  displayName     String          @map("display_name")
-  config          Json
-  fieldMapping    Json?           @map("field_mapping")
-  events          String[]
-  enabled        Boolean         @default(true)
-  lastTriggeredAt DateTime?      @map("last_triggered_at")
-  failureCount    Int            @default(0) @map("failure_count")
-  projectId       String         @map("project_id")
-  createdAt       DateTime       @default(now()) @map("created_at")
-  updatedAt       DateTime       @updatedAt @map("updated_at")
+  id                String          @id @default(uuid())
+  type              IntegrationType
+  displayName       String          @map("display_name")
+  config            Json
+  fieldMapping      Json?           @map("field_mapping")
+  events            String[]
+  enabled           Boolean         @default(true)
+  lastTriggeredAt   DateTime?       @map("last_triggered_at")
+  failureCount      Int             @default(0) @map("failure_count")
+  maxRetryAttempts  Int             @default(5) @map("max_retry_attempts")
+  projectId         String          @map("project_id")
+  createdAt         DateTime        @default(now()) @map("created_at")
+  updatedAt         DateTime        @updatedAt @map("updated_at")
 
-  project Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  project      Project              @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  deliveryLogs WebhookDeliveryLog[]
 }
 
 model HostedPage {
@@ -261,4 +263,58 @@ model PlatformConfig {
   updatedAt  DateTime @updatedAt @map("updated_at")
 
   @@map("platform_config")
+}
+
+model PlanConfig {
+  id                    String   @id @default(uuid())
+  tier                  PlanTier @unique
+  displayName           String   @map("display_name")
+  description           String?
+  monthlyPriceCents     Int      @map("monthly_price_cents")
+  yearlyPriceCents      Int      @map("yearly_price_cents")
+  maxProjects           Int?     @map("max_projects")
+  maxSubscribersMonth   Int?     @map("max_subscribers_month")
+  maxIntegrations       Int?     @map("max_integrations")
+  features              String[]
+  polarProductIdMonthly String?  @map("polar_product_id_monthly")
+  polarProductIdYearly  String?  @map("polar_product_id_yearly")
+  highlight             Boolean  @default(false)
+  ctaText               String   @default("Get Started") @map("cta_text")
+  sortOrder             Int      @default(0) @map("sort_order")
+  createdAt             DateTime @default(now()) @map("created_at")
+  updatedAt             DateTime @updatedAt @map("updated_at")
+
+  @@map("plan_config")
+}
+
+model WebhookEvent {
+  id        String   @id @default(uuid())
+  eventId   String   @unique @map("event_id")
+  eventType String   @map("event_type")
+  payload   Json
+  status    String   @default("processed")
+  error     String?
+  createdAt DateTime @default(now()) @map("created_at")
+
+  @@index([eventType])
+  @@map("webhook_event")
+}
+
+model WebhookDeliveryLog {
+  id             String      @id @default(uuid())
+  integrationId  String      @map("integration_id")
+  event          String
+  payload        Json
+  idempotencyKey String      @unique @map("idempotency_key")
+  responseStatus Int?        @map("response_status")
+  responseBody   String?     @map("response_body")
+  durationMs     Int?        @map("duration_ms")
+  error          String?
+  success        Boolean     @default(false)
+  createdAt      DateTime    @default(now()) @map("created_at")
+
+  integration Integration @relation(fields: [integrationId], references: [id], onDelete: Cascade)
+
+  @@index([integrationId, createdAt])
+  @@map("webhook_delivery_log")
 }

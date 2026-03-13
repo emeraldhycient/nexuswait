@@ -3,12 +3,14 @@ import { PrismaService } from '../../infrastructure/prisma/prisma.service';
 import { CreateIntegrationDto } from './dto/create-integration.dto';
 import { UpdateIntegrationDto } from './dto/update-integration.dto';
 import { WebhookDeliveryService } from './webhook-delivery.service';
+import { PlanEnforcementService } from '../plan-config/plan-enforcement.service';
 
 @Injectable()
 export class IntegrationsService {
   constructor(
     private prisma: PrismaService,
     private webhookDelivery: WebhookDeliveryService,
+    private planEnforcement: PlanEnforcementService,
   ) {}
 
   private async verifyOwnership(projectId: string, accountId: string) {
@@ -21,6 +23,7 @@ export class IntegrationsService {
 
   async create(projectId: string, accountId: string, dto: CreateIntegrationDto) {
     await this.verifyOwnership(projectId, accountId);
+    await this.planEnforcement.checkIntegrationLimit(accountId);
     return this.prisma.integration.create({
       data: {
         projectId,

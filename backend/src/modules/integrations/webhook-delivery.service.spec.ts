@@ -35,6 +35,11 @@ describe('WebhookDeliveryService', () => {
         findMany: jest.fn(),
         update: jest.fn(),
       },
+      webhookDeliveryLog: {
+        findUnique: jest.fn().mockResolvedValue(null),
+        upsert: jest.fn().mockResolvedValue({}),
+        create: jest.fn().mockResolvedValue({}),
+      },
     };
 
     const module: TestingModule = await Test.createTestingModule({

@@ -31,6 +31,8 @@ import AdminSubscribers from './pages/admin/AdminSubscribers'
 import AdminIntegrations from './pages/admin/AdminIntegrations'
 import AdminNotifications from './pages/admin/AdminNotifications'
 import AdminSystem from './pages/admin/AdminSystem'
+import AdminPlans from './pages/admin/AdminPlans'
+import AdminWebhookLogs from './pages/admin/AdminWebhookLogs'
 import PublicWaitlistPage from './pages/PublicWaitlistPage'
 
 export default function App() {
@@ -71,6 +73,8 @@ export default function App() {
         <Route path="/admin/projects" element={<AdminProjects />} />
         <Route path="/admin/subscribers" element={<AdminSubscribers />} />
         <Route path="/admin/integrations" element={<AdminIntegrations />} />
+        <Route path="/admin/plans" element={<AdminPlans />} />
+        <Route path="/admin/webhook-logs" element={<AdminWebhookLogs />} />
         <Route path="/admin/notifications" element={<AdminNotifications />} />
         <Route path="/admin/system" element={<AdminSystem />} />
       </Route>

@@ -1,12 +1,14 @@
 import { useState } from 'react'
+import { Link } from 'react-router-dom'
 import {
   Plug, CheckCircle, AlertTriangle, XCircle, RefreshCw, Loader2,
-  ChevronDown, ChevronUp
+  ChevronDown, ChevronUp, FileText, Save,
 } from 'lucide-react'
 import {
   useAdminIntegrationHealth,
   useAdminFailedIntegrations,
   useAdminRetryIntegration,
+  useAdminUpdateIntegrationConfig,
 } from '../../api/hooks'
 
 interface FailedIntegration {
@@ -14,6 +16,7 @@ interface FailedIntegration {
   type: string
   displayName: string
   failureCount: number
+  maxRetryAttempts?: number
   enabled: boolean
   lastTriggeredAt: string | null
   updatedAt: string
@@ -26,6 +29,43 @@ interface HealthEntry {
   avgFailureCount: number
   totalFailures: number
   deadCount: number
+}
+
+function RetryConfig({ integration }: { integration: FailedIntegration }) {
+  const [value, setValue] = useState(integration.maxRetryAttempts ?? 5)
+  const [dirty, setDirty] = useState(false)
+  const updateConfig = useAdminUpdateIntegrationConfig(integration.id)
+
+  const save = () => {
+    updateConfig.mutate(
+      { maxRetryAttempts: value },
+      { onSuccess: () => setDirty(false) },
+    )
+  }
+
+  return (
+    <div className="flex items-center gap-1.5">
+      <input
+        type="number"
+        min={1}
+        max={20}
+        value={value}
+        onChange={e => { setValue(parseInt(e.target.value) || 5); setDirty(true) }}
+        className="input-field text-xs font-mono w-14 py-1 px-2 text-center"
+      />
+      {dirty && (
+        <button
+          type="button"
+          onClick={save}
+          disabled={updateConfig.isPending}
+          className="text-cyan-glow hover:text-cyan-glow/80 transition-colors"
+          title="Save retry config"
+        >
+          {updateConfig.isPending ? <Loader2 size={12} className="animate-spin" /> : <Save size={12} />}
+        </button>
+      )}
+    </div>
+  )
 }
 
 export default function AdminIntegrations() {
@@ -148,9 +188,10 @@ export default function AdminIntegrations() {
                       <th className="text-left px-4 py-3 text-[10px] font-mono text-nexus-500 tracking-widest uppercase">Type</th>
                       <th className="text-left px-4 py-3 text-[10px] font-mono text-nexus-500 tracking-widest uppercase">Project</th>
                       <th className="text-left px-4 py-3 text-[10px] font-mono text-nexus-500 tracking-widest uppercase">Failures</th>
+                      <th className="text-left px-4 py-3 text-[10px] font-mono text-nexus-500 tracking-widest uppercase">Max Retries</th>
                       <th className="text-left px-4 py-3 text-[10px] font-mono text-nexus-500 tracking-widest uppercase">Status</th>
                       <th className="text-left px-4 py-3 text-[10px] font-mono text-nexus-500 tracking-widest uppercase">Last Update</th>
-                      <th className="text-right px-4 py-3 text-[10px] font-mono text-nexus-500 tracking-widest uppercase">Action</th>
+                      <th className="text-right px-4 py-3 text-[10px] font-mono text-nexus-500 tracking-widest uppercase">Actions</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -175,6 +216,9 @@ export default function AdminIntegrations() {
                           </span>
                         </td>
                         <td className="px-4 py-3">
+                          <RetryConfig integration={int} />
+                        </td>
+                        <td className="px-4 py-3">
                           <span className={`text-[9px] font-mono font-bold tracking-wider uppercase px-1.5 py-0.5 rounded ${
                             int.enabled
                               ? 'bg-amber-glow/10 text-amber-glow'
@@ -187,19 +231,29 @@ export default function AdminIntegrations() {
                           {new Date(int.updatedAt).toLocaleString()}
                         </td>
                         <td className="px-4 py-3 text-right">
-                          <button
-                            onClick={() => retryMutation.mutate(int.id)}
-                            disabled={retryMutation.isPending}
-                            className="inline-flex items-center gap-1.5 px-3 py-1.5 text-[10px] font-mono font-bold bg-cyan-glow/10 text-cyan-glow hover:bg-cyan-glow/20 rounded-lg transition-colors disabled:opacity-40"
-                            title="Reset failure count, re-enable integration"
-                          >
-                            {retryMutation.isPending ? (
-                              <Loader2 size={11} className="animate-spin" />
-                            ) : (
-                              <RefreshCw size={11} />
-                            )}
-                            Retry
-                          </button>
+                          <div className="flex items-center gap-2 justify-end">
+                            <Link
+                              to={`/admin/webhook-logs?integrationId=${int.id}`}
+                              className="inline-flex items-center gap-1.5 px-3 py-1.5 text-[10px] font-mono font-bold bg-violet-glow/10 text-violet-glow hover:bg-violet-glow/20 rounded-lg transition-colors no-underline"
+                              title="View delivery logs"
+                            >
+                              <FileText size={11} />
+                              Logs
+                            </Link>
+                            <button
+                              onClick={() => retryMutation.mutate(int.id)}
+                              disabled={retryMutation.isPending}
+                              className="inline-flex items-center gap-1.5 px-3 py-1.5 text-[10px] font-mono font-bold bg-cyan-glow/10 text-cyan-glow hover:bg-cyan-glow/20 rounded-lg transition-colors disabled:opacity-40"
+                              title="Reset failure count, re-enable integration"
+                            >
+                              {retryMutation.isPending ? (
+                                <Loader2 size={11} className="animate-spin" />
+                              ) : (
+                                <RefreshCw size={11} />
+                              )}
+                              Retry
+                            </button>
+                          </div>
                         </td>
                       </tr>
                     ))}

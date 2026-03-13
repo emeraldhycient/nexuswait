@@ -2,11 +2,13 @@ import {
   Body,
   Controller,
   DefaultValuePipe,
+  Delete,
   Get,
   Param,
   ParseIntPipe,
   Patch,
   Post,
+  Put,
   Query,
   UseGuards,
 } from '@nestjs/common';
@@ -16,11 +18,16 @@ import { AdminService } from './admin.service';
 import { UpdateAccountDto } from './dto/update-account.dto';
 import { UpdateProjectDto } from './dto/update-project.dto';
 import { PlanTier, ProjectStatus } from '../../generated/prisma/client/enums';
+import { PlanConfigService } from '../plan-config/plan-config.service';
+import { UpsertPlanConfigDto } from '../plan-config/dto/upsert-plan-config.dto';
 
 @Controller('admin')
 @UseGuards(AuthGuard('jwt'), AdminGuard)
 export class AdminController {
-  constructor(private adminService: AdminService) {}
+  constructor(
+    private adminService: AdminService,
+    private planConfigService: PlanConfigService,
+  ) {}
 
   // ──────────────────────────────────────────────
   //  Stats
@@ -122,6 +129,44 @@ export class AdminController {
     return this.adminService.retryIntegration(id);
   }
 
+  @Get('integrations/:id/delivery-logs')
+  async getDeliveryLogs(
+    @Param('id') integrationId: string,
+    @Query('page', new DefaultValuePipe(1), ParseIntPipe) page?: number,
+    @Query('limit', new DefaultValuePipe(20), ParseIntPipe) limit?: number,
+  ) {
+    return this.adminService.getDeliveryLogs(integrationId, page, limit);
+  }
+
+  @Patch('integrations/:id/config')
+  async updateIntegrationConfig(
+    @Param('id') id: string,
+    @Body() body: { maxRetryAttempts?: number },
+  ) {
+    return this.adminService.updateIntegrationConfig(id, body);
+  }
+
+  // ──────────────────────────────────────────────
+  //  Delivery logs retrigger
+  // ──────────────────────────────────────────────
+
+  @Post('delivery-logs/:logId/retrigger')
+  async retriggerDelivery(@Param('logId') logId: string) {
+    return this.adminService.retriggerDelivery(logId);
+  }
+
+  // ──────────────────────────────────────────────
+  //  Webhook events (incoming Polar audit)
+  // ──────────────────────────────────────────────
+
+  @Get('webhook-events')
+  async getWebhookEvents(
+    @Query('page', new DefaultValuePipe(1), ParseIntPipe) page?: number,
+    @Query('limit', new DefaultValuePipe(20), ParseIntPipe) limit?: number,
+  ) {
+    return this.adminService.getWebhookEvents(page, limit);
+  }
+
   // ──────────────────────────────────────────────
   //  Notifications
   // ──────────────────────────────────────────────
@@ -134,6 +179,28 @@ export class AdminController {
   @Get('notifications/templates')
   async getNotificationTemplates() {
     return this.adminService.getNotificationTemplates();
+  }
+
+  // ──────────────────────────────────────────────
+  //  Plans (admin CRUD)
+  // ──────────────────────────────────────────────
+
+  @Get('plans')
+  async getPlans() {
+    return this.planConfigService.getAll();
+  }
+
+  @Put('plans/:tier')
+  async upsertPlan(
+    @Param('tier') tier: PlanTier,
+    @Body() dto: UpsertPlanConfigDto,
+  ) {
+    return this.planConfigService.upsert(tier, dto);
+  }
+
+  @Delete('plans/:tier')
+  async deletePlan(@Param('tier') tier: PlanTier) {
+    return this.planConfigService.delete(tier);
   }
 
   // ──────────────────────────────────────────────

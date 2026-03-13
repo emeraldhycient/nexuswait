@@ -104,3 +104,18 @@ export type PolarSubscription = Prisma.PolarSubscriptionModel
  * 
  */
 export type PlatformConfig = Prisma.PlatformConfigModel
+/**
+ * Model PlanConfig
+ * 
+ */
+export type PlanConfig = Prisma.PlanConfigModel
+/**
+ * Model WebhookEvent
+ * 
+ */
+export type WebhookEvent = Prisma.WebhookEventModel
+/**
+ * Model WebhookDeliveryLog
+ * 
+ */
+export type WebhookDeliveryLog = Prisma.WebhookDeliveryLogModel

@@ -20,6 +20,7 @@ describe('RetryService', () => {
     enabled: true,
     failureCount: 2,
     lastTriggeredAt: null,
+    maxRetryAttempts: 5,
     updatedAt: new Date(Date.now() - 700_000), // 11+ minutes ago (past backoff)
     project: { id: 'proj-1', accountId: 'acc-1', name: 'Test Project' },
   };
@@ -71,6 +72,7 @@ describe('RetryService', () => {
           event: 'retry',
           integration: expect.objectContaining({ id: 'int-1' }),
         }),
+        'retry',
       );
     });
 

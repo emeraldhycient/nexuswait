@@ -433,6 +433,114 @@ export class AdminService {
   }
 
   // ──────────────────────────────────────────────
+  //  Delivery logs + webhook events
+  // ──────────────────────────────────────────────
+
+  async getDeliveryLogs(integrationId: string, page = 1, limit = 20) {
+    const skip = (Math.max(page, 1) - 1) * Math.min(limit, 100);
+    const take = Math.min(limit, 100);
+
+    const [data, total] = await Promise.all([
+      this.prisma.webhookDeliveryLog.findMany({
+        where: { integrationId },
+        skip,
+        take,
+        orderBy: { createdAt: 'desc' },
+      }),
+      this.prisma.webhookDeliveryLog.count({ where: { integrationId } }),
+    ]);
+
+    return { data, total, page, limit: take };
+  }
+
+  async retriggerDelivery(logId: string) {
+    const log = await this.prisma.webhookDeliveryLog.findUnique({
+      where: { id: logId },
+      include: { integration: true },
+    });
+    if (!log) throw new NotFoundException('Delivery log not found');
+
+    const integration = log.integration;
+    const config = integration.config as Record<string, any>;
+    if (!config?.url) {
+      return { success: false, message: 'Integration has no webhook URL' };
+    }
+
+    // Create a new delivery log with a fresh idempotency key
+    const { createHmac } = await import('crypto');
+    const axios = (await import('axios')).default;
+
+    const body = JSON.stringify(log.payload);
+    const headers: Record<string, string> = { 'Content-Type': 'application/json' };
+    if (config.secret) {
+      headers['X-NexusWait-Signature'] = createHmac('sha256', config.secret).update(body).digest('hex');
+    }
+
+    const idempotencyKey = `retrigger:${logId}:${Date.now()}`;
+    const startTime = Date.now();
+
+    try {
+      const response = await axios.post(config.url, log.payload, { headers, timeout: 10000 });
+      await this.prisma.webhookDeliveryLog.create({
+        data: {
+          integrationId: integration.id,
+          event: log.event,
+          payload: log.payload as object,
+          idempotencyKey,
+          responseStatus: response.status,
+          responseBody: JSON.stringify(response.data).slice(0, 2048),
+          durationMs: Date.now() - startTime,
+          success: true,
+        },
+      });
+      return { success: true, message: 'Delivery retriggered successfully' };
+    } catch (error: any) {
+      await this.prisma.webhookDeliveryLog.create({
+        data: {
+          integrationId: integration.id,
+          event: log.event,
+          payload: log.payload as object,
+          idempotencyKey,
+          responseStatus: error.response?.status ?? null,
+          responseBody: error.response?.data ? JSON.stringify(error.response.data).slice(0, 2048) : null,
+          durationMs: Date.now() - startTime,
+          error: error.message,
+          success: false,
+        },
+      });
+      return { success: false, message: `Retrigger failed: ${error.message}` };
+    }
+  }
+
+  async getWebhookEvents(page = 1, limit = 20) {
+    const skip = (Math.max(page, 1) - 1) * Math.min(limit, 100);
+    const take = Math.min(limit, 100);
+
+    const [data, total] = await Promise.all([
+      this.prisma.webhookEvent.findMany({
+        skip,
+        take,
+        orderBy: { createdAt: 'desc' },
+      }),
+      this.prisma.webhookEvent.count(),
+    ]);
+
+    return { data, total, page, limit: take };
+  }
+
+  async updateIntegrationConfig(id: string, body: { maxRetryAttempts?: number }) {
+    const integration = await this.prisma.integration.findUnique({ where: { id } });
+    if (!integration) throw new NotFoundException('Integration not found');
+
+    const data: Record<string, unknown> = {};
+    if (body.maxRetryAttempts !== undefined) {
+      data.maxRetryAttempts = Math.max(1, Math.min(body.maxRetryAttempts, 20));
+    }
+
+    return this.prisma.integration.update({ where: { id }, data });
+  }
+
+  // ──────────────────────────────────────────────
   //  System health
   // ──────────────────────────────────────────────
 

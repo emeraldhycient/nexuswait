@@ -2,6 +2,7 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { NotFoundException } from '@nestjs/common';
 import { ProjectsService } from './projects.service';
 import { PrismaService } from '../../infrastructure/prisma/prisma.service';
+import { PlanEnforcementService } from '../plan-config/plan-enforcement.service';
 
 describe('ProjectsService', () => {
   let service: ProjectsService;
@@ -16,10 +17,16 @@ describe('ProjectsService', () => {
         update: jest.fn(),
       },
     };
+    const mockPlanEnforcement = {
+      checkProjectLimit: jest.fn().mockResolvedValue(undefined),
+      checkSubscriberLimit: jest.fn().mockResolvedValue(undefined),
+      checkIntegrationLimit: jest.fn().mockResolvedValue(undefined),
+    };
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         ProjectsService,
         { provide: PrismaService, useValue: mockPrisma },
+        { provide: PlanEnforcementService, useValue: mockPlanEnforcement },
       ],
     }).compile();
     service = module.get(ProjectsService);

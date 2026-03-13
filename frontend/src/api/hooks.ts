@@ -908,6 +908,173 @@ export function usePublicCreateSubscriber(projectId: string | undefined) {
   })
 }
 
+// ─── Plans (Public) ─────────────────────────────────────
+
+export interface PlanConfig {
+  id: string
+  tier: string
+  displayName: string
+  description: string | null
+  monthlyPriceCents: number
+  yearlyPriceCents: number
+  maxProjects: number | null
+  maxSubscribersMonth: number | null
+  maxIntegrations: number | null
+  features: string[]
+  polarProductIdMonthly: string | null
+  polarProductIdYearly: string | null
+  highlight: boolean
+  ctaText: string
+  sortOrder: number
+}
+
+export function usePlans() {
+  return useQuery<PlanConfig[]>({
+    queryKey: ['plans'],
+    queryFn: async () => {
+      const { data } = await api.get<PlanConfig[]>('/plans')
+      return data
+    },
+    staleTime: 5 * 60 * 1000,
+  })
+}
+
+// ─── Admin Plans ────────────────────────────────────────
+
+export function useAdminPlans() {
+  return useQuery<PlanConfig[]>({
+    queryKey: ['admin', 'plans'],
+    queryFn: async () => {
+      const { data } = await api.get<PlanConfig[]>('/admin/plans')
+      return data
+    },
+  })
+}
+
+export function useAdminUpsertPlan() {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: async ({ tier, ...body }: { tier: string } & Record<string, unknown>) => {
+      const { data } = await api.put(`/admin/plans/${tier}`, body)
+      return data
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['admin', 'plans'] })
+      queryClient.invalidateQueries({ queryKey: ['plans'] })
+    },
+  })
+}
+
+export function useAdminDeletePlan() {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: async (tier: string) => {
+      await api.delete(`/admin/plans/${tier}`)
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['admin', 'plans'] })
+      queryClient.invalidateQueries({ queryKey: ['plans'] })
+    },
+  })
+}
+
+// ─── Cancel Subscription ────────────────────────────────
+
+export function useCancelSubscription() {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: async () => {
+      const { data } = await api.post('/payments/cancel')
+      return data
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['billing'] })
+      queryClient.invalidateQueries({ queryKey: ['account'] })
+    },
+  })
+}
+
+// ─── Admin Delivery Logs ────────────────────────────────
+
+export interface DeliveryLog {
+  id: string
+  integrationId: string
+  event: string
+  payload: unknown
+  idempotencyKey: string
+  responseStatus: number | null
+  responseBody: string | null
+  durationMs: number | null
+  error: string | null
+  success: boolean
+  createdAt: string
+}
+
+export function useAdminDeliveryLogs(integrationId: string | undefined, page = 1, limit = 25) {
+  return useQuery<{ data: DeliveryLog[]; total: number; page: number; limit: number }>({
+    queryKey: ['admin', 'delivery-logs', integrationId, page],
+    queryFn: async () => {
+      const { data } = await api.get(`/admin/integrations/${integrationId}/delivery-logs`, {
+        params: { page, limit },
+      })
+      return data as { data: DeliveryLog[]; total: number; page: number; limit: number }
+    },
+    enabled: !!integrationId,
+  })
+}
+
+export function useAdminRetriggerDelivery() {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: async (logId: string) => {
+      const { data } = await api.post(`/admin/delivery-logs/${logId}/retrigger`)
+      return data
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['admin', 'delivery-logs'] })
+    },
+  })
+}
+
+// ─── Admin Webhook Events ───────────────────────────────
+
+export interface WebhookEvent {
+  id: string
+  eventId: string
+  eventType: string
+  payload: unknown
+  status: string
+  error: string | null
+  createdAt: string
+}
+
+export function useAdminWebhookEvents(page = 1, limit = 25) {
+  return useQuery<{ data: WebhookEvent[]; total: number; page: number; limit: number }>({
+    queryKey: ['admin', 'webhook-events', page],
+    queryFn: async () => {
+      const { data } = await api.get('/admin/webhook-events', {
+        params: { page, limit },
+      })
+      return data as { data: WebhookEvent[]; total: number; page: number; limit: number }
+    },
+  })
+}
+
+// ─── Admin Integration Config ───────────────────────────
+
+export function useAdminUpdateIntegrationConfig(id: string | undefined) {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: async (body: { maxRetryAttempts: number }) => {
+      const { data } = await api.patch(`/admin/integrations/${id}/config`, body)
+      return data
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['admin', 'integrations'] })
+    },
+  })
+}
+
 // ─── Helpers ────────────────────────────────────────────
 
 export function getMutationErrorMessage(error: unknown): string {
