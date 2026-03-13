@@ -358,6 +358,81 @@ export class AdminService {
   }
 
   // ──────────────────────────────────────────────
+  //  Failed integrations + retry
+  // ──────────────────────────────────────────────
+
+  async getFailedIntegrations() {
+    return this.prisma.integration.findMany({
+      where: { failureCount: { gt: 0 } },
+      orderBy: { failureCount: 'desc' },
+      take: 50,
+      include: {
+        project: {
+          select: { id: true, name: true, accountId: true },
+        },
+      },
+    });
+  }
+
+  async retryIntegration(id: string) {
+    const integration = await this.prisma.integration.findUnique({ where: { id } });
+    if (!integration) {
+      throw new NotFoundException('Integration not found');
+    }
+    await this.prisma.integration.update({
+      where: { id },
+      data: { failureCount: 0, enabled: true },
+    });
+    return { success: true, message: 'Integration re-enabled and failure count reset' };
+  }
+
+  // ──────────────────────────────────────────────
+  //  Notification templates (admin view — all)
+  // ──────────────────────────────────────────────
+
+  async getNotificationTemplates() {
+    return this.prisma.notificationTemplate.findMany({
+      orderBy: { createdAt: 'desc' },
+      include: {
+        _count: { select: { notifications: true } },
+      },
+    });
+  }
+
+  // ──────────────────────────────────────────────
+  //  Global search (admin)
+  // ──────────────────────────────────────────────
+
+  async globalSearch(q: string) {
+    if (!q || q.length < 2) return { projects: [], subscribers: [], integrations: [] };
+
+    const [projects, subscribers, integrations] = await Promise.all([
+      this.prisma.project.findMany({
+        where: { name: { contains: q, mode: 'insensitive' } },
+        take: 5,
+        select: { id: true, name: true, status: true },
+      }),
+      this.prisma.subscriber.findMany({
+        where: {
+          OR: [
+            { email: { contains: q, mode: 'insensitive' } },
+            { name: { contains: q, mode: 'insensitive' } },
+          ],
+        },
+        take: 5,
+        select: { id: true, email: true, name: true, projectId: true },
+      }),
+      this.prisma.integration.findMany({
+        where: { displayName: { contains: q, mode: 'insensitive' } },
+        take: 5,
+        select: { id: true, displayName: true, type: true, projectId: true },
+      }),
+    ]);
+
+    return { projects, subscribers, integrations };
+  }
+
+  // ──────────────────────────────────────────────
   //  System health
   // ──────────────────────────────────────────────
 

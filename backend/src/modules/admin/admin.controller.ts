@@ -6,6 +6,7 @@ import {
   Param,
   ParseIntPipe,
   Patch,
+  Post,
   Query,
   UseGuards,
 } from '@nestjs/common';
@@ -111,6 +112,16 @@ export class AdminController {
     return this.adminService.getIntegrationHealth();
   }
 
+  @Get('integrations/failed')
+  async getFailedIntegrations() {
+    return this.adminService.getFailedIntegrations();
+  }
+
+  @Post('integrations/:id/retry')
+  async retryIntegration(@Param('id') id: string) {
+    return this.adminService.retryIntegration(id);
+  }
+
   // ──────────────────────────────────────────────
   //  Notifications
   // ──────────────────────────────────────────────
@@ -118,6 +129,20 @@ export class AdminController {
   @Get('notifications/queue')
   async getNotificationQueue() {
     return this.adminService.getNotificationQueue();
+  }
+
+  @Get('notifications/templates')
+  async getNotificationTemplates() {
+    return this.adminService.getNotificationTemplates();
+  }
+
+  // ──────────────────────────────────────────────
+  //  Global Search
+  // ──────────────────────────────────────────────
+
+  @Get('search')
+  async globalSearch(@Query('q') q: string) {
+    return this.adminService.globalSearch(q);
   }
 
   // ──────────────────────────────────────────────

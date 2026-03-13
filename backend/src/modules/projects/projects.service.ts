@@ -60,4 +60,40 @@ export class ProjectsService {
       data: { status: 'archived' },
     });
   }
+
+  async search(accountId: string, q: string) {
+    if (!q || q.length < 2) return { projects: [], subscribers: [], integrations: [] };
+
+    const [projects, subscribers, integrations] = await Promise.all([
+      this.prisma.project.findMany({
+        where: {
+          accountId,
+          name: { contains: q, mode: 'insensitive' },
+        },
+        take: 5,
+        select: { id: true, name: true, status: true },
+      }),
+      this.prisma.subscriber.findMany({
+        where: {
+          project: { accountId },
+          OR: [
+            { email: { contains: q, mode: 'insensitive' } },
+            { name: { contains: q, mode: 'insensitive' } },
+          ],
+        },
+        take: 5,
+        select: { id: true, email: true, name: true, projectId: true },
+      }),
+      this.prisma.integration.findMany({
+        where: {
+          project: { accountId },
+          displayName: { contains: q, mode: 'insensitive' },
+        },
+        take: 5,
+        select: { id: true, displayName: true, type: true, projectId: true },
+      }),
+    ]);
+
+    return { projects, subscribers, integrations };
+  }
 }

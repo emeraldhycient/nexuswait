@@ -758,6 +758,69 @@ export function useAdminSystemHealth() {
   })
 }
 
+export function useAdminFailedIntegrations() {
+  return useQuery({
+    queryKey: ['admin', 'integrations', 'failed'],
+    queryFn: async () => {
+      const { data } = await api.get('/admin/integrations/failed')
+      return data
+    },
+  })
+}
+
+export function useAdminRetryIntegration() {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: async (id: string) => {
+      const { data } = await api.post(`/admin/integrations/${id}/retry`)
+      return data
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['admin', 'integrations'] })
+    },
+  })
+}
+
+export function useAdminNotificationTemplates() {
+  return useQuery({
+    queryKey: ['admin', 'notifications', 'templates'],
+    queryFn: async () => {
+      const { data } = await api.get('/admin/notifications/templates')
+      return data
+    },
+  })
+}
+
+export function useAdminGlobalSearch(q: string) {
+  return useQuery({
+    queryKey: ['admin', 'search', q],
+    queryFn: async () => {
+      const { data } = await api.get('/admin/search', { params: { q } })
+      return data
+    },
+    enabled: q.length >= 2,
+  })
+}
+
+// ─── User-scoped Search ─────────────────────────────────
+
+export interface SearchResults {
+  projects: { id: string; name: string; status: string }[]
+  subscribers: { id: string; email: string; name: string | null; projectId: string }[]
+  integrations: { id: string; displayName: string; type: string; projectId: string }[]
+}
+
+export function useSearch(q: string) {
+  return useQuery<SearchResults>({
+    queryKey: ['search', q],
+    queryFn: async () => {
+      const { data } = await api.get<SearchResults>('/projects/search/all', { params: { q } })
+      return data
+    },
+    enabled: q.length >= 2,
+  })
+}
+
 // ─── Platform Config ─────────────────────────────────────
 
 export interface PlatformConfig {

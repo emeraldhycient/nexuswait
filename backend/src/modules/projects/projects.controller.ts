@@ -1,4 +1,4 @@
-import { Body, Controller, Delete, Get, Param, Patch, Post, UseGuards } from '@nestjs/common';
+import { Body, Controller, Delete, Get, Param, Patch, Post, Query, UseGuards } from '@nestjs/common';
 import { AuthGuard } from '@nestjs/passport';
 import { JwtPayloadDecorator } from '../auth/jwt-payload.decorator';
 import { CreateProjectDto } from './dto/create-project.dto';
@@ -17,6 +17,15 @@ export class ProjectsController {
   @Get()
   async findAll(@JwtPayloadDecorator() payload: { accountId: string }) {
     return this.projects.findAll(payload.accountId);
+  }
+
+  // Must be above :id route to avoid "search" being matched as an ID
+  @Get('search/all')
+  async search(
+    @JwtPayloadDecorator() payload: { accountId: string },
+    @Query('q') q: string,
+  ) {
+    return this.projects.search(payload.accountId, q);
   }
 
   @Get(':id')
