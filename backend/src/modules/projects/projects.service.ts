@@ -38,7 +38,7 @@ export class ProjectsService {
 
   async findAll(accountId: string) {
     return this.prisma.project.findMany({
-      where: { accountId },
+      where: { accountId, status: { not: 'archived' } },
       orderBy: { createdAt: 'desc' },
       include: { _count: { select: { subscribers: true } } },
     });
@@ -88,6 +88,7 @@ export class ProjectsService {
       this.prisma.project.findMany({
         where: {
           accountId,
+          status: { not: 'archived' },
           name: { contains: q, mode: 'insensitive' },
         },
         take: 5,

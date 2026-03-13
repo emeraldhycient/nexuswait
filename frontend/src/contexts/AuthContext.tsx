@@ -55,6 +55,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setLoading(false)
       return
     }
+    setLoading(true)
     api
       .get<AuthUser>('/auth/me')
       .then((res) => {
