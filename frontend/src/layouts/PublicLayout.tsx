@@ -1,5 +1,6 @@
 import { Outlet, Link, useLocation } from 'react-router-dom'
 import Logo from '../components/Logo'
+import ThemeToggle from '../components/ThemeToggle'
 import { Menu, X } from 'lucide-react'
 import { useState } from 'react'
 
@@ -17,7 +18,7 @@ export default function PublicLayout() {
       {/* Scanline effect */}
       <div className="fixed inset-0 pointer-events-none z-[100]"
         style={{
-          background: 'repeating-linear-gradient(0deg, transparent, transparent 2px, rgba(0,232,255,0.008) 2px, rgba(0,232,255,0.008) 4px)',
+          background: 'repeating-linear-gradient(0deg, transparent, transparent 2px, color-mix(in srgb, var(--color-cyan-glow) 0.8%, transparent) 2px, color-mix(in srgb, var(--color-cyan-glow) 0.8%, transparent) 4px)',
         }}
       />
 
@@ -43,6 +44,7 @@ export default function PublicLayout() {
           </div>
 
           <div className="hidden md:flex items-center gap-3">
+            <ThemeToggle compact />
             <Link to="/login" className="btn-ghost no-underline">Log in</Link>
             <Link to="/signup" className="btn-primary no-underline inline-block">Get Started</Link>
           </div>
@@ -67,6 +69,7 @@ export default function PublicLayout() {
                 {l.label}
               </Link>
             ))}
+            <ThemeToggle />
             <div className="flex gap-3 pt-2">
               <Link to="/login" className="btn-ghost no-underline" onClick={() => setMobileOpen(false)}>Log in</Link>
               <Link to="/signup" className="btn-primary no-underline" onClick={() => setMobileOpen(false)}>Get Started</Link>

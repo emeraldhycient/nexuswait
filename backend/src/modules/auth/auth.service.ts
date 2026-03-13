@@ -31,16 +31,6 @@ export class AuthService {
     return { user: { id: user.id, email: user.email, accountId: user.accountId, role: user.role }, token };
   }
 
-  async createAdminUser(email: string, password: string, firstName?: string, lastName?: string) {
-    const existing = await this.prisma.user.findUnique({ where: { email } });
-    if (existing) throw new UnauthorizedException('Email already registered');
-    const passwordHash = await bcrypt.hash(password, 10);
-    const account = await this.prisma.account.create({ data: { plan: 'enterprise' } });
-    const user = await this.prisma.user.create({ data: { email, passwordHash, firstName, lastName, accountId: account.id, role: 'admin' } });
-    const token = this.jwt.sign({ sub: user.id, accountId: user.accountId, role: user.role });
-    return { user: { id: user.id, email: user.email, accountId: user.accountId, role: user.role }, token };
-  }
-
   async login(email: string, password: string) {
     const user = await this.prisma.user.findUnique({
       where: { email },

@@ -8,6 +8,7 @@ import {
   CreditCard, FileText,
 } from 'lucide-react'
 import { useAuth } from '../contexts/AuthContext'
+import ThemeToggle from '../components/ThemeToggle'
 
 const sidebarItems: { to: string; icon: LucideIcon; label: string }[] = [
   { to: '/admin', icon: LayoutDashboard, label: 'Overview' },
@@ -123,6 +124,7 @@ export default function AdminLayout() {
             />
           </div>
           <div className="flex items-center gap-4">
+            <ThemeToggle compact />
             <button className="relative p-2 text-nexus-400 hover:text-nexus-100 transition-colors">
               <Bell size={18} />
               <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-magenta-glow rounded-full" />

@@ -25,17 +25,17 @@ export default function PublicWaitlistPage() {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-[#0a0a14]">
-        <Loader2 size={28} className="animate-spin text-cyan-400" />
+      <div className="min-h-screen flex items-center justify-center bg-nexus-900">
+        <Loader2 size={28} className="animate-spin text-cyan-glow" />
       </div>
     )
   }
 
   if (error || !page) {
     return (
-      <div className="min-h-screen flex flex-col items-center justify-center bg-[#0a0a14] text-white px-6">
+      <div className="min-h-screen flex flex-col items-center justify-center bg-nexus-900 text-nexus-50 px-6">
         <h1 className="text-4xl font-black mb-3" style={{ fontFamily: "'Orbitron', sans-serif" }}>404</h1>
-        <p className="text-white/50 text-sm">This page doesn't exist or isn't published yet.</p>
+        <p className="text-nexus-400 text-sm">This page doesn't exist or isn't published yet.</p>
       </div>
     )
   }

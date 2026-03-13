@@ -10,6 +10,7 @@ import { useAuth } from '../contexts/AuthContext'
 import NotificationBell from '../components/NotificationBell'
 import GlobalSearch from '../components/GlobalSearch'
 import UserAccountDropdown from '../components/UserAccountDropdown'
+import ThemeToggle from '../components/ThemeToggle'
 
 const sidebarItems: { to: string; icon: LucideIcon; label: string }[] = [
   { to: '/dashboard', icon: LayoutDashboard, label: 'Overview' },
@@ -109,6 +110,7 @@ export default function DashboardLayout() {
         <header className="sticky top-0 z-30 h-16 flex items-center justify-between px-6 border-b border-cyan-glow/[0.06] bg-nexus-900/80 backdrop-blur-xl">
           <GlobalSearch />
           <div className="flex items-center gap-4">
+            <ThemeToggle compact />
             <NotificationBell />
             <UserAccountDropdown />
           </div>
