@@ -57,7 +57,6 @@ export default function ViewProject() {
   const { data: referralData } = useReferralLeaderboard(id)
   const { data: platformConfig } = usePlatformConfig()
   const apiUrl = platformConfig?.apiBaseUrl ?? 'https://api.nexuswait.io'
-  const cdnUrl = platformConfig?.cdnBaseUrl ?? 'https://cdn.nexuswait.io'
 
   // ─── Settings tab state ────────────────────────────
   const [settingsName, setSettingsName] = useState('')
@@ -549,15 +548,26 @@ export default function ViewProject() {
             <div className="mb-5">
               <div className="flex items-center gap-2 mb-2">
                 <FileCode size={14} className="text-cyan-glow" />
-                <h3 className="text-sm font-display font-bold text-nexus-200 tracking-wider">Embed Widget</h3>
+                <h3 className="text-sm font-display font-bold text-nexus-200 tracking-wider">Embed Widget <span className="text-[9px] font-mono text-nexus-500 ml-1 font-normal">(recommended)</span></h3>
               </div>
-              <p className="text-xs text-nexus-500 mb-3">Drop this snippet into your HTML to show a signup form.</p>
+              <p className="text-xs text-nexus-500 mb-3">Drop this snippet into your HTML to show a fully styled signup form. No build tools required.</p>
               <SnippetBlock
                 label="HTML"
-                code={`<script src="${cdnUrl}/v1.js"></script>\n<div id="nexuswait" data-project-id="${id}"></div>`}
+                code={`<script src="${apiUrl.replace(/\/v1$/, '')}/embed.js"></script>\n<div data-nexuswait-id="${id}"></div>`}
                 copied={copiedSnippet}
                 onCopy={setCopiedSnippet}
               />
+              <div className="mt-2">
+                <SnippetBlock
+                  label="All Options"
+                  code={`<script src="${apiUrl.replace(/\/v1$/, '')}/embed.js"></script>\n<div\n  data-nexuswait-id="${id}"\n  data-nexuswait-name="true"\n  data-nexuswait-button-text="Get Early Access"\n  data-nexuswait-theme="dark"\n  data-nexuswait-accent="#00e8ff"\n  data-nexuswait-show-count="true"\n  data-nexuswait-api="${apiUrl}"\n></div>`}
+                  copied={copiedSnippet}
+                  onCopy={setCopiedSnippet}
+                />
+              </div>
+              <Link to="/dashboard/embed" onClick={() => setShowEmbed(false)} className="inline-flex items-center gap-1 text-[11px] text-cyan-glow hover:underline font-mono mt-2">
+                View full embed docs <ArrowUpRight size={10} />
+              </Link>
             </div>
 
             {/* API Endpoint */}
