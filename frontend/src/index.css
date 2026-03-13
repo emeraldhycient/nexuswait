@@ -272,6 +272,23 @@ html.light {
     box-shadow: 0 0 0 3px color-mix(in srgb, var(--color-cyan-glow) 12%, transparent);
   }
 
+  /* ─── Focus visible ─── */
+  a:focus-visible,
+  button:focus-visible,
+  [tabindex]:focus-visible,
+  select:focus-visible {
+    outline: 2px solid var(--color-cyan-glow);
+    outline-offset: 2px;
+  }
+  .btn-primary:focus-visible {
+    outline: 2px solid var(--color-nexus-50);
+    outline-offset: 2px;
+    box-shadow: 0 0 0 4px color-mix(in srgb, var(--color-cyan-glow) 40%, transparent);
+  }
+  .input-field:focus-visible {
+    outline: none;
+  }
+
   /* ─── Animations ─── */
   .animate-float { animation: float 6s ease-in-out infinite; }
   .animate-slide-up { animation: slideUp 0.6s ease-out both; }

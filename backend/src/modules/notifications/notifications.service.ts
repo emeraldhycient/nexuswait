@@ -26,14 +26,15 @@ export class NotificationsService {
     });
   }
 
-  async getTemplate(id: string) {
+  async getTemplate(id: string, accountId?: string) {
     const t = await this.prisma.notificationTemplate.findUnique({ where: { id } });
     if (!t) throw new NotFoundException('Template not found');
+    if (accountId && t.accountId !== accountId) throw new NotFoundException('Template not found');
     return t;
   }
 
-  async updateTemplate(id: string, dto: Partial<CreateTemplateDto>) {
-    await this.getTemplate(id);
+  async updateTemplate(id: string, dto: Partial<CreateTemplateDto>, accountId?: string) {
+    await this.getTemplate(id, accountId);
     return this.prisma.notificationTemplate.update({
       where: { id },
       data: {
@@ -45,14 +46,15 @@ export class NotificationsService {
     });
   }
 
-  async deleteTemplate(id: string) {
-    await this.getTemplate(id);
+  async deleteTemplate(id: string, accountId?: string) {
+    await this.getTemplate(id, accountId);
     return this.prisma.notificationTemplate.delete({ where: { id } });
   }
 
-  async enqueue(templateId: string, recipient: string, payload: Record<string, unknown>) {
+  async enqueue(templateId: string, recipient: string, payload: Record<string, unknown>, accountId?: string) {
     const template = await this.prisma.notificationTemplate.findUnique({ where: { id: templateId } });
     if (!template) throw new NotFoundException('Template not found');
+    if (accountId && template.accountId !== accountId) throw new NotFoundException('Template not found');
     const nextRetryAt = new Date(Date.now() + 1000); // 1s first retry
     return this.prisma.notification.create({
       data: {

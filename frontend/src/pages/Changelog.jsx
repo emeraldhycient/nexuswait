@@ -1,4 +1,5 @@
 import { Link } from 'react-router-dom'
+import { useDocumentTitle } from '../hooks/useDocumentTitle'
 
 const entries = [
   { version: '2.0.0', date: 'March 11, 2026', items: ['Hosted pages & page builder', 'Form submit integrations', 'Public REST API v1', 'Referral engine enhancements'] },
@@ -7,6 +8,8 @@ const entries = [
 ]
 
 export default function Changelog() {
+  useDocumentTitle('Changelog')
+
   return (
     <div className="grid-bg min-h-screen">
       <div className="max-w-3xl mx-auto px-6 py-24">

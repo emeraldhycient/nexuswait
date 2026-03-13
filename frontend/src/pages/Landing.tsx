@@ -1,4 +1,5 @@
 import { Link } from 'react-router-dom'
+import { useDocumentTitle } from '../hooks/useDocumentTitle'
 import type { LucideIcon } from 'lucide-react'
 import {
   Zap, Shield, BarChart3, Globe, Layers, ArrowRight,
@@ -75,6 +76,8 @@ const steps = [
 ]
 
 export default function Landing() {
+  useDocumentTitle('Build Waitlists That Launch Empires')
+
   return (
     <div className="grid-bg">
       {/* HERO */}

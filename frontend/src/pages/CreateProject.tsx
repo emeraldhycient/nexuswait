@@ -4,6 +4,7 @@ import {
   Sparkles, Check, Code
 } from 'lucide-react'
 import { useCreateProject, getMutationErrorMessage } from '../api/hooks'
+import { useDocumentTitle } from '../hooks/useDocumentTitle'
 
 const templates = [
   { id: 'minimal', name: 'Minimal', desc: 'Clean single-field form', color: 'from-cyan-glow/20 to-cyan-glow/5' },
@@ -24,6 +25,7 @@ interface CreateProjectForm {
 }
 
 export default function CreateProject() {
+  useDocumentTitle('New Project')
   const createProject = useCreateProject()
   const [step, setStep] = useState(1)
   const [form, setForm] = useState<CreateProjectForm>({

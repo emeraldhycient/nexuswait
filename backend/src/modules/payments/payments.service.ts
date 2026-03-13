@@ -23,8 +23,8 @@ export class PaymentsService {
   verifyWebhookSignature(rawBody: Buffer, signature: string): boolean {
     const secret = this.config.get<string>('POLAR_WEBHOOK_SECRET');
     if (!secret) {
-      this.logger.warn('POLAR_WEBHOOK_SECRET not set — skipping signature verification');
-      return true;
+      this.logger.error('POLAR_WEBHOOK_SECRET not configured — rejecting webhook');
+      return false;
     }
     if (!signature) return false;
 

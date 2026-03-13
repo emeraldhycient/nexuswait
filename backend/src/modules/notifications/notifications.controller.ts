@@ -114,27 +114,37 @@ export class NotificationsController {
   }
 
   @Get('templates/:id')
-  async getTemplate(@Param('id') id: string) {
-    return this.notifications.getTemplate(id);
+  async getTemplate(
+    @JwtPayloadDecorator() jwt: { accountId: string },
+    @Param('id') id: string,
+  ) {
+    return this.notifications.getTemplate(id, jwt.accountId);
   }
 
   @Patch('templates/:id')
   async updateTemplate(
+    @JwtPayloadDecorator() jwt: { accountId: string },
     @Param('id') id: string,
     @Body() dto: Partial<CreateTemplateDto>,
   ) {
-    return this.notifications.updateTemplate(id, dto);
+    return this.notifications.updateTemplate(id, dto, jwt.accountId);
   }
 
   @Delete('templates/:id')
-  async deleteTemplate(@Param('id') id: string) {
-    return this.notifications.deleteTemplate(id);
+  async deleteTemplate(
+    @JwtPayloadDecorator() jwt: { accountId: string },
+    @Param('id') id: string,
+  ) {
+    return this.notifications.deleteTemplate(id, jwt.accountId);
   }
 
   /* ───── Enqueue (existing) ───────────────────────────── */
 
   @Post('enqueue')
-  async enqueue(@Body() dto: EnqueueNotificationDto) {
-    return this.notifications.enqueue(dto.templateId, dto.recipient, dto.payload || {});
+  async enqueue(
+    @JwtPayloadDecorator() jwt: { accountId: string },
+    @Body() dto: EnqueueNotificationDto,
+  ) {
+    return this.notifications.enqueue(dto.templateId, dto.recipient, dto.payload || {}, jwt.accountId);
   }
 }

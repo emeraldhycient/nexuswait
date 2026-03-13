@@ -7,6 +7,7 @@ import {
 } from 'lucide-react'
 import { useProjects, useSubscribers, useAnalyticsTimeseries } from '../api/hooks'
 import { useAuth } from '../contexts/AuthContext'
+import { useDocumentTitle } from '../hooks/useDocumentTitle'
 
 const colorMap: Record<string, string> = {
   cyan: 'text-cyan-glow bg-cyan-glow/10',
@@ -22,6 +23,7 @@ const sourceColors: Record<string, string> = {
 }
 
 export default function Dashboard() {
+  useDocumentTitle('Dashboard')
   const navigate = useNavigate()
   const { isAuthenticated, loading: authLoading } = useAuth()
   const { data: projectsList, isLoading: projectsLoading, error: projectsError } = useProjects()

@@ -15,6 +15,7 @@ import {
   getMutationErrorMessage,
 } from '../api/hooks'
 import type { PlanConfig } from '../api/hooks'
+import { useDocumentTitle } from '../hooks/useDocumentTitle'
 
 type SettingsTabId = 'profile' | 'notifications' | 'security' | 'billing'
 
@@ -43,6 +44,7 @@ function NotifToggle({ defaultOn }: { defaultOn: boolean }) {
 }
 
 export default function Settings() {
+  useDocumentTitle('Settings')
   const { user } = useAuth()
   const [activeTab, setActiveTab] = useState<SettingsTabId>('profile')
 

@@ -35,6 +35,7 @@ import AdminSystem from './pages/admin/AdminSystem'
 import AdminPlans from './pages/admin/AdminPlans'
 import AdminWebhookLogs from './pages/admin/AdminWebhookLogs'
 import PublicWaitlistPage from './pages/PublicWaitlistPage'
+import NotFound from './pages/NotFound'
 
 export default function App() {
   return (
@@ -55,6 +56,7 @@ export default function App() {
         <Route path="/about" element={<About />} />
         <Route path="/changelog" element={<Changelog />} />
         <Route path="/forgot-password" element={<ForgotPassword />} />
+        <Route path="*" element={<NotFound />} />
       </Route>
       <Route element={<DashboardLayout />}>
         <Route path="/dashboard" element={<Dashboard />} />

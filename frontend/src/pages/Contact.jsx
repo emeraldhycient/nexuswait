@@ -1,8 +1,10 @@
 import { Link } from 'react-router-dom'
 import { useState } from 'react'
 import { ArrowRight } from 'lucide-react'
+import { useDocumentTitle } from '../hooks/useDocumentTitle'
 
 export default function Contact() {
+  useDocumentTitle('Contact')
   const [submitted, setSubmitted] = useState(false)
 
   const handleSubmit = (e) => {

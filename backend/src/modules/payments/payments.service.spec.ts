@@ -377,12 +377,12 @@ describe('PaymentsService', () => {
   // ─── Webhook Signature Verification ─────────────────
 
   describe('verifyWebhookSignature', () => {
-    it('should return true when secret is not set', () => {
+    it('should return false when secret is not set (security: reject unsigned webhooks)', () => {
       (config.get as jest.Mock).mockReturnValue(undefined);
 
       const result = service.verifyWebhookSignature(Buffer.from('body'), 'any-sig');
 
-      expect(result).toBe(true);
+      expect(result).toBe(false);
     });
 
     it('should return false when signature is empty', () => {

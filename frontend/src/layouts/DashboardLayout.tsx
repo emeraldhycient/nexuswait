@@ -35,6 +35,12 @@ export default function DashboardLayout() {
 
   return (
     <div className="min-h-screen flex bg-nexus-900">
+      <a
+        href="#main-content"
+        className="sr-only focus:not-sr-only focus:fixed focus:top-2 focus:left-2 focus:z-[9999] focus:px-4 focus:py-2 focus:bg-cyan-glow focus:text-nexus-900 focus:rounded-lg focus:font-display focus:font-bold"
+      >
+        Skip to content
+      </a>
       {/* Sidebar */}
       <aside className={`fixed top-0 left-0 h-full z-40 flex flex-col border-r border-cyan-glow/[0.06] bg-nexus-800/60 backdrop-blur-xl transition-all duration-300 ${collapsed ? 'w-[68px]' : 'w-[240px]'}`}>
         <div className={`h-16 flex items-center border-b border-cyan-glow/[0.06] ${collapsed ? 'justify-center px-2' : 'px-5'}`}>
@@ -47,7 +53,7 @@ export default function DashboardLayout() {
           )}
         </div>
 
-        <nav className="flex-1 py-4 px-2 space-y-1">
+        <nav aria-label="Sidebar navigation" className="flex-1 py-4 px-2 space-y-1">
           {sidebarItems.map(item => {
             const active = location.pathname === item.to
             const Icon = item.icon
@@ -117,7 +123,7 @@ export default function DashboardLayout() {
           </div>
         </header>
 
-        <main className="p-6">
+        <main id="main-content" className="p-6">
           <Outlet />
         </main>
       </div>

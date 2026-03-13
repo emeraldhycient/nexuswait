@@ -4,6 +4,7 @@ import { useState } from 'react'
 import { usePlans, useBilling, useCheckoutSession } from '../api/hooks'
 import type { PlanConfig } from '../api/hooks'
 import { useAuth } from '../contexts/AuthContext'
+import { useDocumentTitle } from '../hooks/useDocumentTitle'
 
 // Fallback plans used while API loads or if fetch fails
 const fallbackPlans = [
@@ -87,6 +88,7 @@ function mapApiPlan(p: PlanConfig) {
 }
 
 export default function Pricing() {
+  useDocumentTitle('Pricing')
   const [annual, setAnnual] = useState(true)
   const [openFaq, setOpenFaq] = useState<number | null>(null)
   const { data: apiPlans, isLoading } = usePlans()

@@ -6,6 +6,7 @@ import {
 import type { LucideIcon } from 'lucide-react'
 import { useState } from 'react'
 import { usePlatformConfig } from '../api/hooks'
+import { useDocumentTitle } from '../hooks/useDocumentTitle'
 
 const categories: {
   icon: LucideIcon
@@ -74,6 +75,7 @@ const tagColors: Record<string, string> = {
 }
 
 export default function Resources() {
+  useDocumentTitle('Resources')
   const [search, setSearch] = useState('')
   const { data: platformConfig } = usePlatformConfig()
   const apiUrl = platformConfig?.apiBaseUrl ?? 'https://api.nexuswait.io'

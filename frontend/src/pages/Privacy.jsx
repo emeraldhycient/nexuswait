@@ -1,6 +1,9 @@
 import { Link } from 'react-router-dom'
+import { useDocumentTitle } from '../hooks/useDocumentTitle'
 
 export default function Privacy() {
+  useDocumentTitle('Privacy Policy')
+
   return (
     <div className="grid-bg min-h-screen">
       <div className="max-w-3xl mx-auto px-6 py-24">

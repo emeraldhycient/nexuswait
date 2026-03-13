@@ -1,11 +1,13 @@
 import { NestFactory } from '@nestjs/core';
 import { ValidationPipe } from '@nestjs/common';
 import { urlencoded } from 'express';
+import helmet from 'helmet';
 import { AppModule } from './app.module';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule, { rawBody: true });
   app.setGlobalPrefix('v1');
+  app.use(helmet());
   app.use(urlencoded({ extended: true }));
   app.useGlobalPipes(
     new ValidationPipe({

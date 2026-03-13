@@ -38,6 +38,12 @@ export default function AdminLayout() {
 
   return (
     <div className="min-h-screen flex bg-nexus-900">
+      <a
+        href="#main-content"
+        className="sr-only focus:not-sr-only focus:fixed focus:top-2 focus:left-2 focus:z-[9999] focus:px-4 focus:py-2 focus:bg-cyan-glow focus:text-nexus-900 focus:rounded-lg focus:font-display focus:font-bold"
+      >
+        Skip to content
+      </a>
       {/* Sidebar */}
       <aside className={`fixed top-0 left-0 h-full z-40 flex flex-col border-r border-magenta-glow/[0.06] bg-nexus-800/60 backdrop-blur-xl transition-all duration-300 ${collapsed ? 'w-[68px]' : 'w-[240px]'}`}>
         <div className={`h-16 flex items-center border-b border-magenta-glow/[0.06] ${collapsed ? 'justify-center px-2' : 'px-5'}`}>
@@ -53,7 +59,7 @@ export default function AdminLayout() {
           )}
         </div>
 
-        <nav className="flex-1 py-4 px-2 space-y-1">
+        <nav aria-label="Admin navigation" className="flex-1 py-4 px-2 space-y-1">
           {sidebarItems.map(item => {
             const active = item.to === '/admin'
               ? location.pathname === '/admin'
@@ -119,13 +125,14 @@ export default function AdminLayout() {
             <Search size={16} className="text-nexus-500" />
             <input
               type="text"
+              aria-label="Search accounts and projects"
               placeholder="Search accounts, projects..."
               className="bg-transparent border-none outline-none text-sm text-nexus-200 placeholder:text-nexus-500 flex-1"
             />
           </div>
           <div className="flex items-center gap-4">
             <ThemeToggle compact />
-            <button className="relative p-2 text-nexus-400 hover:text-nexus-100 transition-colors">
+            <button aria-label="Notifications" className="relative p-2 text-nexus-400 hover:text-nexus-100 transition-colors">
               <Bell size={18} />
               <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-magenta-glow rounded-full" />
             </button>
@@ -135,7 +142,7 @@ export default function AdminLayout() {
           </div>
         </header>
 
-        <main className="p-6">
+        <main id="main-content" className="p-6">
           <Outlet />
         </main>
       </div>

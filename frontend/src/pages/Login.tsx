@@ -3,8 +3,10 @@ import { useState } from 'react'
 import { Eye, EyeOff, ArrowRight } from 'lucide-react'
 import { useGoogleLogin } from '@react-oauth/google'
 import { useLogin, useGoogleAuth, getMutationErrorMessage } from '../api/hooks'
+import { useDocumentTitle } from '../hooks/useDocumentTitle'
 
 export default function Login() {
+  useDocumentTitle('Log In')
   const [show, setShow] = useState(false)
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')

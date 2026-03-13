@@ -14,7 +14,11 @@ import { PlanConfigModule } from '../plan-config/plan-config.module';
     JwtModule.registerAsync({
       imports: [ConfigModule],
       useFactory: (config: ConfigService) => ({
-        secret: config.get<string>('JWT_SECRET') || 'default-secret-change-in-production',
+        secret: (() => {
+          const s = config.get<string>('JWT_SECRET');
+          if (!s) throw new Error('JWT_SECRET environment variable must be set');
+          return s;
+        })(),
         signOptions: { expiresIn: config.get<string>('JWT_EXPIRES_IN') || '7d' },
       }),
       inject: [ConfigService],

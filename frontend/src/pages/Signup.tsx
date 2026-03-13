@@ -3,6 +3,7 @@ import { useState } from 'react'
 import { Eye, EyeOff, ArrowRight, Check } from 'lucide-react'
 import { useGoogleLogin } from '@react-oauth/google'
 import { useRegister, useGoogleAuth, getMutationErrorMessage } from '../api/hooks'
+import { useDocumentTitle } from '../hooks/useDocumentTitle'
 
 interface SignupForm {
   name: string
@@ -18,6 +19,7 @@ function nameToFirstLast(name: string): { firstName: string; lastName: string } 
 }
 
 export default function Signup() {
+  useDocumentTitle('Create Account')
   const [show, setShow] = useState(false)
   const [form, setForm] = useState<SignupForm>({ name: '', email: '', password: '' })
   const navigate = useNavigate()
