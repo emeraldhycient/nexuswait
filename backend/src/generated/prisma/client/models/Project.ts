@@ -243,11 +243,11 @@ export type ProjectOrderByWithRelationInput = {
 
 export type ProjectWhereUniqueInput = Prisma.AtLeast<{
   id?: string
+  slug?: string
   AND?: Prisma.ProjectWhereInput | Prisma.ProjectWhereInput[]
   OR?: Prisma.ProjectWhereInput[]
   NOT?: Prisma.ProjectWhereInput | Prisma.ProjectWhereInput[]
   name?: Prisma.StringFilter<"Project"> | string
-  slug?: Prisma.StringFilter<"Project"> | string
   status?: Prisma.EnumProjectStatusFilter<"Project"> | $Enums.ProjectStatus
   redirectUrl?: Prisma.StringNullableFilter<"Project"> | string | null
   webhookUrl?: Prisma.StringNullableFilter<"Project"> | string | null
@@ -259,7 +259,7 @@ export type ProjectWhereUniqueInput = Prisma.AtLeast<{
   subscribers?: Prisma.SubscriberListRelationFilter
   integrations?: Prisma.IntegrationListRelationFilter
   hostedPage?: Prisma.XOR<Prisma.HostedPageNullableScalarRelationFilter, Prisma.HostedPageWhereInput> | null
-}, "id">
+}, "id" | "slug">
 
 export type ProjectOrderByWithAggregationInput = {
   id?: Prisma.SortOrder

@@ -18,6 +18,7 @@ import { IntegrationsModule } from './modules/integrations/integrations.module';
 import { AdminModule } from './modules/admin/admin.module';
 import { PlatformConfigModule } from './modules/platform-config/platform-config.module';
 import { PlanConfigModule } from './modules/plan-config/plan-config.module';
+import { FormSubmissionModule } from './modules/form-submission/form-submission.module';
 
 @Module({
   imports: [
@@ -39,6 +40,7 @@ import { PlanConfigModule } from './modules/plan-config/plan-config.module';
     AdminModule,
     PlatformConfigModule,
     PlanConfigModule,
+    FormSubmissionModule,
   ],
   controllers: [HealthController],
 })

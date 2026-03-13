@@ -10,9 +10,20 @@ export class ProjectsService {
     private planEnforcement: PlanEnforcementService,
   ) {}
 
+  private async ensureUniqueSlug(baseSlug: string, excludeId?: string): Promise<string> {
+    let slug = baseSlug;
+    let suffix = 2;
+    while (true) {
+      const existing = await this.prisma.project.findUnique({ where: { slug } });
+      if (!existing || existing.id === excludeId) return slug;
+      slug = `${baseSlug}-${suffix++}`;
+    }
+  }
+
   async create(accountId: string, dto: CreateProjectDto) {
     await this.planEnforcement.checkProjectLimit(accountId);
-    const slug = dto.slug || dto.name.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '');
+    const baseSlug = dto.slug || dto.name.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '');
+    const slug = await this.ensureUniqueSlug(baseSlug);
     return this.prisma.project.create({
       data: {
         name: dto.name,
@@ -45,11 +56,15 @@ export class ProjectsService {
 
   async update(id: string, accountId: string, dto: Partial<CreateProjectDto>) {
     await this.findOne(id, accountId);
+    let slug: string | undefined;
+    if (dto.slug) {
+      slug = await this.ensureUniqueSlug(dto.slug, id);
+    }
     return this.prisma.project.update({
       where: { id },
       data: {
         ...(dto.name && { name: dto.name }),
-        ...(dto.slug && { slug: dto.slug }),
+        ...(slug && { slug }),
         ...(dto.redirectUrl !== undefined && { redirectUrl: dto.redirectUrl }),
         ...(dto.webhookUrl !== undefined && { webhookUrl: dto.webhookUrl }),
         ...(dto.status && { status: dto.status }),
