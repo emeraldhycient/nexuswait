@@ -412,6 +412,44 @@ describe('SubscribersService', () => {
     });
   });
 
+  describe('getFormConfig', () => {
+    it('should return custom fields for an existing project', async () => {
+      const mockFields = [
+        { id: 'f1', label: 'Company', fieldKey: 'company', type: 'text', required: true },
+        { id: 'f2', label: 'Role', fieldKey: 'role', type: 'select', required: false, options: ['Developer', 'Designer'] },
+      ];
+      (prisma.project.findUnique as jest.Mock).mockResolvedValue({
+        id: 'p1',
+        customFields: mockFields,
+      });
+
+      const result = await service.getFormConfig('p1');
+
+      expect(result).toEqual({ customFields: mockFields });
+      expect(prisma.project.findUnique).toHaveBeenCalledWith({
+        where: { id: 'p1' },
+        select: { id: true, customFields: true },
+      });
+    });
+
+    it('should return empty array when project has no custom fields', async () => {
+      (prisma.project.findUnique as jest.Mock).mockResolvedValue({
+        id: 'p1',
+        customFields: null,
+      });
+
+      const result = await service.getFormConfig('p1');
+
+      expect(result).toEqual({ customFields: [] });
+    });
+
+    it('should throw NotFoundException for missing project', async () => {
+      (prisma.project.findUnique as jest.Mock).mockResolvedValue(null);
+
+      await expect(service.getFormConfig('unknown')).rejects.toThrow(NotFoundException);
+    });
+  });
+
   describe('getCount', () => {
     it('should return subscriber count', async () => {
       (prisma.subscriber.count as jest.Mock).mockResolvedValue(42);

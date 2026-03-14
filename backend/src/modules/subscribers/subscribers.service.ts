@@ -163,6 +163,15 @@ export class SubscribersService {
     });
   }
 
+  async getFormConfig(projectId: string) {
+    const project = await this.prisma.project.findUnique({
+      where: { id: projectId },
+      select: { id: true, customFields: true },
+    });
+    if (!project) throw new NotFoundException('Project not found');
+    return { customFields: project.customFields ?? [] };
+  }
+
   async getCount(projectId: string) {
     return this.prisma.subscriber.count({ where: { projectId } });
   }

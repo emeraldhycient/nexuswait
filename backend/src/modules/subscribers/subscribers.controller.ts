@@ -39,6 +39,11 @@ export class SubscribersController {
     });
   }
 
+  @Get('form-config')
+  async getFormConfig(@Param('projectId') projectId: string) {
+    return this.subscribers.getFormConfig(projectId);
+  }
+
   @Get('count')
   async getCount(@Param('projectId') projectId: string) {
     return { count: await this.subscribers.getCount(projectId) };

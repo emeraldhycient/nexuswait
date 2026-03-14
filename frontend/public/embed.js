@@ -1,5 +1,5 @@
 /**
- * NexusWait Embeddable Widget v1.0.0
+ * NexusWait Embeddable Widget v1.1.0
  * https://nexuswait.com
  *
  * A self-contained JavaScript widget for embedding waitlist signup forms.
@@ -16,6 +16,7 @@
  *   data-nexuswait-theme       — "dark" (default) or "light"
  *   data-nexuswait-accent      — Accent color hex (default "#00e8ff")
  *   data-nexuswait-show-count  — Show subscriber count ("true"/"false", default "false")
+ *   data-nexuswait-fields      — Show project custom fields ("true"/"false", default "true")
  *   data-nexuswait-api         — API base URL override (default "https://nexuswait.com/v1")
  */
 (function () {
@@ -25,8 +26,8 @@
   // Constants
   // ---------------------------------------------------------------------------
 
-  var VERSION = '1.0.0';
-  var DEFAULT_API = 'https://nexuswait.com/v1';
+  var VERSION = '1.1.0';
+  var DEFAULT_API = 'https://api.nexuswait.com/v1';
   var STYLE_ID = 'nw-widget-styles';
 
   // ---------------------------------------------------------------------------
@@ -55,6 +56,20 @@
     '.nw-input{width:100%;padding:11px 14px;font-size:14px;font-family:var(--nw-font);color:var(--nw-text);background:var(--nw-bg-input);border:1px solid var(--nw-border);border-radius:8px;outline:none;transition:border-color .2s ease,box-shadow .2s ease}',
     '.nw-input::placeholder{color:var(--nw-text-muted)}',
     '.nw-input:focus{border-color:var(--nw-accent);box-shadow:0 0 0 3px rgba(0,232,255,.12)}',
+
+    /* Textarea */
+    '.nw-textarea{resize:vertical;min-height:60px}',
+
+    /* Select */
+    '.nw-select{appearance:none;-webkit-appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns=\'http://www.w3.org/2000/svg\' width=\'12\' height=\'12\' viewBox=\'0 0 12 12\'%3E%3Cpath fill=\'%237a7a9a\' d=\'M2 4l4 4 4-4\'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 12px center;padding-right:32px}',
+
+    /* Checkbox wrap */
+    '.nw-checkbox-wrap{display:flex;align-items:center;gap:8px;font-size:13px;color:var(--nw-text-muted);cursor:pointer}',
+    '.nw-checkbox-wrap input[type="checkbox"]{width:16px;height:16px;cursor:pointer;accent-color:var(--nw-accent)}',
+
+    /* Field label */
+    '.nw-field-label{display:block;font-size:12px;color:var(--nw-text-muted);margin-bottom:2px;letter-spacing:.2px}',
+    '.nw-field-required{color:#ff4d6a}',
 
     /* Honeypot — invisible to humans, bots will fill it */
     '.nw-hp{position:absolute!important;width:1px!important;height:1px!important;overflow:hidden!important;clip:rect(0,0,0,0)!important;white-space:nowrap!important;border:0!important;padding:0!important;margin:-1px!important}',
@@ -128,8 +143,15 @@
     this.errorMsg = '';
     this.subscriber = null;
     this.count = null;
+    this.customFields = [];
+    this.fieldsLoaded = !config.showFields; // if showFields is false, treat as already loaded (skip fetch)
+
+    // Render immediately (shows form without custom fields)
     this.render();
+
+    // Fetch count and custom fields in parallel
     if (this.config.showCount) this.fetchCount();
+    if (this.config.showFields) this.fetchFormConfig();
   }
 
   Widget.prototype.fetchCount = function () {
@@ -145,6 +167,23 @@
       })
       .catch(function () {
         // Silently ignore count fetch errors
+      });
+  };
+
+  Widget.prototype.fetchFormConfig = function () {
+    var self = this;
+    var url = this.config.apiBase + '/projects/' + this.config.projectId + '/subscribers/form-config';
+    fetch(url)
+      .then(function (r) { return r.json(); })
+      .then(function (data) {
+        self.customFields = data.customFields || [];
+        self.fieldsLoaded = true;
+        self.render();
+      })
+      .catch(function () {
+        // Silently ignore — render without custom fields
+        self.fieldsLoaded = true;
+        self.render();
       });
   };
 
@@ -167,6 +206,37 @@
       return;
     }
 
+    // Validate required custom fields and collect metadata
+    var form = this.container.querySelector('.nw-form');
+    var metadata = {};
+    for (var i = 0; i < this.customFields.length; i++) {
+      var field = this.customFields[i];
+      var el = form ? form.querySelector('[data-nw-field="' + field.fieldKey + '"]') : null;
+      if (!el) continue;
+
+      var val;
+      if (field.type === 'checkbox') {
+        val = el.checked;
+      } else if (field.type === 'number') {
+        val = el.value.trim() !== '' ? Number(el.value) : '';
+      } else {
+        val = el.value.trim();
+      }
+
+      // Required field validation
+      if (field.required && (val === '' || val === false || val === undefined)) {
+        this.state = 'error';
+        this.errorMsg = (field.label || field.fieldKey) + ' is required.';
+        this.render();
+        return;
+      }
+
+      // Only include non-empty values
+      if (val !== '' && val !== false) {
+        metadata[field.fieldKey] = val;
+      }
+    }
+
     this.state = 'loading';
     this.errorMsg = '';
     this.render();
@@ -175,6 +245,12 @@
     var url = this.config.apiBase + '/projects/' + this.config.projectId + '/subscribers';
     var body = { email: email, source: 'embed_widget' };
     if (name) body.name = name;
+
+    // Attach custom field metadata if any values were collected
+    var metaKeys = Object.keys(metadata);
+    if (metaKeys.length > 0) {
+      body.metadata = metadata;
+    }
 
     fetch(url, {
       method: 'POST',
@@ -210,6 +286,7 @@
     var cfg = this.config;
     var accent = cfg.accent;
     var accentBg = 'linear-gradient(135deg, ' + accent + ', ' + shiftColor(accent, -30) + ')';
+    var self = this;
 
     // Build HTML based on current state
     var html = '';
@@ -243,6 +320,13 @@
       if (cfg.showName) {
         html += '<input class="nw-input" type="text" name="name" placeholder="Your name" autocomplete="name">';
       }
+
+      // --- Dynamic custom fields ---
+      for (var i = 0; i < self.customFields.length; i++) {
+        var field = self.customFields[i];
+        html += self.renderCustomField(field);
+      }
+
       html += '<input class="nw-input nw-email" type="email" name="email" placeholder="you@email.com" required autocomplete="email">';
 
       // Honeypot — screen readers & users won't see it, bots will
@@ -273,6 +357,74 @@
 
     // Bind events
     this.bindEvents();
+  };
+
+  // ---------------------------------------------------------------------------
+  // Custom Field Renderer — generates HTML for a single custom field
+  // ---------------------------------------------------------------------------
+
+  Widget.prototype.renderCustomField = function (field) {
+    var html = '';
+    var fieldKey = escapeAttr(field.fieldKey || '');
+    var label = escapeHtml(field.label || field.fieldKey || '');
+    var placeholder = escapeAttr(field.placeholder || field.label || '');
+    var required = field.required;
+    var reqStar = required ? ' <span class="nw-field-required">*</span>' : '';
+
+    switch (field.type) {
+      case 'text':
+      case 'url':
+      case 'phone':
+        html += '<div>';
+        html += '<label class="nw-field-label">' + label + reqStar + '</label>';
+        html += '<input class="nw-input" type="' + (field.type === 'phone' ? 'tel' : field.type) +
+                '" data-nw-field="' + fieldKey +
+                '" placeholder="' + placeholder + '">';
+        html += '</div>';
+        break;
+
+      case 'number':
+        html += '<div>';
+        html += '<label class="nw-field-label">' + label + reqStar + '</label>';
+        html += '<input class="nw-input" type="number" data-nw-field="' + fieldKey +
+                '" placeholder="' + placeholder + '">';
+        html += '</div>';
+        break;
+
+      case 'textarea':
+        html += '<div>';
+        html += '<label class="nw-field-label">' + label + reqStar + '</label>';
+        html += '<textarea class="nw-input nw-textarea" rows="3" data-nw-field="' + fieldKey +
+                '" placeholder="' + placeholder + '"></textarea>';
+        html += '</div>';
+        break;
+
+      case 'select':
+        html += '<div>';
+        html += '<label class="nw-field-label">' + label + reqStar + '</label>';
+        html += '<select class="nw-input nw-select" data-nw-field="' + fieldKey + '">';
+        html += '<option value="">' + escapeHtml(field.placeholder || 'Select ' + (field.label || '')) + '</option>';
+        var opts = field.options || [];
+        for (var j = 0; j < opts.length; j++) {
+          html += '<option value="' + escapeAttr(opts[j]) + '">' + escapeHtml(opts[j]) + '</option>';
+        }
+        html += '</select>';
+        html += '</div>';
+        break;
+
+      case 'checkbox':
+        html += '<label class="nw-checkbox-wrap">';
+        html += '<input type="checkbox" data-nw-field="' + fieldKey + '">';
+        html += '<span>' + label + (required ? ' <span class="nw-field-required">*</span>' : '') + '</span>';
+        html += '</label>';
+        break;
+
+      default:
+        // Unknown field type — skip
+        break;
+    }
+
+    return html;
   };
 
   Widget.prototype.bindEvents = function () {
@@ -364,6 +516,7 @@
       theme: el.getAttribute('data-nexuswait-theme') === 'light' ? 'light' : 'dark',
       accent: el.getAttribute('data-nexuswait-accent') || '#00e8ff',
       showCount: el.getAttribute('data-nexuswait-show-count') === 'true',
+      showFields: el.getAttribute('data-nexuswait-fields') !== 'false',
       apiBase: resolveApi(el.getAttribute('data-nexuswait-api')),
     };
   }
@@ -419,6 +572,7 @@
       theme: options.theme === 'light' ? 'light' : 'dark',
       accent: options.accent || '#00e8ff',
       showCount: !!options.showCount,
+      showFields: options.showFields !== false,
       apiBase: resolveApi(options.apiBase),
     };
 

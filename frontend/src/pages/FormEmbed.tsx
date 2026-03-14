@@ -6,7 +6,8 @@ import {
 } from 'lucide-react'
 import { useProjects } from '../api/hooks'
 
-const API_BASE = import.meta.env.VITE_API_BASE_URL || 'http://localhost:3000/v1'
+const API_BASE = import.meta.env.VITE_API_BASE_URL || 'http://localhost:3001/v1'
+const APP_URL = import.meta.env.VITE_APP_URL || window.location.origin
 
 type Tab = 'widget' | 'basic' | 'full' | 'styled'
 
@@ -29,11 +30,10 @@ export default function FormEmbed() {
   const slug = selectedProject?.slug || 'your-project-slug'
   const projectId = selectedProject?.id || 'YOUR_PROJECT_ID'
   const actionUrl = `${API_BASE}/s/${slug}`
-  const embedBase = API_BASE.replace('/v1', '')
 
   const snippets: Record<Tab, string> = {
     widget: `<!-- NexusWait Widget -->
-<script src="${embedBase}/embed.js"></script>
+<script src="${APP_URL}/embed.js"></script>
 <div data-nexuswait-id="${projectId}"></div>`,
     basic: `<form action="${actionUrl}" method="POST">
   <input name="email" type="email" placeholder="your@email.com" required>
@@ -64,7 +64,7 @@ export default function FormEmbed() {
   }
 
   const widgetFullExample = `<!-- NexusWait Widget — all options -->
-<script src="${embedBase}/embed.js"></script>
+<script src="${APP_URL}/embed.js"></script>
 <div
   data-nexuswait-id="${projectId}"
   data-nexuswait-name="true"
@@ -72,6 +72,7 @@ export default function FormEmbed() {
   data-nexuswait-theme="dark"
   data-nexuswait-accent="#00e8ff"
   data-nexuswait-show-count="true"
+  data-nexuswait-fields="true"
   data-nexuswait-api="${API_BASE}"
 ></div>`
 
@@ -213,6 +214,7 @@ export default function FormEmbed() {
                         ['data-nexuswait-theme', '"dark"', '"dark" or "light"'],
                         ['data-nexuswait-accent', '"#00e8ff"', 'Accent color (hex)'],
                         ['data-nexuswait-show-count', '"false"', 'Display subscriber count'],
+                        ['data-nexuswait-fields', '"true"', 'Show project custom fields'],
                         ['data-nexuswait-api', `"${API_BASE}"`, 'API base URL override'],
                       ].map(([attr, def, desc]) => (
                         <tr key={attr} className="border-b border-nexus-700/15">
@@ -288,6 +290,24 @@ export default function FormEmbed() {
               </div>
             </div>
           ))}
+        </div>
+      </div>
+
+      {/* Custom Fields Info */}
+      <div className="card-surface p-5 mb-6">
+        <div className="flex items-start gap-3">
+          <div className="w-8 h-8 rounded-lg bg-cyan-glow/10 border border-cyan-glow/20 flex items-center justify-center shrink-0 mt-0.5">
+            <Zap size={14} className="text-cyan-glow" />
+          </div>
+          <div>
+            <h3 className="font-display text-sm font-bold text-nexus-100 tracking-wider mb-1">Custom Fields</h3>
+            <p className="text-xs text-nexus-400 leading-relaxed">
+              The <strong className="text-nexus-200">Widget</strong> embed automatically fetches and renders your project's custom fields (text, number, url, phone, textarea, select, checkbox). Set <code className="text-nexus-300">data-nexuswait-fields="false"</code> to disable them.
+            </p>
+            <p className="text-xs text-nexus-400 leading-relaxed mt-2">
+              For <strong className="text-nexus-200">HTML form</strong> snippets (Basic / Full / Styled), add extra <code className="text-nexus-300">&lt;input&gt;</code> fields using the custom field key as the <code className="text-nexus-300">name</code> attribute. Any field names other than <code className="text-nexus-300">email</code>, <code className="text-nexus-300">name</code>, and <code className="text-nexus-300">_hp</code> are automatically packed into subscriber metadata.
+            </p>
+          </div>
         </div>
       </div>
 
