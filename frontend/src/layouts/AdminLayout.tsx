@@ -1,13 +1,14 @@
 import { Outlet, Link, useLocation, useNavigate } from 'react-router-dom'
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useRef } from 'react'
 import Logo from '../components/Logo'
 import type { LucideIcon } from 'lucide-react'
 import {
   LayoutDashboard, Users, FolderOpen, UserPlus, Plug, Bell, Server,
-  LogOut, ChevronLeft, ChevronRight, User, ArrowLeft,
-  CreditCard, FileText,
+  LogOut, ChevronLeft, ChevronRight, Search, User, ArrowLeft,
+  CreditCard, FileText, Loader2, X,
 } from 'lucide-react'
 import { useAuth } from '../contexts/AuthContext'
+import { useAdminGlobalSearch } from '../api/hooks'
 import ThemeToggle from '../components/ThemeToggle'
 import NotificationBell from '../components/NotificationBell'
 import UserAccountDropdown from '../components/UserAccountDropdown'
@@ -27,9 +28,45 @@ const sidebarItems: { to: string; icon: LucideIcon; label: string }[] = [
 
 export default function AdminLayout() {
   const [collapsed, setCollapsed] = useState(false)
+  const [searchQuery, setSearchQuery] = useState('')
+  const [debouncedQuery, setDebouncedQuery] = useState('')
+  const [searchOpen, setSearchOpen] = useState(false)
+  const searchRef = useRef<HTMLDivElement>(null)
   const location = useLocation()
   const navigate = useNavigate()
   const { token, loading, isAdmin, logout } = useAuth()
+
+  const { data: searchResults, isLoading: searchLoading } = useAdminGlobalSearch(debouncedQuery)
+
+  useEffect(() => {
+    const timer = setTimeout(() => setDebouncedQuery(searchQuery), 300)
+    return () => clearTimeout(timer)
+  }, [searchQuery])
+
+  // Close dropdown on outside click
+  useEffect(() => {
+    function handleClickOutside(e: MouseEvent) {
+      if (searchRef.current && !searchRef.current.contains(e.target as Node)) {
+        setSearchOpen(false)
+      }
+    }
+    document.addEventListener('mousedown', handleClickOutside)
+    return () => document.removeEventListener('mousedown', handleClickOutside)
+  }, [])
+
+  // Close dropdown on route change
+  useEffect(() => {
+    setSearchOpen(false)
+    setSearchQuery('')
+  }, [location.pathname])
+
+  const results = searchResults as Record<string, unknown[]> | undefined
+  const hasResults = results && (
+    (results.users?.length ?? 0) > 0 ||
+    (results.projects?.length ?? 0) > 0 ||
+    (results.subscribers?.length ?? 0) > 0 ||
+    (results.integrations?.length ?? 0) > 0
+  )
 
   useEffect(() => {
     if (!loading && !token) navigate('/login')
@@ -135,7 +172,134 @@ export default function AdminLayout() {
       {/* Main content */}
       <div className={`flex-1 transition-all duration-300 ${collapsed ? 'ml-[68px]' : 'ml-[240px]'}`}>
         {/* Top bar */}
-        <header className="sticky top-0 z-30 h-16 flex items-center justify-end px-8 border-b border-magenta-glow/[0.06] bg-nexus-900/80 backdrop-blur-xl">
+        <header className="sticky top-0 z-30 h-16 flex items-center justify-between px-8 border-b border-magenta-glow/[0.06] bg-nexus-900/80 backdrop-blur-xl">
+          <div ref={searchRef} className="relative flex items-center gap-3 flex-1 max-w-lg">
+            {searchLoading ? (
+              <Loader2 size={18} className="text-nexus-500 animate-spin" />
+            ) : (
+              <Search size={18} className="text-nexus-500" />
+            )}
+            <input
+              type="text"
+              aria-label="Search accounts and projects"
+              placeholder="Search users, projects, subscribers..."
+              value={searchQuery}
+              onChange={e => { setSearchQuery(e.target.value); setSearchOpen(true) }}
+              onFocus={() => { if (searchQuery.length >= 2) setSearchOpen(true) }}
+              className="bg-transparent border-none outline-none text-[15px] text-nexus-200 placeholder:text-nexus-500 flex-1"
+            />
+            {searchQuery && (
+              <button
+                type="button"
+                onClick={() => { setSearchQuery(''); setSearchOpen(false) }}
+                className="text-nexus-500 hover:text-nexus-200 transition-colors"
+              >
+                <X size={16} />
+              </button>
+            )}
+
+            {/* Search results dropdown */}
+            {searchOpen && debouncedQuery.length >= 2 && (
+              <div className="absolute top-full left-0 right-0 mt-2 card-surface border border-cyan-glow/10 rounded-xl shadow-2xl overflow-hidden max-h-[420px] overflow-y-auto z-50">
+                {!hasResults && !searchLoading && (
+                  <div className="px-4 py-6 text-center text-sm text-nexus-500">No results found.</div>
+                )}
+
+                {/* Users */}
+                {(results?.users?.length ?? 0) > 0 && (
+                  <div>
+                    <div className="px-4 py-2 text-[10px] font-mono text-nexus-500 tracking-widest uppercase bg-nexus-800/50">Users</div>
+                    {results!.users!.slice(0, 5).map((u: unknown) => {
+                      const user = u as Record<string, unknown>
+                      return (
+                        <Link
+                          key={user.id as string}
+                          to={`/admin/users/${user.id}`}
+                          className="flex items-center gap-3 px-4 py-2.5 hover:bg-nexus-700/30 transition-colors no-underline"
+                        >
+                          <User size={15} className="text-magenta-glow shrink-0" />
+                          <div className="min-w-0">
+                            <div className="text-sm text-nexus-200 truncate">{(user.email as string) ?? '—'}</div>
+                            <div className="text-xs text-nexus-500 truncate">
+                              {[(user.firstName as string), (user.lastName as string)].filter(Boolean).join(' ') || 'No name'}
+                            </div>
+                          </div>
+                        </Link>
+                      )
+                    })}
+                  </div>
+                )}
+
+                {/* Projects */}
+                {(results?.projects?.length ?? 0) > 0 && (
+                  <div>
+                    <div className="px-4 py-2 text-[10px] font-mono text-nexus-500 tracking-widest uppercase bg-nexus-800/50">Projects</div>
+                    {results!.projects!.slice(0, 5).map((p: unknown) => {
+                      const project = p as Record<string, unknown>
+                      return (
+                        <Link
+                          key={project.id as string}
+                          to={`/admin/projects`}
+                          className="flex items-center gap-3 px-4 py-2.5 hover:bg-nexus-700/30 transition-colors no-underline"
+                        >
+                          <FolderOpen size={15} className="text-violet-glow shrink-0" />
+                          <div className="min-w-0">
+                            <div className="text-sm text-nexus-200 truncate">{(project.name as string) ?? '—'}</div>
+                            <div className="text-xs text-nexus-500">{(project.status as string) ?? 'unknown'}</div>
+                          </div>
+                        </Link>
+                      )
+                    })}
+                  </div>
+                )}
+
+                {/* Subscribers */}
+                {(results?.subscribers?.length ?? 0) > 0 && (
+                  <div>
+                    <div className="px-4 py-2 text-[10px] font-mono text-nexus-500 tracking-widest uppercase bg-nexus-800/50">Subscribers</div>
+                    {results!.subscribers!.slice(0, 5).map((s: unknown) => {
+                      const sub = s as Record<string, unknown>
+                      return (
+                        <div
+                          key={sub.id as string}
+                          className="flex items-center gap-3 px-4 py-2.5 hover:bg-nexus-700/30 transition-colors"
+                        >
+                          <UserPlus size={15} className="text-cyan-glow shrink-0" />
+                          <div className="min-w-0">
+                            <div className="text-sm text-nexus-200 truncate">{(sub.email as string) ?? '—'}</div>
+                            <div className="text-xs text-nexus-500 truncate">{(sub.name as string) || 'No name'}</div>
+                          </div>
+                        </div>
+                      )
+                    })}
+                  </div>
+                )}
+
+                {/* Integrations */}
+                {(results?.integrations?.length ?? 0) > 0 && (
+                  <div>
+                    <div className="px-4 py-2 text-[10px] font-mono text-nexus-500 tracking-widest uppercase bg-nexus-800/50">Integrations</div>
+                    {results!.integrations!.slice(0, 5).map((int: unknown) => {
+                      const integration = int as Record<string, unknown>
+                      return (
+                        <Link
+                          key={integration.id as string}
+                          to={`/admin/integrations`}
+                          className="flex items-center gap-3 px-4 py-2.5 hover:bg-nexus-700/30 transition-colors no-underline"
+                        >
+                          <Plug size={15} className="text-emerald-glow shrink-0" />
+                          <div className="min-w-0">
+                            <div className="text-sm text-nexus-200 truncate">{(integration.displayName as string) ?? '—'}</div>
+                            <div className="text-xs text-nexus-500">{(integration.type as string) ?? 'webhook'}</div>
+                          </div>
+                        </Link>
+                      )
+                    })}
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
           <div className="flex items-center gap-5">
             <ThemeToggle compact />
             <NotificationBell />

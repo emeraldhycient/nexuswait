@@ -201,14 +201,14 @@ export default function AdminAccountDetail() {
           <div className="card-surface overflow-hidden">
             <div className="px-6 pt-5 pb-3 flex items-center justify-between">
               <h2 className="font-display text-sm font-bold text-nexus-200 tracking-widest uppercase">Subscribers ({subTotal})</h2>
-              <div className="relative w-56">
-                <Search size={13} className="absolute left-2.5 top-1/2 -translate-y-1/2 text-nexus-500" />
+              <div className="relative w-72">
+                <Search size={18} className="absolute left-4 top-1/2 -translate-y-1/2 text-nexus-500" />
                 <input
                   type="text"
                   placeholder="Search subscribers..."
                   value={subSearch}
                   onChange={e => { setSubSearch(e.target.value); setSubPage(1) }}
-                  className="input-field pl-8 w-full text-xs py-1.5"
+                  className="input-field pl-11 w-full"
                 />
               </div>
             </div>

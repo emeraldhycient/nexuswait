@@ -81,13 +81,13 @@ export default function AdminWebhookLogs() {
               placeholder="Enter integration ID to filter..."
               value={integrationId}
               onChange={e => { setIntegrationId(e.target.value); setOutPage(1) }}
-              className="input-field text-sm font-mono flex-1 max-w-md"
+              className="input-field font-mono flex-1 max-w-lg"
             />
             {failedIntegrations.length > 0 && (
               <select
                 value={integrationId}
                 onChange={e => { setIntegrationId(e.target.value); setOutPage(1) }}
-                className="input-field text-xs max-w-[200px]"
+                className="input-field max-w-[260px]"
               >
                 <option value="">Quick select...</option>
                 {failedIntegrations.map(fi => (

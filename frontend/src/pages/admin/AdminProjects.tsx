@@ -29,20 +29,20 @@ export default function AdminProjects() {
 
       {/* Filters */}
       <div className="flex flex-col sm:flex-row gap-3">
-        <div className="relative flex-1 max-w-md">
-          <Search size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-nexus-500" />
+        <div className="relative flex-1 max-w-lg">
+          <Search size={18} className="absolute left-4 top-1/2 -translate-y-1/2 text-nexus-500" />
           <input
             type="text"
             placeholder="Search by name..."
             value={search}
             onChange={e => { setSearch(e.target.value); setPage(1) }}
-            className="input-field pl-9 w-full"
+            className="input-field pl-11 w-full"
           />
         </div>
         <select
           value={status}
           onChange={e => { setStatus(e.target.value); setPage(1) }}
-          className="input-field w-40"
+          className="input-field w-48"
         >
           <option value="">All Status</option>
           <option value="active">Active</option>
