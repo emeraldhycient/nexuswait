@@ -50,7 +50,7 @@ export default function AdminOverview() {
                   <Icon size={15} />
                 </div>
               </div>
-              <div className="font-display text-2xl font-black text-nexus-50">{s.value.toLocaleString()}</div>
+              <div className="font-display text-2xl font-black text-nexus-50">{s?.value?.toLocaleString()}</div>
               <div className="text-xs font-mono text-nexus-500 tracking-wider uppercase mt-1">{s.label}</div>
             </div>
           )
@@ -73,7 +73,7 @@ export default function AdminOverview() {
                     <span className={`text-xs font-mono font-bold tracking-wider uppercase ${planLabelColors[planKey] ?? 'text-nexus-400'}`}>
                       {item.plan}
                     </span>
-                    <span className="text-xs font-mono text-nexus-400">{item._count.toLocaleString()} accounts</span>
+                    <span className="text-xs font-mono text-nexus-400">{item?._count?.toLocaleString()} accounts</span>
                   </div>
                   <div className="h-2 bg-nexus-700/30 rounded-full overflow-hidden">
                     <div
