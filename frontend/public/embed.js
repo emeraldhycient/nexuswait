@@ -146,6 +146,13 @@
     this.customFields = [];
     this.fieldsLoaded = !config.showFields; // if showFields is false, treat as already loaded (skip fetch)
 
+    // Read referral code from page URL (?ref=CODE)
+    this.referralCode = '';
+    try {
+      var params = new URLSearchParams(window.location.search);
+      this.referralCode = params.get('ref') || '';
+    } catch (_) { /* URLSearchParams not supported — skip */ }
+
     // Render immediately (shows form without custom fields)
     this.render();
 
@@ -243,6 +250,10 @@
 
     var self = this;
     var url = this.config.apiBase + '/projects/' + this.config.projectId + '/subscribers';
+    // Append referral code as query param (backend reads @Query('ref'))
+    if (this.referralCode) {
+      url += '?ref=' + encodeURIComponent(this.referralCode);
+    }
     var body = { email: email, source: 'embed_widget' };
     if (name) body.name = name;
 

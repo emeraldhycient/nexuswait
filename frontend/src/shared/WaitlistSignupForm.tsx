@@ -73,7 +73,6 @@ export function WaitlistSignupForm({
     try {
       const body: Record<string, unknown> = { email: email.trim() }
       if (formConfig.showNameField && name.trim()) body.name = name.trim()
-      if (referralCode) body.referralCode = referralCode
 
       // Add custom field values as metadata
       if (customFieldDefs.length > 0) {
@@ -89,7 +88,9 @@ export function WaitlistSignupForm({
         }
       }
 
-      const { data } = await api.post(`/projects/${projectId}/subscribers`, body)
+      // Pass referral code as query param (backend reads @Query('ref'))
+      const refParam = referralCode ? `?ref=${encodeURIComponent(referralCode)}` : ''
+      const { data } = await api.post(`/projects/${projectId}/subscribers${refParam}`, body)
       setSuccess({
         position: data?.position ?? data?._count,
         referralCode: data?.referralCode,
