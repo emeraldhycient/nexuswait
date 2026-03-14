@@ -1,5 +1,6 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { NotFoundException } from '@nestjs/common';
+import { EventEmitter2 } from '@nestjs/event-emitter';
 import { ApiKeyType } from '../../generated/prisma/client/enums';
 import { ApiKeysService } from './api-keys.service';
 import { PrismaService } from '../../infrastructure/prisma/prisma.service';
@@ -7,6 +8,7 @@ import { PrismaService } from '../../infrastructure/prisma/prisma.service';
 describe('ApiKeysService', () => {
   let service: ApiKeysService;
   let prisma: jest.Mocked<PrismaService>;
+  let eventEmitter: { emit: jest.Mock };
 
   beforeEach(async () => {
     const mockPrisma = {
@@ -19,10 +21,13 @@ describe('ApiKeysService', () => {
       },
     };
 
+    eventEmitter = { emit: jest.fn() };
+
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         ApiKeysService,
         { provide: PrismaService, useValue: mockPrisma },
+        { provide: EventEmitter2, useValue: eventEmitter },
       ],
     }).compile();
 
@@ -185,6 +190,42 @@ describe('ApiKeysService', () => {
       const result = await service.validateKey('nw_sk_live_invalidkey');
 
       expect(result).toBeNull();
+    });
+  });
+
+  describe('event emissions', () => {
+    it('should emit api-key.created on generate', async () => {
+      (prisma.apiKey.create as jest.Mock).mockResolvedValue({
+        id: 'key-1',
+        keyHash: 'somehash',
+        prefix: 'nw_sk_live_XXXX',
+        type: ApiKeyType.secret,
+        createdAt: new Date('2025-01-01'),
+      });
+
+      await service.generate('acc-1', { type: ApiKeyType.secret });
+
+      expect(eventEmitter.emit).toHaveBeenCalledWith('api-key.created', {
+        accountId: 'acc-1',
+        keyPrefix: expect.any(String),
+        type: ApiKeyType.secret,
+      });
+    });
+
+    it('should emit api-key.revoked on revoke', async () => {
+      (prisma.apiKey.findUnique as jest.Mock).mockResolvedValue({
+        id: 'key-1',
+        accountId: 'acc-1',
+        prefix: 'nw_sk_live_XXXX',
+      });
+      (prisma.apiKey.delete as jest.Mock).mockResolvedValue({});
+
+      await service.revoke('key-1', 'acc-1');
+
+      expect(eventEmitter.emit).toHaveBeenCalledWith('api-key.revoked', {
+        accountId: 'acc-1',
+        keyPrefix: 'nw_sk_live_XXXX',
+      });
     });
   });
 });

@@ -622,4 +622,54 @@ describe('SubscribersService', () => {
       ).rejects.toThrow(NotFoundException);
     });
   });
+
+  describe('subscriber milestone emissions', () => {
+    it('should emit subscriber.milestone at milestone counts', async () => {
+      (prisma.project.findUnique as jest.Mock).mockResolvedValue({
+        id: 'p1',
+        accountId: 'acc-1',
+        name: 'Test Project',
+      });
+      (prisma.subscriber.findUnique as jest.Mock).mockResolvedValue(null);
+      (prisma.subscriber.create as jest.Mock).mockResolvedValue({
+        id: 's1',
+        email: 'milestone@test.com',
+        projectId: 'p1',
+        referralCode: 'CODE1',
+      });
+      (prisma.subscriber.count as jest.Mock).mockResolvedValue(100);
+
+      await service.create('p1', { email: 'milestone@test.com' });
+
+      expect(eventEmitter.emit).toHaveBeenCalledWith('subscriber.milestone', {
+        accountId: 'acc-1',
+        projectId: 'p1',
+        projectName: 'Test Project',
+        count: 100,
+      });
+    });
+
+    it('should not emit milestone at non-milestone counts', async () => {
+      (prisma.project.findUnique as jest.Mock).mockResolvedValue({
+        id: 'p1',
+        accountId: 'acc-1',
+        name: 'Test Project',
+      });
+      (prisma.subscriber.findUnique as jest.Mock).mockResolvedValue(null);
+      (prisma.subscriber.create as jest.Mock).mockResolvedValue({
+        id: 's1',
+        email: 'normal@test.com',
+        projectId: 'p1',
+        referralCode: 'CODE1',
+      });
+      (prisma.subscriber.count as jest.Mock).mockResolvedValue(42);
+
+      await service.create('p1', { email: 'normal@test.com' });
+
+      expect(eventEmitter.emit).not.toHaveBeenCalledWith(
+        'subscriber.milestone',
+        expect.anything(),
+      );
+    });
+  });
 });

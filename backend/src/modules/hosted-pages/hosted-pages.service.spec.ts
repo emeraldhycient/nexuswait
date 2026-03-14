@@ -1,5 +1,6 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { NotFoundException } from '@nestjs/common';
+import { EventEmitter2 } from '@nestjs/event-emitter';
 import { HostedPagesService } from './hosted-pages.service';
 import { PrismaService } from '../../infrastructure/prisma/prisma.service';
 import { UpsertHostedPageDto } from './dto/upsert-hosted-page.dto';
@@ -7,6 +8,7 @@ import { UpsertHostedPageDto } from './dto/upsert-hosted-page.dto';
 describe('HostedPagesService', () => {
   let service: HostedPagesService;
   let prisma: jest.Mocked<PrismaService>;
+  let eventEmitter: { emit: jest.Mock };
 
   const mockProject = { id: 'proj-1', accountId: 'acc-1', name: 'Test Project' };
 
@@ -53,10 +55,13 @@ describe('HostedPagesService', () => {
       },
     };
 
+    eventEmitter = { emit: jest.fn() };
+
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         HostedPagesService,
         { provide: PrismaService, useValue: mockPrisma },
+        { provide: EventEmitter2, useValue: eventEmitter },
       ],
     }).compile();
 
@@ -233,6 +238,26 @@ describe('HostedPagesService', () => {
       (prisma.hostedPage.findUnique as jest.Mock).mockResolvedValue(null);
 
       await expect(service.unpublish('proj-1', 'acc-1')).rejects.toThrow(NotFoundException);
+    });
+  });
+
+  describe('event emissions', () => {
+    it('should emit hosted-page.published on publish', async () => {
+      const publishedPage = { ...mockHostedPage, status: 'published', publishedAt: new Date() };
+      (prisma.project.findUnique as jest.Mock).mockResolvedValue(mockProject);
+      (prisma.hostedPage.findUnique as jest.Mock).mockResolvedValue(mockHostedPage);
+      (prisma.hostedPage.update as jest.Mock).mockResolvedValue(publishedPage);
+
+      await service.publish('proj-1', 'acc-1');
+
+      expect(eventEmitter.emit).toHaveBeenCalledWith('hosted-page.published', {
+        accountId: 'acc-1',
+        projectId: 'proj-1',
+        page: expect.objectContaining({
+          slug: 'my-waitlist',
+          title: 'Join the Waitlist',
+        }),
+      });
     });
   });
 });

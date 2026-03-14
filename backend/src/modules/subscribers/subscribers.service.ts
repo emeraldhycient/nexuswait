@@ -81,6 +81,18 @@ export class SubscribersService {
       subscriber,
     });
 
+    // Check for subscriber milestones
+    const count = await this.prisma.subscriber.count({ where: { projectId } });
+    const milestones = [100, 500, 1000, 5000, 10000];
+    if (milestones.includes(count)) {
+      this.eventEmitter.emit('subscriber.milestone', {
+        accountId: project.accountId,
+        projectId,
+        projectName: project.name,
+        count,
+      });
+    }
+
     return subscriber;
   }
 

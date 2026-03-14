@@ -54,7 +54,7 @@ describe('NotificationPreferenceService', () => {
 
       // Other events should have defaults
       const webhookPref = result.find((p) => p.event === 'integration.webhook.failed');
-      expect(webhookPref?.channels).toEqual(['in_app']);
+      expect(webhookPref?.channels).toEqual(['in_app', 'email']);
       expect(webhookPref?.id).toBeNull();
     });
   });

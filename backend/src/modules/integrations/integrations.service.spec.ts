@@ -1,5 +1,6 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { NotFoundException } from '@nestjs/common';
+import { EventEmitter2 } from '@nestjs/event-emitter';
 import { IntegrationsService } from './integrations.service';
 import { PrismaService } from '../../infrastructure/prisma/prisma.service';
 import { WebhookDeliveryService } from './webhook-delivery.service';
@@ -9,6 +10,7 @@ describe('IntegrationsService', () => {
   let service: IntegrationsService;
   let prisma: jest.Mocked<PrismaService>;
   let webhookDelivery: jest.Mocked<WebhookDeliveryService>;
+  let eventEmitter: { emit: jest.Mock };
 
   const mockProject = { id: 'proj-1', accountId: 'acc-1', name: 'Test Project' };
 
@@ -51,12 +53,15 @@ describe('IntegrationsService', () => {
       checkIntegrationLimit: jest.fn().mockResolvedValue(undefined),
     };
 
+    eventEmitter = { emit: jest.fn() };
+
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         IntegrationsService,
         { provide: PrismaService, useValue: mockPrisma },
         { provide: WebhookDeliveryService, useValue: mockWebhookDelivery },
         { provide: PlanEnforcementService, useValue: mockPlanEnforcement },
+        { provide: EventEmitter2, useValue: eventEmitter },
       ],
     }).compile();
 
@@ -201,6 +206,40 @@ describe('IntegrationsService', () => {
       await expect(service.test('proj-1', 'int-999', 'acc-1')).rejects.toThrow(
         NotFoundException,
       );
+    });
+  });
+
+  describe('event emissions', () => {
+    it('should emit integration.created on create', async () => {
+      (prisma.project.findUnique as jest.Mock).mockResolvedValue(mockProject);
+      (prisma.integration.create as jest.Mock).mockResolvedValue(mockIntegration);
+
+      await service.create('proj-1', 'acc-1', {
+        type: 'webhook',
+        displayName: 'My Webhook',
+        config: { url: 'https://example.com/webhook' },
+        events: ['waitlist.signup.created'],
+      } as any);
+
+      expect(eventEmitter.emit).toHaveBeenCalledWith('integration.created', {
+        accountId: 'acc-1',
+        projectId: 'proj-1',
+        integration: { id: 'int-1', type: 'webhook', displayName: 'My Webhook' },
+      });
+    });
+
+    it('should emit integration.removed on remove', async () => {
+      (prisma.project.findUnique as jest.Mock).mockResolvedValue(mockProject);
+      (prisma.integration.findFirst as jest.Mock).mockResolvedValue(mockIntegration);
+      (prisma.integration.delete as jest.Mock).mockResolvedValue(mockIntegration);
+
+      await service.remove('proj-1', 'int-1', 'acc-1');
+
+      expect(eventEmitter.emit).toHaveBeenCalledWith('integration.removed', {
+        accountId: 'acc-1',
+        projectId: 'proj-1',
+        integration: { id: 'int-1', type: 'webhook', displayName: 'My Webhook' },
+      });
     });
   });
 });

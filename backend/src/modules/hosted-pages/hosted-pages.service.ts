@@ -1,11 +1,15 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
+import { EventEmitter2 } from '@nestjs/event-emitter';
 import { PrismaService } from '../../infrastructure/prisma/prisma.service';
 import { UpsertHostedPageDto } from './dto/upsert-hosted-page.dto';
 import { UpdateHostedPageDto } from './dto/update-hosted-page.dto';
 
 @Injectable()
 export class HostedPagesService {
-  constructor(private prisma: PrismaService) {}
+  constructor(
+    private prisma: PrismaService,
+    private eventEmitter: EventEmitter2,
+  ) {}
 
   private async verifyProjectOwnership(projectId: string, accountId: string) {
     const project = await this.prisma.project.findUnique({ where: { id: projectId } });
@@ -89,13 +93,21 @@ export class HostedPagesService {
       throw new NotFoundException('Hosted page not found');
     }
 
-    return this.prisma.hostedPage.update({
+    const page = await this.prisma.hostedPage.update({
       where: { projectId },
       data: {
         status: 'published',
         publishedAt: new Date(),
       },
     });
+
+    this.eventEmitter.emit('hosted-page.published', {
+      accountId,
+      projectId,
+      page: { slug: page.slug, title: page.title },
+    });
+
+    return page;
   }
 
   async findBySlug(slug: string) {

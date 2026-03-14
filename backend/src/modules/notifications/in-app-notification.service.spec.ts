@@ -191,4 +191,201 @@ describe('InAppNotificationService', () => {
       expect(prisma.inAppNotification.create).not.toHaveBeenCalled();
     });
   });
+
+  /* ─── New event listener tests ────────────────────── */
+
+  const setupNotifyHelper = () => {
+    (prisma.notificationPreference.findUnique as jest.Mock).mockResolvedValue(null);
+    (prisma.inAppNotification.create as jest.Mock).mockResolvedValue(mockNotification);
+  };
+
+  describe('onProjectCreated', () => {
+    it('should create in-app notification', async () => {
+      setupNotifyHelper();
+
+      await service.onProjectCreated({
+        accountId: 'acc-1',
+        project: { id: 'proj-1', name: 'New Project', slug: 'new-project' },
+      });
+
+      expect(prisma.inAppNotification.create).toHaveBeenCalledWith({
+        data: expect.objectContaining({
+          accountId: 'acc-1',
+          title: 'Project Created',
+          type: 'success',
+        }),
+      });
+    });
+  });
+
+  describe('onProjectArchived', () => {
+    it('should create in-app notification', async () => {
+      setupNotifyHelper();
+
+      await service.onProjectArchived({
+        accountId: 'acc-1',
+        project: { id: 'proj-1', name: 'Old Project' },
+      });
+
+      expect(prisma.inAppNotification.create).toHaveBeenCalledWith({
+        data: expect.objectContaining({
+          accountId: 'acc-1',
+          title: 'Project Archived',
+          type: 'warning',
+        }),
+      });
+    });
+  });
+
+  describe('onIntegrationCreated', () => {
+    it('should create in-app notification', async () => {
+      setupNotifyHelper();
+
+      await service.onIntegrationCreated({
+        accountId: 'acc-1',
+        projectId: 'proj-1',
+        integration: { id: 'int-1', type: 'webhook', displayName: 'My Webhook' },
+      });
+
+      expect(prisma.inAppNotification.create).toHaveBeenCalledWith({
+        data: expect.objectContaining({
+          accountId: 'acc-1',
+          title: 'Integration Connected',
+          type: 'success',
+        }),
+      });
+    });
+  });
+
+  describe('onSubscriptionUpgraded', () => {
+    it('should create in-app notification', async () => {
+      setupNotifyHelper();
+
+      await service.onSubscriptionUpgraded({
+        accountId: 'acc-1',
+        plan: 'pulse',
+        previousPlan: 'spark',
+      });
+
+      expect(prisma.inAppNotification.create).toHaveBeenCalledWith({
+        data: expect.objectContaining({
+          accountId: 'acc-1',
+          title: 'Plan Upgraded',
+          type: 'success',
+        }),
+      });
+    });
+  });
+
+  describe('onSubscriptionCancelled', () => {
+    it('should create in-app notification', async () => {
+      setupNotifyHelper();
+
+      await service.onSubscriptionCancelled({ accountId: 'acc-1' });
+
+      expect(prisma.inAppNotification.create).toHaveBeenCalledWith({
+        data: expect.objectContaining({
+          accountId: 'acc-1',
+          title: 'Subscription Cancelled',
+          type: 'warning',
+        }),
+      });
+    });
+  });
+
+  describe('onSubscriberMilestone', () => {
+    it('should create in-app notification', async () => {
+      setupNotifyHelper();
+
+      await service.onSubscriberMilestone({
+        accountId: 'acc-1',
+        projectId: 'proj-1',
+        projectName: 'Test Project',
+        count: 1000,
+      });
+
+      expect(prisma.inAppNotification.create).toHaveBeenCalledWith({
+        data: expect.objectContaining({
+          accountId: 'acc-1',
+          title: 'Milestone Reached!',
+          type: 'success',
+        }),
+      });
+    });
+  });
+
+  describe('onApiKeyCreated', () => {
+    it('should create in-app notification', async () => {
+      setupNotifyHelper();
+
+      await service.onApiKeyCreated({
+        accountId: 'acc-1',
+        keyPrefix: 'nw_sk_live_XXXX',
+        type: 'secret',
+      });
+
+      expect(prisma.inAppNotification.create).toHaveBeenCalledWith({
+        data: expect.objectContaining({
+          accountId: 'acc-1',
+          title: 'API Key Created',
+          type: 'info',
+        }),
+      });
+    });
+  });
+
+  describe('onApiKeyRevoked', () => {
+    it('should create in-app notification', async () => {
+      setupNotifyHelper();
+
+      await service.onApiKeyRevoked({
+        accountId: 'acc-1',
+        keyPrefix: 'nw_sk_live_XXXX',
+      });
+
+      expect(prisma.inAppNotification.create).toHaveBeenCalledWith({
+        data: expect.objectContaining({
+          accountId: 'acc-1',
+          title: 'API Key Revoked',
+          type: 'warning',
+        }),
+      });
+    });
+  });
+
+  describe('onHostedPagePublished', () => {
+    it('should create in-app notification', async () => {
+      setupNotifyHelper();
+
+      await service.onHostedPagePublished({
+        accountId: 'acc-1',
+        projectId: 'proj-1',
+        page: { slug: 'my-page', title: 'My Page' },
+      });
+
+      expect(prisma.inAppNotification.create).toHaveBeenCalledWith({
+        data: expect.objectContaining({
+          accountId: 'acc-1',
+          title: 'Page Published',
+          type: 'success',
+        }),
+      });
+    });
+  });
+
+  describe('notifyIfEnabled (preference gating)', () => {
+    it('should skip when preference is disabled', async () => {
+      (prisma.notificationPreference.findUnique as jest.Mock).mockResolvedValue({
+        enabled: false,
+        channels: ['in_app', 'email'],
+      });
+
+      await service.onProjectCreated({
+        accountId: 'acc-1',
+        project: { id: 'proj-1', name: 'P', slug: 'p' },
+      });
+
+      expect(prisma.inAppNotification.create).not.toHaveBeenCalled();
+    });
+  });
 });

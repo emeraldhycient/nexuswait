@@ -1,5 +1,6 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { NotFoundException } from '@nestjs/common';
+import { EventEmitter2 } from '@nestjs/event-emitter';
 import { ProjectsService } from './projects.service';
 import { PrismaService } from '../../infrastructure/prisma/prisma.service';
 import { PlanEnforcementService } from '../plan-config/plan-enforcement.service';
@@ -7,6 +8,7 @@ import { PlanEnforcementService } from '../plan-config/plan-enforcement.service'
 describe('ProjectsService', () => {
   let service: ProjectsService;
   let prisma: jest.Mocked<PrismaService>;
+  let eventEmitter: { emit: jest.Mock };
 
   beforeEach(async () => {
     const mockPrisma = {
@@ -23,11 +25,13 @@ describe('ProjectsService', () => {
       checkSubscriberLimit: jest.fn().mockResolvedValue(undefined),
       checkIntegrationLimit: jest.fn().mockResolvedValue(undefined),
     };
+    eventEmitter = { emit: jest.fn() };
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         ProjectsService,
         { provide: PrismaService, useValue: mockPrisma },
         { provide: PlanEnforcementService, useValue: mockPlanEnforcement },
+        { provide: EventEmitter2, useValue: eventEmitter },
       ],
     }).compile();
     service = module.get(ProjectsService);
@@ -126,6 +130,45 @@ describe('ProjectsService', () => {
           orderBy: { name: 'asc' },
         }),
       );
+    });
+  });
+
+  describe('event emissions', () => {
+    it('should emit project.created on create', async () => {
+      (prisma.project.create as jest.Mock).mockResolvedValue({
+        id: 'p1',
+        name: 'My Project',
+        slug: 'my-project',
+        accountId: 'acc-1',
+      });
+      // ensureUniqueSlug - slug is unique
+      (prisma.project.findUnique as jest.Mock).mockResolvedValue(null);
+
+      await service.create('acc-1', { name: 'My Project' });
+
+      expect(eventEmitter.emit).toHaveBeenCalledWith('project.created', {
+        accountId: 'acc-1',
+        project: { id: 'p1', name: 'My Project', slug: 'my-project' },
+      });
+    });
+
+    it('should emit project.archived on remove', async () => {
+      (prisma.project.findUnique as jest.Mock).mockResolvedValue({
+        id: 'p1',
+        name: 'My Project',
+        accountId: 'acc-1',
+      });
+      (prisma.project.update as jest.Mock).mockResolvedValue({
+        id: 'p1',
+        status: 'archived',
+      });
+
+      await service.remove('p1', 'acc-1');
+
+      expect(eventEmitter.emit).toHaveBeenCalledWith('project.archived', {
+        accountId: 'acc-1',
+        project: { id: 'p1', name: 'My Project' },
+      });
     });
   });
 });

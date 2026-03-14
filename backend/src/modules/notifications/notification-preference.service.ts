@@ -6,9 +6,17 @@ import { UpdatePreferenceDto } from './dto/update-preference.dto';
 /** All known events and their default channels */
 export const DEFAULT_PREFERENCES: { event: string; label: string; channels: string[] }[] = [
   { event: 'waitlist.signup.created', label: 'New waitlist signup', channels: ['in_app'] },
-  { event: 'integration.webhook.failed', label: 'Webhook delivery failure', channels: ['in_app'] },
-  { event: 'project.milestone', label: 'Milestone reached', channels: ['in_app'] },
-  { event: 'account.billing', label: 'Billing updates', channels: ['in_app', 'email'] },
+  { event: 'integration.webhook.failed', label: 'Webhook delivery failure', channels: ['in_app', 'email'] },
+  { event: 'project.created', label: 'Project created', channels: ['in_app'] },
+  { event: 'project.archived', label: 'Project archived', channels: ['in_app'] },
+  { event: 'integration.created', label: 'Integration connected', channels: ['in_app'] },
+  { event: 'integration.removed', label: 'Integration removed', channels: ['in_app'] },
+  { event: 'subscription.upgraded', label: 'Plan upgraded', channels: ['in_app', 'email'] },
+  { event: 'subscription.cancelled', label: 'Subscription cancelled', channels: ['in_app', 'email'] },
+  { event: 'subscriber.milestone', label: 'Subscriber milestone reached', channels: ['in_app', 'email'] },
+  { event: 'api-key.created', label: 'API key generated', channels: ['in_app'] },
+  { event: 'api-key.revoked', label: 'API key revoked', channels: ['in_app'] },
+  { event: 'hosted-page.published', label: 'Hosted page published', channels: ['in_app'] },
 ];
 
 @Injectable()

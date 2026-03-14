@@ -1,5 +1,6 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { ConfigService } from '@nestjs/config';
+import { EventEmitter2 } from '@nestjs/event-emitter';
 import { PaymentsService } from './payments.service';
 import { PrismaService } from '../../infrastructure/prisma/prisma.service';
 import axios from 'axios';
@@ -11,6 +12,7 @@ describe('PaymentsService', () => {
   let service: PaymentsService;
   let prisma: jest.Mocked<PrismaService>;
   let config: jest.Mocked<ConfigService>;
+  let eventEmitter: { emit: jest.Mock };
 
   const MOCK_ACCOUNT_ID = 'acc-test-123';
   const MOCK_PRODUCT_ID = 'prod-pulse-monthly';
@@ -47,11 +49,14 @@ describe('PaymentsService', () => {
       }),
     };
 
+    eventEmitter = { emit: jest.fn() };
+
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         PaymentsService,
         { provide: PrismaService, useValue: mockPrisma },
         { provide: ConfigService, useValue: mockConfig },
+        { provide: EventEmitter2, useValue: eventEmitter },
       ],
     }).compile();
 
@@ -407,6 +412,57 @@ describe('PaymentsService', () => {
       const result = service.verifyWebhookSignature(body, 'deadbeef'.repeat(8));
 
       expect(result).toBe(false);
+    });
+  });
+
+  // ─── Event Emissions ─────────────────────────────────
+
+  describe('event emissions', () => {
+    const makeWebhookPayload = (
+      type: string,
+      overrides: Record<string, unknown> = {},
+    ) => ({
+      id: 'evt-emit-001',
+      type,
+      data: {
+        id: MOCK_SUBSCRIPTION_ID,
+        customer_id: MOCK_CUSTOMER_ID,
+        product_id: MOCK_PRODUCT_ID,
+        external_customer_id: MOCK_ACCOUNT_ID,
+        metadata: { accountId: MOCK_ACCOUNT_ID },
+        ...overrides,
+      },
+    });
+
+    beforeEach(() => {
+      (prisma.webhookEvent.findUnique as jest.Mock).mockResolvedValue(null);
+      (prisma.webhookEvent.create as jest.Mock).mockResolvedValue({});
+      (prisma.account.findUnique as jest.Mock).mockResolvedValue({ id: MOCK_ACCOUNT_ID, plan: 'spark' });
+      (prisma.account.update as jest.Mock).mockResolvedValue({});
+      (prisma.polarSubscription.upsert as jest.Mock).mockResolvedValue({});
+      (prisma.polarSubscription.updateMany as jest.Mock).mockResolvedValue({});
+      (prisma.planConfig.findFirst as jest.Mock).mockResolvedValue({ tier: 'pulse' });
+    });
+
+    it('should emit subscription.upgraded on subscription.created', async () => {
+      const payload = makeWebhookPayload('subscription.created');
+
+      await service.handlePolarWebhook(payload);
+
+      expect(eventEmitter.emit).toHaveBeenCalledWith('subscription.upgraded', expect.objectContaining({
+        accountId: MOCK_ACCOUNT_ID,
+        plan: 'pulse',
+      }));
+    });
+
+    it('should emit subscription.cancelled on subscription.cancelled', async () => {
+      const payload = makeWebhookPayload('subscription.cancelled');
+
+      await service.handlePolarWebhook(payload);
+
+      expect(eventEmitter.emit).toHaveBeenCalledWith('subscription.cancelled', {
+        accountId: MOCK_ACCOUNT_ID,
+      });
     });
   });
 });
