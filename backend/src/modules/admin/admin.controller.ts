@@ -52,8 +52,10 @@ export class AdminController {
     @Query('plan') plan?: PlanTier,
     @Query('page', new DefaultValuePipe(1), ParseIntPipe) page?: number,
     @Query('limit', new DefaultValuePipe(20), ParseIntPipe) limit?: number,
+    @Query('sortBy') sortBy?: string,
+    @Query('sortOrder') sortOrder?: 'asc' | 'desc',
   ) {
-    return this.adminService.getAccounts({ search, plan, page, limit });
+    return this.adminService.getAccounts({ search, plan, page, limit, sortBy, sortOrder });
   }
 
   @Get('accounts/:id')
@@ -75,8 +77,10 @@ export class AdminController {
     @Query('search') search?: string,
     @Query('page', new DefaultValuePipe(1), ParseIntPipe) page?: number,
     @Query('limit', new DefaultValuePipe(20), ParseIntPipe) limit?: number,
+    @Query('sortBy') sortBy?: string,
+    @Query('sortOrder') sortOrder?: 'asc' | 'desc',
   ) {
-    return this.adminService.getAccountSubscribers(id, { search, page, limit });
+    return this.adminService.getAccountSubscribers(id, { search, page, limit, sortBy, sortOrder });
   }
 
   // ──────────────────────────────────────────────
@@ -90,8 +94,10 @@ export class AdminController {
     @Query('accountId') accountId?: string,
     @Query('page', new DefaultValuePipe(1), ParseIntPipe) page?: number,
     @Query('limit', new DefaultValuePipe(20), ParseIntPipe) limit?: number,
+    @Query('sortBy') sortBy?: string,
+    @Query('sortOrder') sortOrder?: 'asc' | 'desc',
   ) {
-    return this.adminService.getUsers({ search, role, accountId, page, limit });
+    return this.adminService.getUsers({ search, role, accountId, page, limit, sortBy, sortOrder });
   }
 
   @Get('users/:id')
@@ -135,6 +141,8 @@ export class AdminController {
     @Query('accountId') accountId?: string,
     @Query('page', new DefaultValuePipe(1), ParseIntPipe) page?: number,
     @Query('limit', new DefaultValuePipe(20), ParseIntPipe) limit?: number,
+    @Query('sortBy') sortBy?: string,
+    @Query('sortOrder') sortOrder?: 'asc' | 'desc',
   ) {
     return this.adminService.getProjects({
       search,
@@ -142,6 +150,8 @@ export class AdminController {
       accountId,
       page,
       limit,
+      sortBy,
+      sortOrder,
     });
   }
 
@@ -161,6 +171,18 @@ export class AdminController {
   // ──────────────────────────────────────────────
   //  Subscribers
   // ──────────────────────────────────────────────
+
+  @Get('subscribers')
+  async getSubscribers(
+    @Query('search') search?: string,
+    @Query('source') source?: string,
+    @Query('page', new DefaultValuePipe(1), ParseIntPipe) page?: number,
+    @Query('limit', new DefaultValuePipe(20), ParseIntPipe) limit?: number,
+    @Query('sortBy') sortBy?: string,
+    @Query('sortOrder') sortOrder?: 'asc' | 'desc',
+  ) {
+    return this.adminService.getSubscribers({ search, source, page, limit, sortBy, sortOrder });
+  }
 
   @Get('subscribers/recent')
   async getRecentSubscribers(
@@ -184,7 +206,18 @@ export class AdminController {
   }
 
   @Get('integrations/failed')
-  async getFailedIntegrations() {
+  async getFailedIntegrations(
+    @Query('search') search?: string,
+    @Query('page', new DefaultValuePipe(1), ParseIntPipe) page?: number,
+    @Query('limit', new DefaultValuePipe(20), ParseIntPipe) limit?: number,
+    @Query('sortBy') sortBy?: string,
+    @Query('sortOrder') sortOrder?: 'asc' | 'desc',
+    @Query('paginated') paginated?: string,
+  ) {
+    // When paginated=true, return paginated response; otherwise keep legacy array response
+    if (paginated === 'true') {
+      return this.adminService.getFailedIntegrationsPaginated({ search, page, limit, sortBy, sortOrder });
+    }
     return this.adminService.getFailedIntegrations();
   }
 
@@ -198,8 +231,10 @@ export class AdminController {
     @Param('id') integrationId: string,
     @Query('page', new DefaultValuePipe(1), ParseIntPipe) page?: number,
     @Query('limit', new DefaultValuePipe(20), ParseIntPipe) limit?: number,
+    @Query('sortBy') sortBy?: string,
+    @Query('sortOrder') sortOrder?: 'asc' | 'desc',
   ) {
-    return this.adminService.getDeliveryLogs(integrationId, page, limit);
+    return this.adminService.getDeliveryLogs(integrationId, page, limit, sortBy, sortOrder);
   }
 
   @Patch('integrations/:id/config')
@@ -227,13 +262,23 @@ export class AdminController {
   async getWebhookEvents(
     @Query('page', new DefaultValuePipe(1), ParseIntPipe) page?: number,
     @Query('limit', new DefaultValuePipe(20), ParseIntPipe) limit?: number,
+    @Query('sortBy') sortBy?: string,
+    @Query('sortOrder') sortOrder?: 'asc' | 'desc',
   ) {
-    return this.adminService.getWebhookEvents(page, limit);
+    return this.adminService.getWebhookEvents(page, limit, sortBy, sortOrder);
   }
 
   // ──────────────────────────────────────────────
   //  Notifications
   // ──────────────────────────────────────────────
+
+  @Get('notifications/failed')
+  async getFailedNotifications(
+    @Query('page', new DefaultValuePipe(1), ParseIntPipe) page?: number,
+    @Query('limit', new DefaultValuePipe(20), ParseIntPipe) limit?: number,
+  ) {
+    return this.adminService.getFailedNotifications({ page, limit });
+  }
 
   @Get('notifications/queue')
   async getNotificationQueue() {

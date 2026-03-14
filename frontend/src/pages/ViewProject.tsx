@@ -10,6 +10,7 @@ import {
   useUpdateProject,
   useDeleteProject,
   useSubscribers,
+  useSubscriberCount,
   useAnalyticsOverview,
   useAnalyticsTimeseries,
   useAnalyticsSources,
@@ -65,7 +66,14 @@ export default function ViewProject() {
   const { data: overview } = useAnalyticsOverview(id)
   const { data: timeseries } = useAnalyticsTimeseries(id, period)
   const { data: sourcesData } = useAnalyticsSources(id)
-  const { data: subscribersData, isLoading: subsLoading } = useSubscribers(id, { search: debouncedSearch || undefined, source: subSource || undefined, sort: subSort })
+  const {
+    data: subscribersPages,
+    isLoading: subsLoading,
+    fetchNextPage,
+    hasNextPage,
+    isFetchingNextPage,
+  } = useSubscribers(id, { search: debouncedSearch || undefined, source: subSource || undefined, sort: subSort })
+  const { data: subCountData } = useSubscriberCount(id)
   const { data: referralData } = useReferralLeaderboard(id)
   const { data: platformConfig } = usePlatformConfig()
   const apiUrl = platformConfig?.apiBaseUrl ?? 'https://api.nexuswait.com'
@@ -108,12 +116,13 @@ export default function ViewProject() {
 
   const sources = (Array.isArray(sourcesData) ? sourcesData : (sourcesData as { data?: unknown[] })?.data ?? []) as { source?: string; count?: number; pct?: number }[]
 
-  const subscribers = (Array.isArray(subscribersData) ? subscribersData : (subscribersData as { data?: unknown[] })?.data ?? []) as {
+  const subscribers = (subscribersPages?.pages.flatMap(p => p.data) ?? []) as {
     id?: string; email?: string; name?: string; source?: string; referrals?: number; position?: number; createdAt?: string
     referralCode?: string; referrer?: { id?: string; email?: string; referralCode?: string } | null
     metadata?: Record<string, unknown> | null; verifiedAt?: string | null
     _count?: { referred?: number }
   }[]
+  const subscriberTotal = (subCountData as { count?: number })?.count ?? subscribers.length
 
   // ─── Subscriber detail modal state ───────────────────
   const [selectedSub, setSelectedSub] = useState<(typeof subscribers)[number] | null>(null)
@@ -386,7 +395,7 @@ export default function ViewProject() {
               )}
             </div>
             <div className="flex items-center gap-3">
-              <span className="text-xs font-mono text-nexus-500">{subscribers.length.toLocaleString()} subscribers</span>
+              <span className="text-xs font-mono text-nexus-500">{subscribers.length.toLocaleString()} of {subscriberTotal.toLocaleString()} subscribers</span>
               <button
                 type="button"
                 onClick={handleExportCsv}
@@ -400,60 +409,80 @@ export default function ViewProject() {
           {subsLoading && <p className="text-nexus-500 text-sm">Loading subscribers...</p>}
 
           {!subsLoading && (
-            <div className="card-surface overflow-hidden">
-              <div className="overflow-x-auto">
-                <table className="w-full">
-                  <thead>
-                    <tr className="border-b border-cyan-glow/[0.06]">
-                      {['#', 'Name', 'Email', 'Source', 'Referrals', 'Date'].map(h => (
-                        <th key={h} className="px-4 py-3 text-left text-[10px] font-mono text-nexus-500 tracking-widest uppercase">{h}</th>
-                      ))}
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {subscribers.length === 0 && (
-                      <tr>
-                        <td colSpan={6} className="px-4 py-8 text-center text-xs text-nexus-500">
-                          {subSearch || subSource ? 'No subscribers match your filters.' : 'No subscribers yet.'}
-                        </td>
+            <div className="space-y-4">
+              <div className="card-surface overflow-hidden">
+                <div className="overflow-x-auto">
+                  <table className="w-full">
+                    <thead>
+                      <tr className="border-b border-cyan-glow/[0.06]">
+                        {['#', 'Name', 'Email', 'Source', 'Referrals', 'Date'].map(h => (
+                          <th key={h} className="px-4 py-3 text-left text-[10px] font-mono text-nexus-500 tracking-widest uppercase">{h}</th>
+                        ))}
                       </tr>
-                    )}
-                    {subscribers.map((s, i) => {
-                      const displayName = s.name ?? s.email ?? ''
-                      const initials = displayName
-                        .split(' ')
-                        .map(n => n[0])
-                        .join('')
-                        .slice(0, 2)
-                        .toUpperCase()
-                      const refCount = s._count?.referred ?? s.referrals ?? 0
-                      return (
-                        <tr
-                          key={s.id ?? i}
-                          className="border-b border-cyan-glow/[0.03] hover:bg-cyan-glow/[0.02] transition-colors cursor-pointer"
-                          onClick={() => setSelectedSub(s)}
-                        >
-                          <td className="px-4 py-3 text-xs font-mono text-nexus-600">{s.position ?? i + 1}</td>
-                          <td className="px-4 py-3">
-                            <div className="flex items-center gap-2.5">
-                              <div className="w-7 h-7 rounded-full bg-gradient-to-br from-cyan-glow/15 to-magenta-glow/15 flex items-center justify-center">
-                                <span className="text-[9px] font-display font-bold text-cyan-glow">{initials}</span>
-                              </div>
-                              <span className="text-sm text-nexus-200 font-semibold">{s.name ?? '--'}</span>
-                            </div>
+                    </thead>
+                    <tbody>
+                      {subscribers.length === 0 && (
+                        <tr>
+                          <td colSpan={6} className="px-4 py-8 text-center text-xs text-nexus-500">
+                            {subSearch || subSource ? 'No subscribers match your filters.' : 'No subscribers yet.'}
                           </td>
-                          <td className="px-4 py-3 text-xs font-mono text-nexus-400">{s.email ?? '--'}</td>
-                          <td className="px-4 py-3">
-                            <span className={`text-[9px] font-mono font-bold tracking-wider uppercase px-1.5 py-0.5 rounded ${sourceColors[s.source ?? ''] ?? 'bg-nexus-600/10 text-nexus-400'}`}>{s.source ?? 'direct'}</span>
-                          </td>
-                          <td className="px-4 py-3 text-xs font-mono text-nexus-400">{refCount}</td>
-                          <td className="px-4 py-3 text-xs text-nexus-500">{s.createdAt ? new Date(s.createdAt).toLocaleDateString() : '--'}</td>
                         </tr>
-                      )
-                    })}
-                  </tbody>
-                </table>
+                      )}
+                      {subscribers.map((s, i) => {
+                        const displayName = s.name ?? s.email ?? ''
+                        const initials = displayName
+                          .split(' ')
+                          .map(n => n[0])
+                          .join('')
+                          .slice(0, 2)
+                          .toUpperCase()
+                        const refCount = s._count?.referred ?? s.referrals ?? 0
+                        return (
+                          <tr
+                            key={s.id ?? i}
+                            className="border-b border-cyan-glow/[0.03] hover:bg-cyan-glow/[0.02] transition-colors cursor-pointer"
+                            onClick={() => setSelectedSub(s)}
+                          >
+                            <td className="px-4 py-3 text-xs font-mono text-nexus-600">{s.position ?? i + 1}</td>
+                            <td className="px-4 py-3">
+                              <div className="flex items-center gap-2.5">
+                                <div className="w-7 h-7 rounded-full bg-gradient-to-br from-cyan-glow/15 to-magenta-glow/15 flex items-center justify-center">
+                                  <span className="text-[9px] font-display font-bold text-cyan-glow">{initials}</span>
+                                </div>
+                                <span className="text-sm text-nexus-200 font-semibold">{s.name ?? '--'}</span>
+                              </div>
+                            </td>
+                            <td className="px-4 py-3 text-xs font-mono text-nexus-400">{s.email ?? '--'}</td>
+                            <td className="px-4 py-3">
+                              <span className={`text-[9px] font-mono font-bold tracking-wider uppercase px-1.5 py-0.5 rounded ${sourceColors[s.source ?? ''] ?? 'bg-nexus-600/10 text-nexus-400'}`}>{s.source ?? 'direct'}</span>
+                            </td>
+                            <td className="px-4 py-3 text-xs font-mono text-nexus-400">{refCount}</td>
+                            <td className="px-4 py-3 text-xs text-nexus-500">{s.createdAt ? new Date(s.createdAt).toLocaleDateString() : '--'}</td>
+                          </tr>
+                        )
+                      })}
+                    </tbody>
+                  </table>
+                </div>
               </div>
+
+              {/* Load More */}
+              {hasNextPage && (
+                <div className="flex justify-center">
+                  <button
+                    type="button"
+                    onClick={() => fetchNextPage()}
+                    disabled={isFetchingNextPage}
+                    className="btn-ghost flex items-center gap-2 text-xs font-mono"
+                  >
+                    {isFetchingNextPage ? (
+                      <><Loader2 size={13} className="animate-spin" /> Loading...</>
+                    ) : (
+                      'Load More'
+                    )}
+                  </button>
+                </div>
+              )}
             </div>
           )}
         </div>

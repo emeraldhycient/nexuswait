@@ -1,15 +1,17 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { Link } from 'react-router-dom'
 import {
   Plug, CheckCircle, AlertTriangle, XCircle, RefreshCw, Loader2,
-  ChevronDown, ChevronUp, FileText, Save,
+  ChevronDown, ChevronUp, FileText, Save, Search, ChevronLeft, ChevronRight,
 } from 'lucide-react'
 import {
   useAdminIntegrationHealth,
-  useAdminFailedIntegrations,
+  useAdminFailedIntegrationsPaginated,
   useAdminRetryIntegration,
   useAdminUpdateIntegrationConfig,
 } from '../../api/hooks'
+import SortableHeader from '../../components/SortableHeader'
+import { useSortState } from '../../hooks/useSortState'
 
 interface FailedIntegration {
   id: string
@@ -70,15 +72,39 @@ function RetryConfig({ integration }: { integration: FailedIntegration }) {
 
 export default function AdminIntegrations() {
   const { data: healthData, isLoading: healthLoading, error: healthError } = useAdminIntegrationHealth()
-  const { data: failedData, isLoading: failedLoading } = useAdminFailedIntegrations()
   const retryMutation = useAdminRetryIntegration()
   const [showFailed, setShowFailed] = useState(true)
+
+  // Failed integrations paginated state
+  const [failedSearch, setFailedSearch] = useState('')
+  const [debouncedFailedSearch, setDebouncedFailedSearch] = useState('')
+  const [failedPage, setFailedPage] = useState(1)
+  const failedLimit = 20
+  const { sortBy: failedSortBy, sortOrder: failedSortOrder, handleSort: handleFailedSort } = useSortState('failureCount', 'desc')
+
+  useEffect(() => {
+    const timer = setTimeout(() => setDebouncedFailedSearch(failedSearch), 300)
+    return () => clearTimeout(timer)
+  }, [failedSearch])
+
+  useEffect(() => { setFailedPage(1) }, [failedSortBy, failedSortOrder])
+
+  const { data: failedData, isLoading: failedLoading } = useAdminFailedIntegrationsPaginated({
+    search: debouncedFailedSearch || undefined,
+    page: failedPage,
+    limit: failedLimit,
+    sortBy: failedSortBy,
+    sortOrder: failedSortOrder,
+  })
+
+  const failedIntegrations: FailedIntegration[] = (failedData as Record<string, unknown>)?.data as FailedIntegration[] ?? []
+  const failedTotal: number = ((failedData as Record<string, unknown>)?.total as number) ?? 0
+  const failedTotalPages = Math.max(1, Math.ceil(failedTotal / failedLimit))
 
   if (healthLoading) return <div className="p-6 text-nexus-400">Loading...</div>
   if (healthError) return <div className="p-6 text-magenta-glow">Failed to load integration health.</div>
 
   const healthEntries: HealthEntry[] = (healthData as HealthEntry[]) ?? []
-  const failedIntegrations: FailedIntegration[] = (failedData as FailedIntegration[]) ?? []
 
   return (
     <div className="space-y-6 animate-fade-in">
@@ -162,9 +188,9 @@ export default function AdminIntegrations() {
             <h2 className="font-display text-sm font-bold text-nexus-200 tracking-widest uppercase">
               Failed Integrations
             </h2>
-            {failedIntegrations.length > 0 && (
+            {failedTotal > 0 && (
               <span className="text-[9px] font-mono font-bold px-1.5 py-0.5 rounded bg-magenta-glow/10 text-magenta-glow">
-                {failedIntegrations.length}
+                {failedTotal}
               </span>
             )}
           </div>
@@ -172,96 +198,139 @@ export default function AdminIntegrations() {
         </button>
 
         {showFailed && (
-          <>
+          <div className="space-y-4 pb-5">
+            {/* Search */}
+            <div className="px-6 pt-2">
+              <div className="relative max-w-lg">
+                <Search size={18} className="absolute left-4 top-1/2 -translate-y-1/2 text-nexus-500" />
+                <input
+                  type="text"
+                  placeholder="Search by name..."
+                  value={failedSearch}
+                  onChange={e => { setFailedSearch(e.target.value); setFailedPage(1) }}
+                  className="input-field pl-11 w-full"
+                />
+              </div>
+            </div>
+
             {failedLoading ? (
-              <div className="px-6 pb-5 flex justify-center py-8">
+              <div className="px-6 flex justify-center py-8">
                 <Loader2 size={18} className="animate-spin text-nexus-500" />
               </div>
             ) : failedIntegrations.length === 0 ? (
-              <div className="px-6 pb-5 text-sm text-nexus-500">No failed integrations. All systems operational.</div>
+              <div className="px-6 text-sm text-nexus-500">No failed integrations found.</div>
             ) : (
-              <div className="overflow-x-auto">
-                <table className="w-full">
-                  <thead>
-                    <tr className="border-b border-magenta-glow/[0.06]">
-                      <th className="text-left px-4 py-3 text-[10px] font-mono text-nexus-500 tracking-widest uppercase">Integration</th>
-                      <th className="text-left px-4 py-3 text-[10px] font-mono text-nexus-500 tracking-widest uppercase">Type</th>
-                      <th className="text-left px-4 py-3 text-[10px] font-mono text-nexus-500 tracking-widest uppercase">Project</th>
-                      <th className="text-left px-4 py-3 text-[10px] font-mono text-nexus-500 tracking-widest uppercase">Failures</th>
-                      <th className="text-left px-4 py-3 text-[10px] font-mono text-nexus-500 tracking-widest uppercase">Max Retries</th>
-                      <th className="text-left px-4 py-3 text-[10px] font-mono text-nexus-500 tracking-widest uppercase">Status</th>
-                      <th className="text-left px-4 py-3 text-[10px] font-mono text-nexus-500 tracking-widest uppercase">Last Update</th>
-                      <th className="text-right px-4 py-3 text-[10px] font-mono text-nexus-500 tracking-widest uppercase">Actions</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {failedIntegrations.map((int) => (
-                      <tr key={int.id} className="border-b border-nexus-700/10 hover:bg-nexus-800/30 transition-colors">
-                        <td className="px-4 py-3 text-sm text-nexus-200 font-semibold truncate max-w-[180px]">
-                          {int.displayName}
-                        </td>
-                        <td className="px-4 py-3">
-                          <span className="text-[9px] font-mono font-bold tracking-wider uppercase px-1.5 py-0.5 rounded bg-violet-glow/10 text-violet-glow">
-                            {int.type}
-                          </span>
-                        </td>
-                        <td className="px-4 py-3 text-sm text-nexus-300 font-mono truncate max-w-[150px]">
-                          {int.project.name}
-                        </td>
-                        <td className="px-4 py-3">
-                          <span className={`text-sm font-mono font-bold ${
-                            int.failureCount >= 5 ? 'text-magenta-glow' : int.failureCount >= 3 ? 'text-amber-glow' : 'text-nexus-300'
-                          }`}>
-                            {int.failureCount}
-                          </span>
-                        </td>
-                        <td className="px-4 py-3">
-                          <RetryConfig integration={int} />
-                        </td>
-                        <td className="px-4 py-3">
-                          <span className={`text-[9px] font-mono font-bold tracking-wider uppercase px-1.5 py-0.5 rounded ${
-                            int.enabled
-                              ? 'bg-amber-glow/10 text-amber-glow'
-                              : 'bg-magenta-glow/10 text-magenta-glow'
-                          }`}>
-                            {int.enabled ? 'Failing' : 'Disabled'}
-                          </span>
-                        </td>
-                        <td className="px-4 py-3 text-xs text-nexus-500 font-mono">
-                          {new Date(int.updatedAt).toLocaleString()}
-                        </td>
-                        <td className="px-4 py-3 text-right">
-                          <div className="flex items-center gap-2 justify-end">
-                            <Link
-                              to={`/admin/webhook-logs?integrationId=${int.id}`}
-                              className="inline-flex items-center gap-1.5 px-3 py-1.5 text-[10px] font-mono font-bold bg-violet-glow/10 text-violet-glow hover:bg-violet-glow/20 rounded-lg transition-colors no-underline"
-                              title="View delivery logs"
-                            >
-                              <FileText size={11} />
-                              Logs
-                            </Link>
-                            <button
-                              onClick={() => retryMutation.mutate(int.id)}
-                              disabled={retryMutation.isPending}
-                              className="inline-flex items-center gap-1.5 px-3 py-1.5 text-[10px] font-mono font-bold bg-cyan-glow/10 text-cyan-glow hover:bg-cyan-glow/20 rounded-lg transition-colors disabled:opacity-40"
-                              title="Reset failure count, re-enable integration"
-                            >
-                              {retryMutation.isPending ? (
-                                <Loader2 size={11} className="animate-spin" />
-                              ) : (
-                                <RefreshCw size={11} />
-                              )}
-                              Retry
-                            </button>
-                          </div>
-                        </td>
+              <>
+                <div className="overflow-x-auto">
+                  <table className="w-full">
+                    <thead>
+                      <tr className="border-b border-magenta-glow/[0.06]">
+                        <SortableHeader label="Integration" sortKey="displayName" currentSortBy={failedSortBy} currentSortOrder={failedSortOrder} onSort={handleFailedSort} />
+                        <SortableHeader label="Type" sortKey="type" currentSortBy={failedSortBy} currentSortOrder={failedSortOrder} onSort={handleFailedSort} />
+                        <th className="text-left px-4 py-3 text-[10px] font-mono text-nexus-500 tracking-widest uppercase">Project</th>
+                        <SortableHeader label="Failures" sortKey="failureCount" currentSortBy={failedSortBy} currentSortOrder={failedSortOrder} onSort={handleFailedSort} />
+                        <th className="text-left px-4 py-3 text-[10px] font-mono text-nexus-500 tracking-widest uppercase">Max Retries</th>
+                        <th className="text-left px-4 py-3 text-[10px] font-mono text-nexus-500 tracking-widest uppercase">Status</th>
+                        <SortableHeader label="Last Update" sortKey="updatedAt" currentSortBy={failedSortBy} currentSortOrder={failedSortOrder} onSort={handleFailedSort} />
+                        <th className="text-right px-4 py-3 text-[10px] font-mono text-nexus-500 tracking-widest uppercase">Actions</th>
                       </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
+                    </thead>
+                    <tbody>
+                      {failedIntegrations.map((int) => (
+                        <tr key={int.id} className="border-b border-nexus-700/10 hover:bg-nexus-800/30 transition-colors">
+                          <td className="px-4 py-3 text-sm text-nexus-200 font-semibold truncate max-w-[180px]">
+                            {int.displayName}
+                          </td>
+                          <td className="px-4 py-3">
+                            <span className="text-[9px] font-mono font-bold tracking-wider uppercase px-1.5 py-0.5 rounded bg-violet-glow/10 text-violet-glow">
+                              {int.type}
+                            </span>
+                          </td>
+                          <td className="px-4 py-3 text-sm text-nexus-300 font-mono truncate max-w-[150px]">
+                            {int.project.name}
+                          </td>
+                          <td className="px-4 py-3">
+                            <span className={`text-sm font-mono font-bold ${
+                              int.failureCount >= 5 ? 'text-magenta-glow' : int.failureCount >= 3 ? 'text-amber-glow' : 'text-nexus-300'
+                            }`}>
+                              {int.failureCount}
+                            </span>
+                          </td>
+                          <td className="px-4 py-3">
+                            <RetryConfig integration={int} />
+                          </td>
+                          <td className="px-4 py-3">
+                            <span className={`text-[9px] font-mono font-bold tracking-wider uppercase px-1.5 py-0.5 rounded ${
+                              int.enabled
+                                ? 'bg-amber-glow/10 text-amber-glow'
+                                : 'bg-magenta-glow/10 text-magenta-glow'
+                            }`}>
+                              {int.enabled ? 'Failing' : 'Disabled'}
+                            </span>
+                          </td>
+                          <td className="px-4 py-3 text-xs text-nexus-500 font-mono">
+                            {new Date(int.updatedAt).toLocaleString()}
+                          </td>
+                          <td className="px-4 py-3 text-right">
+                            <div className="flex items-center gap-2 justify-end">
+                              <Link
+                                to={`/admin/webhook-logs?integrationId=${int.id}`}
+                                className="inline-flex items-center gap-1.5 px-3 py-1.5 text-[10px] font-mono font-bold bg-violet-glow/10 text-violet-glow hover:bg-violet-glow/20 rounded-lg transition-colors no-underline"
+                                title="View delivery logs"
+                              >
+                                <FileText size={11} />
+                                Logs
+                              </Link>
+                              <button
+                                onClick={() => retryMutation.mutate(int.id)}
+                                disabled={retryMutation.isPending}
+                                className="inline-flex items-center gap-1.5 px-3 py-1.5 text-[10px] font-mono font-bold bg-cyan-glow/10 text-cyan-glow hover:bg-cyan-glow/20 rounded-lg transition-colors disabled:opacity-40"
+                                title="Reset failure count, re-enable integration"
+                              >
+                                {retryMutation.isPending ? (
+                                  <Loader2 size={11} className="animate-spin" />
+                                ) : (
+                                  <RefreshCw size={11} />
+                                )}
+                                Retry
+                              </button>
+                            </div>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+
+                {/* Pagination */}
+                {failedTotalPages > 1 && (
+                  <div className="flex items-center justify-between px-6">
+                    <span className="text-xs font-mono text-nexus-500">
+                      Page {failedPage} of {failedTotalPages} ({failedTotal} total)
+                    </span>
+                    <div className="flex items-center gap-2">
+                      <button
+                        type="button"
+                        disabled={failedPage <= 1}
+                        onClick={() => setFailedPage(p => Math.max(1, p - 1))}
+                        className="btn-ghost p-2 disabled:opacity-30"
+                      >
+                        <ChevronLeft size={16} />
+                      </button>
+                      <button
+                        type="button"
+                        disabled={failedPage >= failedTotalPages}
+                        onClick={() => setFailedPage(p => p + 1)}
+                        className="btn-ghost p-2 disabled:opacity-30"
+                      >
+                        <ChevronRight size={16} />
+                      </button>
+                    </div>
+                  </div>
+                )}
+              </>
             )}
-          </>
+          </div>
         )}
       </div>
     </div>

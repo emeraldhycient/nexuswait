@@ -2,6 +2,8 @@ import { useState, useEffect } from 'react'
 import { Link } from 'react-router-dom'
 import { Search, ChevronLeft, ChevronRight, ExternalLink } from 'lucide-react'
 import { useAdminProjects } from '../../api/hooks'
+import SortableHeader from '../../components/SortableHeader'
+import { useSortState } from '../../hooks/useSortState'
 
 export default function AdminProjects() {
   const [search, setSearch] = useState('')
@@ -9,13 +11,16 @@ export default function AdminProjects() {
   const [status, setStatus] = useState('')
   const [page, setPage] = useState(1)
   const limit = 15
+  const { sortBy, sortOrder, handleSort } = useSortState()
 
   useEffect(() => {
     const timer = setTimeout(() => setDebouncedSearch(search), 300)
     return () => clearTimeout(timer)
   }, [search])
 
-  const { data, isLoading, error } = useAdminProjects({ search: debouncedSearch || undefined, status: status || undefined, page, limit })
+  useEffect(() => { setPage(1) }, [sortBy, sortOrder])
+
+  const { data, isLoading, error } = useAdminProjects({ search: debouncedSearch || undefined, status: status || undefined, page, limit, sortBy, sortOrder })
 
   const projects: Record<string, unknown>[] = (data as Record<string, unknown>)?.data as Record<string, unknown>[] ?? []
   const total: number = ((data as Record<string, unknown>)?.total as number) ?? 0
@@ -65,11 +70,11 @@ export default function AdminProjects() {
             <table className="w-full">
               <thead>
                 <tr className="border-b border-magenta-glow/[0.06]">
-                  <th className="text-left px-4 py-3 text-[10px] font-mono text-nexus-500 tracking-widest uppercase">Name</th>
+                  <SortableHeader label="Name" sortKey="name" currentSortBy={sortBy} currentSortOrder={sortOrder} onSort={handleSort} />
                   <th className="text-left px-4 py-3 text-[10px] font-mono text-nexus-500 tracking-widest uppercase">Account</th>
-                  <th className="text-left px-4 py-3 text-[10px] font-mono text-nexus-500 tracking-widest uppercase">Status</th>
+                  <SortableHeader label="Status" sortKey="status" currentSortBy={sortBy} currentSortOrder={sortOrder} onSort={handleSort} />
                   <th className="text-left px-4 py-3 text-[10px] font-mono text-nexus-500 tracking-widest uppercase">Subscribers</th>
-                  <th className="text-left px-4 py-3 text-[10px] font-mono text-nexus-500 tracking-widest uppercase">Created</th>
+                  <SortableHeader label="Created" sortKey="createdAt" currentSortBy={sortBy} currentSortOrder={sortOrder} onSort={handleSort} />
                   <th className="px-4 py-3" />
                 </tr>
               </thead>

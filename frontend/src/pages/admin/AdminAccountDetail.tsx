@@ -2,6 +2,8 @@ import { useState, useEffect } from 'react'
 import { useParams, Link } from 'react-router-dom'
 import { ArrowLeft, Save, Search, ChevronLeft, ChevronRight, ExternalLink } from 'lucide-react'
 import { useAdminAccount, useAdminUpdateAccount, useAdminAccountSubscribers } from '../../api/hooks'
+import SortableHeader from '../../components/SortableHeader'
+import { useSortState } from '../../hooks/useSortState'
 
 const planBadge: Record<string, string> = {
   spark: 'bg-cyan-glow/10 text-cyan-glow',
@@ -19,13 +21,16 @@ export default function AdminAccountDetail() {
   const [debouncedSubSearch, setDebouncedSubSearch] = useState('')
   const [subPage, setSubPage] = useState(1)
   const subLimit = 10
+  const { sortBy: subSortBy, sortOrder: subSortOrder, handleSort: handleSubSort } = useSortState()
 
   useEffect(() => {
     const timer = setTimeout(() => setDebouncedSubSearch(subSearch), 300)
     return () => clearTimeout(timer)
   }, [subSearch])
 
-  const { data: subData } = useAdminAccountSubscribers(id, { search: debouncedSubSearch || undefined, page: subPage, limit: subLimit })
+  useEffect(() => { setSubPage(1) }, [subSortBy, subSortOrder])
+
+  const { data: subData } = useAdminAccountSubscribers(id, { search: debouncedSubSearch || undefined, page: subPage, limit: subLimit, sortBy: subSortBy, sortOrder: subSortOrder })
 
   if (isLoading) return <div className="p-6 text-nexus-400">Loading...</div>
   if (error || !account) return <div className="p-6 text-magenta-glow">Failed to load account.</div>
@@ -219,11 +224,11 @@ export default function AdminAccountDetail() {
                 <table className="w-full">
                   <thead>
                     <tr className="border-b border-magenta-glow/[0.06]">
-                      <th className="text-left px-4 py-3 text-[10px] font-mono text-nexus-500 tracking-widest uppercase">Email</th>
-                      <th className="text-left px-4 py-3 text-[10px] font-mono text-nexus-500 tracking-widest uppercase">Name</th>
+                      <SortableHeader label="Email" sortKey="email" currentSortBy={subSortBy} currentSortOrder={subSortOrder} onSort={handleSubSort} />
+                      <SortableHeader label="Name" sortKey="name" currentSortBy={subSortBy} currentSortOrder={subSortOrder} onSort={handleSubSort} />
                       <th className="text-left px-4 py-3 text-[10px] font-mono text-nexus-500 tracking-widest uppercase">Project</th>
-                      <th className="text-left px-4 py-3 text-[10px] font-mono text-nexus-500 tracking-widest uppercase">Source</th>
-                      <th className="text-left px-4 py-3 text-[10px] font-mono text-nexus-500 tracking-widest uppercase">Created</th>
+                      <SortableHeader label="Source" sortKey="source" currentSortBy={subSortBy} currentSortOrder={subSortOrder} onSort={handleSubSort} />
+                      <SortableHeader label="Created" sortKey="createdAt" currentSortBy={subSortBy} currentSortOrder={subSortOrder} onSort={handleSubSort} />
                     </tr>
                   </thead>
                   <tbody>

@@ -56,11 +56,25 @@ export class AdminService {
   //  Accounts
   // ──────────────────────────────────────────────
 
+  private resolveSort(
+    sortBy: string | undefined,
+    sortOrder: string | undefined,
+    allowed: string[],
+    defaultField = 'createdAt',
+    defaultDir: 'asc' | 'desc' = 'desc',
+  ): Record<string, 'asc' | 'desc'> {
+    const field = allowed.includes(sortBy ?? '') ? sortBy! : defaultField;
+    const dir: 'asc' | 'desc' = sortOrder === 'asc' ? 'asc' : sortOrder === 'desc' ? 'desc' : defaultDir;
+    return { [field]: dir };
+  }
+
   async getAccounts(params: {
     search?: string;
     plan?: PlanTier;
     page?: number;
     limit?: number;
+    sortBy?: string;
+    sortOrder?: 'asc' | 'desc';
   }) {
     const page = Math.max(params.page ?? 1, 1);
     const limit = Math.min(Math.max(params.limit ?? 20, 1), 100);
@@ -80,12 +94,14 @@ export class AdminService {
       };
     }
 
+    const orderBy = this.resolveSort(params.sortBy, params.sortOrder, ['createdAt', 'plan']);
+
     const [data, total] = await Promise.all([
       this.prisma.account.findMany({
         where,
         skip,
         take: limit,
-        orderBy: { createdAt: 'desc' },
+        orderBy,
         include: {
           _count: {
             select: { users: true, projects: true },
@@ -160,6 +176,8 @@ export class AdminService {
     accountId?: string;
     page?: number;
     limit?: number;
+    sortBy?: string;
+    sortOrder?: 'asc' | 'desc';
   }) {
     const page = Math.max(params.page ?? 1, 1);
     const limit = Math.min(Math.max(params.limit ?? 20, 1), 100);
@@ -183,12 +201,14 @@ export class AdminService {
       ];
     }
 
+    const orderBy = this.resolveSort(params.sortBy, params.sortOrder, ['createdAt', 'email', 'firstName', 'lastName']);
+
     const [data, total] = await Promise.all([
       this.prisma.user.findMany({
         where,
         skip,
         take: limit,
-        orderBy: { createdAt: 'desc' },
+        orderBy,
         select: {
           id: true,
           email: true,
@@ -346,7 +366,7 @@ export class AdminService {
 
   async getAccountSubscribers(
     accountId: string,
-    params: { search?: string; page?: number; limit?: number },
+    params: { search?: string; page?: number; limit?: number; sortBy?: string; sortOrder?: 'asc' | 'desc' },
   ) {
     const account = await this.prisma.account.findUnique({
       where: { id: accountId },
@@ -374,12 +394,14 @@ export class AdminService {
       ];
     }
 
+    const orderBy = this.resolveSort(params.sortBy, params.sortOrder, ['createdAt', 'email', 'name', 'source']);
+
     const [data, total] = await Promise.all([
       this.prisma.subscriber.findMany({
         where,
         skip,
         take: limit,
-        orderBy: { createdAt: 'desc' },
+        orderBy,
         include: {
           project: { select: { id: true, name: true } },
         },
@@ -400,6 +422,8 @@ export class AdminService {
     accountId?: string;
     page?: number;
     limit?: number;
+    sortBy?: string;
+    sortOrder?: 'asc' | 'desc';
   }) {
     const page = Math.max(params.page ?? 1, 1);
     const limit = Math.min(Math.max(params.limit ?? 20, 1), 100);
@@ -419,12 +443,14 @@ export class AdminService {
       where.name = { contains: params.search, mode: 'insensitive' };
     }
 
+    const orderBy = this.resolveSort(params.sortBy, params.sortOrder, ['createdAt', 'name', 'status']);
+
     const [data, total] = await Promise.all([
       this.prisma.project.findMany({
         where,
         skip,
         take: limit,
-        orderBy: { createdAt: 'desc' },
+        orderBy,
         include: {
           _count: {
             select: { subscribers: true, integrations: true },
@@ -747,16 +773,23 @@ export class AdminService {
   //  Delivery logs + webhook events
   // ──────────────────────────────────────────────
 
-  async getDeliveryLogs(integrationId: string, page = 1, limit = 20) {
+  async getDeliveryLogs(
+    integrationId: string,
+    page = 1,
+    limit = 20,
+    sortBy?: string,
+    sortOrder?: 'asc' | 'desc',
+  ) {
     const skip = (Math.max(page, 1) - 1) * Math.min(limit, 100);
     const take = Math.min(limit, 100);
+    const orderBy = this.resolveSort(sortBy, sortOrder, ['createdAt', 'event', 'success']);
 
     const [data, total] = await Promise.all([
       this.prisma.webhookDeliveryLog.findMany({
         where: { integrationId },
         skip,
         take,
-        orderBy: { createdAt: 'desc' },
+        orderBy,
       }),
       this.prisma.webhookDeliveryLog.count({ where: { integrationId } }),
     ]);
@@ -823,15 +856,21 @@ export class AdminService {
     }
   }
 
-  async getWebhookEvents(page = 1, limit = 20) {
+  async getWebhookEvents(
+    page = 1,
+    limit = 20,
+    sortBy?: string,
+    sortOrder?: 'asc' | 'desc',
+  ) {
     const skip = (Math.max(page, 1) - 1) * Math.min(limit, 100);
     const take = Math.min(limit, 100);
+    const orderBy = this.resolveSort(sortBy, sortOrder, ['createdAt', 'eventType', 'status']);
 
     const [data, total] = await Promise.all([
       this.prisma.webhookEvent.findMany({
         skip,
         take,
-        orderBy: { createdAt: 'desc' },
+        orderBy,
       }),
       this.prisma.webhookEvent.count(),
     ]);
@@ -849,6 +888,130 @@ export class AdminService {
     }
 
     return this.prisma.integration.update({ where: { id }, data });
+  }
+
+  // ──────────────────────────────────────────────
+  //  Subscribers (paginated, all projects)
+  // ──────────────────────────────────────────────
+
+  async getSubscribers(params: {
+    search?: string;
+    source?: string;
+    page?: number;
+    limit?: number;
+    sortBy?: string;
+    sortOrder?: 'asc' | 'desc';
+  }) {
+    const page = Math.max(params.page ?? 1, 1);
+    const limit = Math.min(Math.max(params.limit ?? 20, 1), 100);
+    const skip = (page - 1) * limit;
+
+    const where: Record<string, unknown> = {};
+
+    if (params.search) {
+      where.OR = [
+        { email: { contains: params.search, mode: 'insensitive' } },
+        { name: { contains: params.search, mode: 'insensitive' } },
+      ];
+    }
+
+    if (params.source) {
+      where.source = params.source;
+    }
+
+    const orderBy = this.resolveSort(params.sortBy, params.sortOrder, ['createdAt', 'email', 'name', 'source']);
+
+    const [data, total] = await Promise.all([
+      this.prisma.subscriber.findMany({
+        where,
+        skip,
+        take: limit,
+        orderBy,
+        include: {
+          project: { select: { id: true, name: true, accountId: true } },
+        },
+      }),
+      this.prisma.subscriber.count({ where }),
+    ]);
+
+    return { data, total, page, limit };
+  }
+
+  // ──────────────────────────────────────────────
+  //  Failed integrations (paginated)
+  // ──────────────────────────────────────────────
+
+  async getFailedIntegrationsPaginated(params: {
+    search?: string;
+    page?: number;
+    limit?: number;
+    sortBy?: string;
+    sortOrder?: 'asc' | 'desc';
+  }) {
+    const page = Math.max(params.page ?? 1, 1);
+    const limit = Math.min(Math.max(params.limit ?? 20, 1), 100);
+    const skip = (page - 1) * limit;
+
+    const where: Record<string, unknown> = { failureCount: { gt: 0 } };
+
+    if (params.search) {
+      where.displayName = { contains: params.search, mode: 'insensitive' };
+    }
+
+    const orderBy = this.resolveSort(params.sortBy, params.sortOrder, ['failureCount', 'displayName', 'type', 'updatedAt'], 'failureCount');
+
+    const [data, total] = await Promise.all([
+      this.prisma.integration.findMany({
+        where,
+        skip,
+        take: limit,
+        orderBy,
+        include: {
+          project: {
+            select: { id: true, name: true, accountId: true },
+          },
+        },
+      }),
+      this.prisma.integration.count({ where }),
+    ]);
+
+    return { data, total, page, limit };
+  }
+
+  // ──────────────────────────────────────────────
+  //  Failed notifications (paginated)
+  // ──────────────────────────────────────────────
+
+  async getFailedNotifications(params: {
+    page?: number;
+    limit?: number;
+  }) {
+    const page = Math.max(params.page ?? 1, 1);
+    const limit = Math.min(Math.max(params.limit ?? 20, 1), 100);
+    const skip = (page - 1) * limit;
+
+    const where = { status: { in: ['failed', 'dead_letter'] as NotificationStatus[] } };
+
+    const [data, total] = await Promise.all([
+      this.prisma.notification.findMany({
+        where,
+        skip,
+        take: limit,
+        orderBy: { createdAt: 'desc' },
+        select: {
+          id: true,
+          templateId: true,
+          recipient: true,
+          status: true,
+          attempts: true,
+          lastError: true,
+          createdAt: true,
+        },
+      }),
+      this.prisma.notification.count({ where }),
+    ]);
+
+    return { data, total, page, limit };
   }
 
   // ──────────────────────────────────────────────

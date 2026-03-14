@@ -1,13 +1,14 @@
 import { useState } from 'react'
 import {
   Bell, Clock, XCircle, Skull, FileText, Plus, ChevronDown, ChevronUp,
-  Trash2, Mail, Loader2
+  Trash2, Mail, Loader2, ChevronLeft, ChevronRight,
 } from 'lucide-react'
 import {
   useAdminNotificationQueue,
   useAdminNotificationTemplates,
   useCreateNotificationTemplate,
   useDeleteNotificationTemplate,
+  useAdminFailedNotifications,
   type NotificationTemplate,
 } from '../../api/hooks'
 
@@ -21,6 +22,14 @@ export default function AdminNotifications() {
   const [expandedTemplate, setExpandedTemplate] = useState<string | null>(null)
   const [form, setForm] = useState({ name: '', channel: 'email', subject: '', body: '' })
 
+  // Paginated failed notifications
+  const [failedPage, setFailedPage] = useState(1)
+  const failedLimit = 20
+  const { data: failedData, isLoading: failedLoading } = useAdminFailedNotifications({ page: failedPage, limit: failedLimit })
+  const failedNotifications: Record<string, unknown>[] = (failedData as Record<string, unknown>)?.data as Record<string, unknown>[] ?? []
+  const failedTotal: number = ((failedData as Record<string, unknown>)?.total as number) ?? 0
+  const failedTotalPages = Math.max(1, Math.ceil(failedTotal / failedLimit))
+
   if (queueLoading) return <div className="p-6 text-nexus-400">Loading...</div>
   if (queueError) return <div className="p-6 text-magenta-glow">Failed to load notification data.</div>
 
@@ -31,7 +40,6 @@ export default function AdminNotifications() {
   const sent = (queue?.sent as number) ?? 0
   const failed = (queue?.failed as number) ?? 0
   const deadLetter = (queue?.deadLetter as number) ?? 0
-  const recentFailed: Record<string, unknown>[] = (queue?.recentFailed as Record<string, unknown>[]) ?? []
 
   const templates: (NotificationTemplate & { _count?: { notifications: number } })[] =
     (templatesData as (NotificationTemplate & { _count?: { notifications: number } })[]) ?? []
@@ -244,56 +252,96 @@ export default function AdminNotifications() {
         )}
       </div>
 
-      {/* Recent Failures Table */}
+      {/* Failed Notifications Table */}
       <div className="card-surface overflow-hidden">
         <div className="px-6 pt-5 pb-3 flex items-center gap-2">
           <Bell size={15} className="text-magenta-glow" />
-          <h2 className="font-display text-sm font-bold text-nexus-200 tracking-widest uppercase">Recent Failures</h2>
+          <h2 className="font-display text-sm font-bold text-nexus-200 tracking-widest uppercase">
+            Failed Notifications
+          </h2>
+          {failedTotal > 0 && (
+            <span className="text-[9px] font-mono font-bold px-1.5 py-0.5 rounded bg-magenta-glow/10 text-magenta-glow">
+              {failedTotal}
+            </span>
+          )}
         </div>
-        {recentFailed.length === 0 ? (
-          <div className="px-6 pb-5 text-sm text-nexus-500">No recent failures. Queue is healthy.</div>
+        {failedLoading ? (
+          <div className="px-6 pb-5 flex justify-center py-8">
+            <Loader2 size={18} className="animate-spin text-nexus-500" />
+          </div>
+        ) : failedNotifications.length === 0 ? (
+          <div className="px-6 pb-5 text-sm text-nexus-500">No failed notifications. Queue is healthy.</div>
         ) : (
-          <div className="overflow-x-auto">
-            <table className="w-full">
-              <thead>
-                <tr className="border-b border-magenta-glow/[0.06]">
-                  <th className="text-left px-4 py-3 text-[10px] font-mono text-nexus-500 tracking-widest uppercase">Template</th>
-                  <th className="text-left px-4 py-3 text-[10px] font-mono text-nexus-500 tracking-widest uppercase">Recipient</th>
-                  <th className="text-left px-4 py-3 text-[10px] font-mono text-nexus-500 tracking-widest uppercase">Status</th>
-                  <th className="text-left px-4 py-3 text-[10px] font-mono text-nexus-500 tracking-widest uppercase">Error</th>
-                  <th className="text-left px-4 py-3 text-[10px] font-mono text-nexus-500 tracking-widest uppercase">Attempts</th>
-                  <th className="text-left px-4 py-3 text-[10px] font-mono text-nexus-500 tracking-widest uppercase">Created</th>
-                </tr>
-              </thead>
-              <tbody>
-                {recentFailed.map((failure, i) => (
-                  <tr key={(failure.id as string) ?? i} className="border-b border-nexus-700/10 hover:bg-nexus-800/30 transition-colors">
-                    <td className="px-4 py-3 text-sm text-nexus-200 font-mono truncate max-w-[150px]">
-                      {(failure.templateId as string) ?? '—'}
-                    </td>
-                    <td className="px-4 py-3 text-sm text-nexus-200 font-mono truncate max-w-[200px]">
-                      {(failure.recipient as string) ?? '—'}
-                    </td>
-                    <td className="px-4 py-3">
-                      <span className={`text-[9px] font-mono font-bold tracking-wider uppercase px-1.5 py-0.5 rounded ${
-                        (failure.status as string) === 'dead_letter'
-                          ? 'bg-amber-glow/10 text-amber-glow'
-                          : 'bg-magenta-glow/10 text-magenta-glow'
-                      }`}>
-                        {(failure.status as string) ?? 'failed'}
-                      </span>
-                    </td>
-                    <td className="px-4 py-3 text-xs text-magenta-glow font-mono truncate max-w-[200px]">
-                      {(failure.lastError as string) ?? '—'}
-                    </td>
-                    <td className="px-4 py-3 text-sm text-nexus-300 font-mono">{(failure.attempts as number) ?? 0}</td>
-                    <td className="px-4 py-3 text-xs text-nexus-500 font-mono">
-                      {failure.createdAt ? new Date(failure.createdAt as string).toLocaleString() : '—'}
-                    </td>
+          <div className="space-y-4 pb-5">
+            <div className="overflow-x-auto">
+              <table className="w-full">
+                <thead>
+                  <tr className="border-b border-magenta-glow/[0.06]">
+                    <th className="text-left px-4 py-3 text-[10px] font-mono text-nexus-500 tracking-widest uppercase">Template</th>
+                    <th className="text-left px-4 py-3 text-[10px] font-mono text-nexus-500 tracking-widest uppercase">Recipient</th>
+                    <th className="text-left px-4 py-3 text-[10px] font-mono text-nexus-500 tracking-widest uppercase">Status</th>
+                    <th className="text-left px-4 py-3 text-[10px] font-mono text-nexus-500 tracking-widest uppercase">Error</th>
+                    <th className="text-left px-4 py-3 text-[10px] font-mono text-nexus-500 tracking-widest uppercase">Attempts</th>
+                    <th className="text-left px-4 py-3 text-[10px] font-mono text-nexus-500 tracking-widest uppercase">Created</th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
+                </thead>
+                <tbody>
+                  {failedNotifications.map((failure, i) => (
+                    <tr key={(failure.id as string) ?? i} className="border-b border-nexus-700/10 hover:bg-nexus-800/30 transition-colors">
+                      <td className="px-4 py-3 text-sm text-nexus-200 font-mono truncate max-w-[150px]">
+                        {(failure.templateId as string) ?? '—'}
+                      </td>
+                      <td className="px-4 py-3 text-sm text-nexus-200 font-mono truncate max-w-[200px]">
+                        {(failure.recipient as string) ?? '—'}
+                      </td>
+                      <td className="px-4 py-3">
+                        <span className={`text-[9px] font-mono font-bold tracking-wider uppercase px-1.5 py-0.5 rounded ${
+                          (failure.status as string) === 'dead_letter'
+                            ? 'bg-amber-glow/10 text-amber-glow'
+                            : 'bg-magenta-glow/10 text-magenta-glow'
+                        }`}>
+                          {(failure.status as string) ?? 'failed'}
+                        </span>
+                      </td>
+                      <td className="px-4 py-3 text-xs text-magenta-glow font-mono truncate max-w-[200px]">
+                        {(failure.lastError as string) ?? '—'}
+                      </td>
+                      <td className="px-4 py-3 text-sm text-nexus-300 font-mono">{(failure.attempts as number) ?? 0}</td>
+                      <td className="px-4 py-3 text-xs text-nexus-500 font-mono">
+                        {failure.createdAt ? new Date(failure.createdAt as string).toLocaleString() : '—'}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+
+            {/* Pagination */}
+            {failedTotalPages > 1 && (
+              <div className="flex items-center justify-between px-6">
+                <span className="text-xs font-mono text-nexus-500">
+                  Page {failedPage} of {failedTotalPages} ({failedTotal} total)
+                </span>
+                <div className="flex items-center gap-2">
+                  <button
+                    type="button"
+                    disabled={failedPage <= 1}
+                    onClick={() => setFailedPage(p => Math.max(1, p - 1))}
+                    className="btn-ghost p-2 disabled:opacity-30"
+                  >
+                    <ChevronLeft size={16} />
+                  </button>
+                  <button
+                    type="button"
+                    disabled={failedPage >= failedTotalPages}
+                    onClick={() => setFailedPage(p => p + 1)}
+                    className="btn-ghost p-2 disabled:opacity-30"
+                  >
+                    <ChevronRight size={16} />
+                  </button>
+                </div>
+              </div>
+            )}
           </div>
         )}
       </div>

@@ -2,6 +2,8 @@ import { useState, useEffect } from 'react'
 import { Link } from 'react-router-dom'
 import { Search, ChevronLeft, ChevronRight, ExternalLink } from 'lucide-react'
 import { useAdminAccounts } from '../../api/hooks'
+import SortableHeader from '../../components/SortableHeader'
+import { useSortState } from '../../hooks/useSortState'
 
 const planBadge: Record<string, string> = {
   spark: 'bg-cyan-glow/10 text-cyan-glow',
@@ -16,13 +18,17 @@ export default function AdminAccounts() {
   const [plan, setPlan] = useState('')
   const [page, setPage] = useState(1)
   const limit = 15
+  const { sortBy, sortOrder, handleSort } = useSortState()
 
   useEffect(() => {
     const timer = setTimeout(() => setDebouncedSearch(search), 300)
     return () => clearTimeout(timer)
   }, [search])
 
-  const { data, isLoading, error } = useAdminAccounts({ search: debouncedSearch || undefined, plan: plan || undefined, page, limit })
+  // Reset page on sort change
+  useEffect(() => { setPage(1) }, [sortBy, sortOrder])
+
+  const { data, isLoading, error } = useAdminAccounts({ search: debouncedSearch || undefined, plan: plan || undefined, page, limit, sortBy, sortOrder })
 
   const accounts: Record<string, unknown>[] = (data as Record<string, unknown>)?.data as Record<string, unknown>[] ?? []
   const total: number = ((data as Record<string, unknown>)?.total as number) ?? 0
@@ -74,10 +80,10 @@ export default function AdminAccounts() {
               <thead>
                 <tr className="border-b border-magenta-glow/[0.06]">
                   <th className="text-left px-4 py-3 text-[10px] font-mono text-nexus-500 tracking-widest uppercase">Email</th>
-                  <th className="text-left px-4 py-3 text-[10px] font-mono text-nexus-500 tracking-widest uppercase">Plan</th>
+                  <SortableHeader label="Plan" sortKey="plan" currentSortBy={sortBy} currentSortOrder={sortOrder} onSort={handleSort} />
                   <th className="text-left px-4 py-3 text-[10px] font-mono text-nexus-500 tracking-widest uppercase">Projects</th>
                   <th className="text-left px-4 py-3 text-[10px] font-mono text-nexus-500 tracking-widest uppercase">Subscribers</th>
-                  <th className="text-left px-4 py-3 text-[10px] font-mono text-nexus-500 tracking-widest uppercase">Created</th>
+                  <SortableHeader label="Created" sortKey="createdAt" currentSortBy={sortBy} currentSortOrder={sortOrder} onSort={handleSort} />
                   <th className="px-4 py-3" />
                 </tr>
               </thead>

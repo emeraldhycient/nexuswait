@@ -40,6 +40,8 @@ describe('AdminService', () => {
       },
       integration: {
         groupBy: jest.fn(),
+        findMany: jest.fn(),
+        count: jest.fn(),
       },
       notification: {
         groupBy: jest.fn(),
@@ -712,5 +714,209 @@ describe('AdminService', () => {
     expect(result).toHaveProperty('projects');
     expect(result).toHaveProperty('subscribers');
     expect(result).toHaveProperty('integrations');
+  });
+
+  // ──────────────────────────────────────────────
+  //  Sorting — existing endpoints
+  // ──────────────────────────────────────────────
+
+  it('getAccounts applies custom sort', async () => {
+    (prisma.account.findMany as jest.Mock).mockResolvedValue([]);
+    (prisma.account.count as jest.Mock).mockResolvedValue(0);
+
+    await service.getAccounts({ sortBy: 'plan', sortOrder: 'asc' });
+
+    expect(prisma.account.findMany).toHaveBeenCalledWith(
+      expect.objectContaining({ orderBy: { plan: 'asc' } }),
+    );
+  });
+
+  it('getAccounts falls back to default sort for invalid sortBy', async () => {
+    (prisma.account.findMany as jest.Mock).mockResolvedValue([]);
+    (prisma.account.count as jest.Mock).mockResolvedValue(0);
+
+    await service.getAccounts({ sortBy: 'INVALID_FIELD', sortOrder: 'asc' });
+
+    expect(prisma.account.findMany).toHaveBeenCalledWith(
+      expect.objectContaining({ orderBy: { createdAt: 'asc' } }),
+    );
+  });
+
+  it('getUsers applies custom sort', async () => {
+    (prisma.user.findMany as jest.Mock).mockResolvedValue([]);
+    (prisma.user.count as jest.Mock).mockResolvedValue(0);
+
+    await service.getUsers({ sortBy: 'email', sortOrder: 'asc' });
+
+    expect(prisma.user.findMany).toHaveBeenCalledWith(
+      expect.objectContaining({ orderBy: { email: 'asc' } }),
+    );
+  });
+
+  it('getProjects applies custom sort', async () => {
+    (prisma.project.findMany as jest.Mock).mockResolvedValue([]);
+    (prisma.project.count as jest.Mock).mockResolvedValue(0);
+
+    await service.getProjects({ sortBy: 'name', sortOrder: 'asc' });
+
+    expect(prisma.project.findMany).toHaveBeenCalledWith(
+      expect.objectContaining({ orderBy: { name: 'asc' } }),
+    );
+  });
+
+  it('getAccountSubscribers applies custom sort', async () => {
+    const mockAccount = { id: 'acc-1', projects: [{ id: 'p1' }] };
+    (prisma.account.findUnique as jest.Mock).mockResolvedValue(mockAccount);
+    (prisma.subscriber.findMany as jest.Mock).mockResolvedValue([]);
+    (prisma.subscriber.count as jest.Mock).mockResolvedValue(0);
+
+    await service.getAccountSubscribers('acc-1', { sortBy: 'email', sortOrder: 'asc' });
+
+    expect(prisma.subscriber.findMany).toHaveBeenCalledWith(
+      expect.objectContaining({ orderBy: { email: 'asc' } }),
+    );
+  });
+
+  it('getDeliveryLogs applies custom sort', async () => {
+    (prisma as any).webhookDeliveryLog = {
+      findMany: jest.fn().mockResolvedValue([]),
+      count: jest.fn().mockResolvedValue(0),
+    };
+
+    await service.getDeliveryLogs('int-1', 1, 20, 'event', 'asc');
+
+    expect((prisma as any).webhookDeliveryLog.findMany).toHaveBeenCalledWith(
+      expect.objectContaining({ orderBy: { event: 'asc' } }),
+    );
+  });
+
+  it('getWebhookEvents applies custom sort', async () => {
+    (prisma as any).webhookEvent = {
+      findMany: jest.fn().mockResolvedValue([]),
+      count: jest.fn().mockResolvedValue(0),
+    };
+
+    await service.getWebhookEvents(1, 20, 'eventType', 'asc');
+
+    expect((prisma as any).webhookEvent.findMany).toHaveBeenCalledWith(
+      expect.objectContaining({ orderBy: { eventType: 'asc' } }),
+    );
+  });
+
+  // ──────────────────────────────────────────────
+  //  getSubscribers (new — paginated, all projects)
+  // ──────────────────────────────────────────────
+
+  it('getSubscribers returns paginated results with defaults', async () => {
+    const mockSubs = [{ id: 's1', email: 'sub@test.com' }];
+    (prisma.subscriber.findMany as jest.Mock).mockResolvedValue(mockSubs);
+    (prisma.subscriber.count as jest.Mock).mockResolvedValue(1);
+
+    const result = await service.getSubscribers({});
+
+    expect(result).toEqual({ data: mockSubs, total: 1, page: 1, limit: 20 });
+    expect(prisma.subscriber.findMany).toHaveBeenCalledWith(
+      expect.objectContaining({ skip: 0, take: 20, orderBy: { createdAt: 'desc' } }),
+    );
+  });
+
+  it('getSubscribers applies search filter', async () => {
+    (prisma.subscriber.findMany as jest.Mock).mockResolvedValue([]);
+    (prisma.subscriber.count as jest.Mock).mockResolvedValue(0);
+
+    await service.getSubscribers({ search: 'alice' });
+
+    expect(prisma.subscriber.findMany).toHaveBeenCalledWith(
+      expect.objectContaining({
+        where: expect.objectContaining({
+          OR: [
+            { email: { contains: 'alice', mode: 'insensitive' } },
+            { name: { contains: 'alice', mode: 'insensitive' } },
+          ],
+        }),
+      }),
+    );
+  });
+
+  it('getSubscribers applies source filter and custom sort', async () => {
+    (prisma.subscriber.findMany as jest.Mock).mockResolvedValue([]);
+    (prisma.subscriber.count as jest.Mock).mockResolvedValue(0);
+
+    await service.getSubscribers({ source: 'referral', sortBy: 'email', sortOrder: 'asc' });
+
+    expect(prisma.subscriber.findMany).toHaveBeenCalledWith(
+      expect.objectContaining({
+        where: expect.objectContaining({ source: 'referral' }),
+        orderBy: { email: 'asc' },
+      }),
+    );
+  });
+
+  // ──────────────────────────────────────────────
+  //  getFailedIntegrationsPaginated (new)
+  // ──────────────────────────────────────────────
+
+  it('getFailedIntegrationsPaginated returns paginated results', async () => {
+    const mockIntegrations = [{ id: 'int-1', failureCount: 5 }];
+    (prisma.integration.findMany as jest.Mock).mockResolvedValue(mockIntegrations);
+    (prisma.integration.count as jest.Mock).mockResolvedValue(1);
+
+    const result = await service.getFailedIntegrationsPaginated({});
+
+    expect(result).toEqual({ data: mockIntegrations, total: 1, page: 1, limit: 20 });
+    expect(prisma.integration.findMany).toHaveBeenCalledWith(
+      expect.objectContaining({
+        where: expect.objectContaining({ failureCount: { gt: 0 } }),
+        orderBy: { failureCount: 'desc' },
+      }),
+    );
+  });
+
+  it('getFailedIntegrationsPaginated applies search and custom sort', async () => {
+    (prisma.integration.findMany as jest.Mock).mockResolvedValue([]);
+    (prisma.integration.count as jest.Mock).mockResolvedValue(0);
+
+    await service.getFailedIntegrationsPaginated({ search: 'slack', sortBy: 'displayName', sortOrder: 'asc' });
+
+    expect(prisma.integration.findMany).toHaveBeenCalledWith(
+      expect.objectContaining({
+        where: expect.objectContaining({
+          displayName: { contains: 'slack', mode: 'insensitive' },
+        }),
+        orderBy: { displayName: 'asc' },
+      }),
+    );
+  });
+
+  // ──────────────────────────────────────────────
+  //  getFailedNotifications (new)
+  // ──────────────────────────────────────────────
+
+  it('getFailedNotifications returns paginated failures', async () => {
+    const mockNotifications = [{ id: 'n1', status: 'failed' }];
+    (prisma.notification.findMany as jest.Mock).mockResolvedValue(mockNotifications);
+    (prisma.notification.count as jest.Mock).mockResolvedValue(1);
+
+    const result = await service.getFailedNotifications({});
+
+    expect(result).toEqual({ data: mockNotifications, total: 1, page: 1, limit: 20 });
+    expect(prisma.notification.findMany).toHaveBeenCalledWith(
+      expect.objectContaining({
+        where: { status: { in: ['failed', 'dead_letter'] } },
+        orderBy: { createdAt: 'desc' },
+      }),
+    );
+  });
+
+  it('getFailedNotifications respects page and limit', async () => {
+    (prisma.notification.findMany as jest.Mock).mockResolvedValue([]);
+    (prisma.notification.count as jest.Mock).mockResolvedValue(50);
+
+    const result = await service.getFailedNotifications({ page: 3, limit: 10 });
+
+    expect(result).toEqual({ data: [], total: 50, page: 3, limit: 10 });
+    expect(prisma.notification.findMany).toHaveBeenCalledWith(
+      expect.objectContaining({ skip: 20, take: 10 }),
+    );
   });
 });

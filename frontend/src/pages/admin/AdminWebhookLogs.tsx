@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useSearchParams } from 'react-router-dom'
 import {
   FileText, ArrowDownCircle, ArrowUpCircle, RefreshCw, Loader2,
@@ -11,6 +11,8 @@ import {
   useAdminFailedIntegrations,
 } from '../../api/hooks'
 import type { DeliveryLog, WebhookEvent } from '../../api/hooks'
+import SortableHeader from '../../components/SortableHeader'
+import { useSortState } from '../../hooks/useSortState'
 
 type Tab = 'outgoing' | 'incoming'
 
@@ -21,16 +23,24 @@ export default function AdminWebhookLogs() {
   const [integrationId, setIntegrationId] = useState(presetIntegrationId)
   const [outPage, setOutPage] = useState(1)
   const [inPage, setInPage] = useState(1)
+  const { sortBy: outSortBy, sortOrder: outSortOrder, handleSort: handleOutSort } = useSortState()
+  const { sortBy: inSortBy, sortOrder: inSortOrder, handleSort: handleInSort } = useSortState()
+
+  useEffect(() => { setOutPage(1) }, [outSortBy, outSortOrder])
+  useEffect(() => { setInPage(1) }, [inSortBy, inSortOrder])
 
   // Outgoing
   const { data: logsData, isLoading: logsLoading } = useAdminDeliveryLogs(
     integrationId || undefined,
     outPage,
+    25,
+    outSortBy,
+    outSortOrder,
   )
   const retrigger = useAdminRetriggerDelivery()
 
   // Incoming
-  const { data: eventsData, isLoading: eventsLoading } = useAdminWebhookEvents(inPage)
+  const { data: eventsData, isLoading: eventsLoading } = useAdminWebhookEvents(inPage, 25, inSortBy, inSortOrder)
 
   // Failed integrations for quick selector
   const { data: failedData } = useAdminFailedIntegrations()
@@ -115,12 +125,12 @@ export default function AdminWebhookLogs() {
                   <table className="w-full">
                     <thead>
                       <tr className="border-b border-nexus-700/20">
-                        <th className="text-left px-4 py-3 text-[10px] font-mono text-nexus-500 tracking-widest uppercase">Event</th>
-                        <th className="text-left px-4 py-3 text-[10px] font-mono text-nexus-500 tracking-widest uppercase">Status</th>
+                        <SortableHeader label="Event" sortKey="event" currentSortBy={outSortBy} currentSortOrder={outSortOrder} onSort={handleOutSort} />
+                        <SortableHeader label="Status" sortKey="success" currentSortBy={outSortBy} currentSortOrder={outSortOrder} onSort={handleOutSort} />
                         <th className="text-left px-4 py-3 text-[10px] font-mono text-nexus-500 tracking-widest uppercase">Response</th>
                         <th className="text-left px-4 py-3 text-[10px] font-mono text-nexus-500 tracking-widest uppercase">Duration</th>
                         <th className="text-left px-4 py-3 text-[10px] font-mono text-nexus-500 tracking-widest uppercase">Error</th>
-                        <th className="text-left px-4 py-3 text-[10px] font-mono text-nexus-500 tracking-widest uppercase">Time</th>
+                        <SortableHeader label="Time" sortKey="createdAt" currentSortBy={outSortBy} currentSortOrder={outSortOrder} onSort={handleOutSort} />
                         <th className="text-right px-4 py-3 text-[10px] font-mono text-nexus-500 tracking-widest uppercase">Action</th>
                       </tr>
                     </thead>
@@ -216,10 +226,10 @@ export default function AdminWebhookLogs() {
                     <thead>
                       <tr className="border-b border-nexus-700/20">
                         <th className="text-left px-4 py-3 text-[10px] font-mono text-nexus-500 tracking-widest uppercase">Event ID</th>
-                        <th className="text-left px-4 py-3 text-[10px] font-mono text-nexus-500 tracking-widest uppercase">Type</th>
-                        <th className="text-left px-4 py-3 text-[10px] font-mono text-nexus-500 tracking-widest uppercase">Status</th>
+                        <SortableHeader label="Type" sortKey="eventType" currentSortBy={inSortBy} currentSortOrder={inSortOrder} onSort={handleInSort} />
+                        <SortableHeader label="Status" sortKey="status" currentSortBy={inSortBy} currentSortOrder={inSortOrder} onSort={handleInSort} />
                         <th className="text-left px-4 py-3 text-[10px] font-mono text-nexus-500 tracking-widest uppercase">Error</th>
-                        <th className="text-left px-4 py-3 text-[10px] font-mono text-nexus-500 tracking-widest uppercase">Processed At</th>
+                        <SortableHeader label="Processed At" sortKey="createdAt" currentSortBy={inSortBy} currentSortOrder={inSortOrder} onSort={handleInSort} />
                       </tr>
                     </thead>
                     <tbody>

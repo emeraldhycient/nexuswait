@@ -2,6 +2,8 @@ import { useState, useEffect } from 'react'
 import { Link } from 'react-router-dom'
 import { Search, ChevronLeft, ChevronRight, ExternalLink } from 'lucide-react'
 import { useAdminUsers } from '../../api/hooks'
+import SortableHeader from '../../components/SortableHeader'
+import { useSortState } from '../../hooks/useSortState'
 
 const planBadge: Record<string, string> = {
   spark: 'bg-cyan-glow/10 text-cyan-glow',
@@ -26,13 +28,16 @@ export default function AdminUsers() {
   const [role, setRole] = useState('')
   const [page, setPage] = useState(1)
   const limit = 20
+  const { sortBy, sortOrder, handleSort } = useSortState()
 
   useEffect(() => {
     const timer = setTimeout(() => setDebouncedSearch(search), 300)
     return () => clearTimeout(timer)
   }, [search])
 
-  const { data, isLoading, error } = useAdminUsers({ search: debouncedSearch || undefined, role: role || undefined, page, limit })
+  useEffect(() => { setPage(1) }, [sortBy, sortOrder])
+
+  const { data, isLoading, error } = useAdminUsers({ search: debouncedSearch || undefined, role: role || undefined, page, limit, sortBy, sortOrder })
 
   const users: Record<string, unknown>[] = (data as Record<string, unknown>)?.data as Record<string, unknown>[] ?? []
   const total: number = ((data as Record<string, unknown>)?.total as number) ?? 0
@@ -81,12 +86,12 @@ export default function AdminUsers() {
             <table className="w-full">
               <thead>
                 <tr className="border-b border-magenta-glow/[0.06]">
-                  <th className="text-left px-4 py-3 text-[10px] font-mono text-nexus-500 tracking-widest uppercase">Email</th>
-                  <th className="text-left px-4 py-3 text-[10px] font-mono text-nexus-500 tracking-widest uppercase">Name</th>
+                  <SortableHeader label="Email" sortKey="email" currentSortBy={sortBy} currentSortOrder={sortOrder} onSort={handleSort} />
+                  <SortableHeader label="Name" sortKey="firstName" currentSortBy={sortBy} currentSortOrder={sortOrder} onSort={handleSort} />
                   <th className="text-left px-4 py-3 text-[10px] font-mono text-nexus-500 tracking-widest uppercase">Roles</th>
                   <th className="text-left px-4 py-3 text-[10px] font-mono text-nexus-500 tracking-widest uppercase">Provider</th>
                   <th className="text-left px-4 py-3 text-[10px] font-mono text-nexus-500 tracking-widest uppercase">Plan</th>
-                  <th className="text-left px-4 py-3 text-[10px] font-mono text-nexus-500 tracking-widest uppercase">Created</th>
+                  <SortableHeader label="Created" sortKey="createdAt" currentSortBy={sortBy} currentSortOrder={sortOrder} onSort={handleSort} />
                   <th className="px-4 py-3" />
                 </tr>
               </thead>

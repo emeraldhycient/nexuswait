@@ -81,7 +81,7 @@ function setupMocks(overrides: {
   })
 
   mockedUseSubscribers.mockReturnValue({
-    data: subscribers,
+    data: { pages: [{ data: subscribers, nextCursor: null }], pageParams: [undefined] },
   })
 
   mockedUseAnalyticsTimeseries.mockReturnValue({

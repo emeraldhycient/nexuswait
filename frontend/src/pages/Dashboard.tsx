@@ -36,12 +36,10 @@ export default function Dashboard() {
   const firstProjectId = projects.length > 0 ? projects[0].id : undefined
 
   // Load subscribers from first project to show recent signups
-  const { data: recentSubsData } = useSubscribers(firstProjectId, { enabled: !!firstProjectId })
-  const recentSubs = (
-    Array.isArray(recentSubsData)
-      ? recentSubsData
-      : (recentSubsData as { data?: unknown[] })?.data ?? []
-  ) as { id?: string; name?: string; email?: string; source?: string; createdAt?: string; projectId?: string }[]
+  const { data: recentSubsPages } = useSubscribers(firstProjectId, {}, { enabled: !!firstProjectId })
+  const recentSubs = (recentSubsPages?.pages?.[0]?.data ?? []) as {
+    id?: string; name?: string; email?: string; source?: string; createdAt?: string; projectId?: string
+  }[]
 
   // Signup trend timeseries (30-day, daily granularity)
   const { data: trendData } = useAnalyticsTimeseries(firstProjectId, '30d', 'day')
