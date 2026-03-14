@@ -1,8 +1,8 @@
-import { useState, useEffect } from 'react'
+import { useState } from 'react'
 import { Link } from 'react-router-dom'
 import {
   Plug, CheckCircle, AlertTriangle, XCircle, RefreshCw, Loader2,
-  ChevronDown, ChevronUp, FileText, Save, Search, ChevronLeft, ChevronRight,
+  ChevronDown, ChevronUp, FileText, Save,
 } from 'lucide-react'
 import {
   useAdminIntegrationHealth,
@@ -11,7 +11,9 @@ import {
   useAdminUpdateIntegrationConfig,
 } from '../../api/hooks'
 import SortableHeader from '../../components/SortableHeader'
-import { useSortState } from '../../hooks/useSortState'
+import SearchInput from '../../components/SearchInput'
+import PaginationFooter from '../../components/PaginationFooter'
+import { useListState } from '../../hooks/useListState'
 
 interface FailedIntegration {
   id: string
@@ -76,30 +78,19 @@ export default function AdminIntegrations() {
   const [showFailed, setShowFailed] = useState(true)
 
   // Failed integrations paginated state
-  const [failedSearch, setFailedSearch] = useState('')
-  const [debouncedFailedSearch, setDebouncedFailedSearch] = useState('')
-  const [failedPage, setFailedPage] = useState(1)
-  const failedLimit = 20
-  const { sortBy: failedSortBy, sortOrder: failedSortOrder, handleSort: handleFailedSort } = useSortState('failureCount', 'desc')
-
-  useEffect(() => {
-    const timer = setTimeout(() => setDebouncedFailedSearch(failedSearch), 300)
-    return () => clearTimeout(timer)
-  }, [failedSearch])
-
-  useEffect(() => { setFailedPage(1) }, [failedSortBy, failedSortOrder])
+  const failedList = useListState({ defaultSortBy: 'failureCount', defaultSortOrder: 'desc', limit: 20 })
 
   const { data: failedData, isLoading: failedLoading } = useAdminFailedIntegrationsPaginated({
-    search: debouncedFailedSearch || undefined,
-    page: failedPage,
-    limit: failedLimit,
-    sortBy: failedSortBy,
-    sortOrder: failedSortOrder,
+    search: failedList.debouncedSearch || undefined,
+    page: failedList.page,
+    limit: failedList.limit,
+    sortBy: failedList.sortBy,
+    sortOrder: failedList.sortOrder,
   })
 
   const failedIntegrations: FailedIntegration[] = (failedData as Record<string, unknown>)?.data as FailedIntegration[] ?? []
   const failedTotal: number = ((failedData as Record<string, unknown>)?.total as number) ?? 0
-  const failedTotalPages = Math.max(1, Math.ceil(failedTotal / failedLimit))
+  const failedTotalPages = Math.max(1, Math.ceil(failedTotal / failedList.limit))
 
   if (healthLoading) return <div className="p-6 text-nexus-400">Loading...</div>
   if (healthError) return <div className="p-6 text-magenta-glow">Failed to load integration health.</div>
@@ -201,16 +192,7 @@ export default function AdminIntegrations() {
           <div className="space-y-4 pb-5">
             {/* Search */}
             <div className="px-6 pt-2">
-              <div className="relative max-w-lg">
-                <Search size={18} className="absolute left-4 top-1/2 -translate-y-1/2 text-nexus-500" />
-                <input
-                  type="text"
-                  placeholder="Search by name..."
-                  value={failedSearch}
-                  onChange={e => { setFailedSearch(e.target.value); setFailedPage(1) }}
-                  className="input-field pl-11 w-full"
-                />
-              </div>
+              <SearchInput value={failedList.search} onChange={failedList.setSearch} placeholder="Search by name..." />
             </div>
 
             {failedLoading ? (
@@ -225,13 +207,13 @@ export default function AdminIntegrations() {
                   <table className="w-full">
                     <thead>
                       <tr className="border-b border-magenta-glow/[0.06]">
-                        <SortableHeader label="Integration" sortKey="displayName" currentSortBy={failedSortBy} currentSortOrder={failedSortOrder} onSort={handleFailedSort} />
-                        <SortableHeader label="Type" sortKey="type" currentSortBy={failedSortBy} currentSortOrder={failedSortOrder} onSort={handleFailedSort} />
+                        <SortableHeader label="Integration" sortKey="displayName" currentSortBy={failedList.sortBy} currentSortOrder={failedList.sortOrder} onSort={failedList.handleSort} />
+                        <SortableHeader label="Type" sortKey="type" currentSortBy={failedList.sortBy} currentSortOrder={failedList.sortOrder} onSort={failedList.handleSort} />
                         <th className="text-left px-4 py-3 text-[10px] font-mono text-nexus-500 tracking-widest uppercase">Project</th>
-                        <SortableHeader label="Failures" sortKey="failureCount" currentSortBy={failedSortBy} currentSortOrder={failedSortOrder} onSort={handleFailedSort} />
+                        <SortableHeader label="Failures" sortKey="failureCount" currentSortBy={failedList.sortBy} currentSortOrder={failedList.sortOrder} onSort={failedList.handleSort} />
                         <th className="text-left px-4 py-3 text-[10px] font-mono text-nexus-500 tracking-widest uppercase">Max Retries</th>
                         <th className="text-left px-4 py-3 text-[10px] font-mono text-nexus-500 tracking-widest uppercase">Status</th>
-                        <SortableHeader label="Last Update" sortKey="updatedAt" currentSortBy={failedSortBy} currentSortOrder={failedSortOrder} onSort={handleFailedSort} />
+                        <SortableHeader label="Last Update" sortKey="updatedAt" currentSortBy={failedList.sortBy} currentSortOrder={failedList.sortOrder} onSort={failedList.handleSort} />
                         <th className="text-right px-4 py-3 text-[10px] font-mono text-nexus-500 tracking-widest uppercase">Actions</th>
                       </tr>
                     </thead>
@@ -302,32 +284,7 @@ export default function AdminIntegrations() {
                   </table>
                 </div>
 
-                {/* Pagination */}
-                {failedTotalPages > 1 && (
-                  <div className="flex items-center justify-between px-6">
-                    <span className="text-xs font-mono text-nexus-500">
-                      Page {failedPage} of {failedTotalPages} ({failedTotal} total)
-                    </span>
-                    <div className="flex items-center gap-2">
-                      <button
-                        type="button"
-                        disabled={failedPage <= 1}
-                        onClick={() => setFailedPage(p => Math.max(1, p - 1))}
-                        className="btn-ghost p-2 disabled:opacity-30"
-                      >
-                        <ChevronLeft size={16} />
-                      </button>
-                      <button
-                        type="button"
-                        disabled={failedPage >= failedTotalPages}
-                        onClick={() => setFailedPage(p => p + 1)}
-                        className="btn-ghost p-2 disabled:opacity-30"
-                      >
-                        <ChevronRight size={16} />
-                      </button>
-                    </div>
-                  </div>
-                )}
+                <PaginationFooter page={failedList.page} totalPages={failedTotalPages} total={failedTotal} onPageChange={failedList.setPage} className="px-6" />
               </>
             )}
           </div>

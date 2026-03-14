@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react'
 import { useSearchParams } from 'react-router-dom'
 import {
   FileText, ArrowDownCircle, ArrowUpCircle, RefreshCw, Loader2,
-  CheckCircle, XCircle, ChevronLeft, ChevronRight, Clock, AlertTriangle,
+  CheckCircle, XCircle, Clock, AlertTriangle,
 } from 'lucide-react'
 import {
   useAdminDeliveryLogs,
@@ -12,6 +12,7 @@ import {
 } from '../../api/hooks'
 import type { DeliveryLog, WebhookEvent } from '../../api/hooks'
 import SortableHeader from '../../components/SortableHeader'
+import PaginationFooter from '../../components/PaginationFooter'
 import { useSortState } from '../../hooks/useSortState'
 
 type Tab = 'outgoing' | 'incoming'
@@ -50,6 +51,10 @@ export default function AdminWebhookLogs() {
   const logsTotal = logsData?.total ?? 0
   const events: WebhookEvent[] = eventsData?.data ?? []
   const eventsTotal = eventsData?.total ?? 0
+  const outLimit = 25
+  const inLimit = 25
+  const outTotalPages = Math.max(1, Math.ceil(logsTotal / outLimit))
+  const inTotalPages = Math.max(1, Math.ceil(eventsTotal / inLimit))
 
   return (
     <div className="space-y-6 animate-fade-in">
@@ -181,29 +186,7 @@ export default function AdminWebhookLogs() {
                 </div>
               </div>
 
-              {/* Pagination */}
-              <div className="flex items-center justify-between">
-                <span className="text-xs text-nexus-500 font-mono">{logsTotal} total logs</span>
-                <div className="flex gap-2">
-                  <button
-                    type="button"
-                    disabled={outPage <= 1}
-                    onClick={() => setOutPage(p => p - 1)}
-                    className="btn-ghost text-xs px-2 py-1 disabled:opacity-30"
-                  >
-                    <ChevronLeft size={14} />
-                  </button>
-                  <span className="text-xs font-mono text-nexus-400 px-2 py-1">Page {outPage}</span>
-                  <button
-                    type="button"
-                    disabled={deliveryLogs.length < 25}
-                    onClick={() => setOutPage(p => p + 1)}
-                    className="btn-ghost text-xs px-2 py-1 disabled:opacity-30"
-                  >
-                    <ChevronRight size={14} />
-                  </button>
-                </div>
-              </div>
+              <PaginationFooter page={outPage} totalPages={outTotalPages} total={logsTotal} onPageChange={setOutPage} />
             </>
           )}
         </div>
@@ -271,29 +254,7 @@ export default function AdminWebhookLogs() {
                 </div>
               </div>
 
-              {/* Pagination */}
-              <div className="flex items-center justify-between">
-                <span className="text-xs text-nexus-500 font-mono">{eventsTotal} total events</span>
-                <div className="flex gap-2">
-                  <button
-                    type="button"
-                    disabled={inPage <= 1}
-                    onClick={() => setInPage(p => p - 1)}
-                    className="btn-ghost text-xs px-2 py-1 disabled:opacity-30"
-                  >
-                    <ChevronLeft size={14} />
-                  </button>
-                  <span className="text-xs font-mono text-nexus-400 px-2 py-1">Page {inPage}</span>
-                  <button
-                    type="button"
-                    disabled={events.length < 25}
-                    onClick={() => setInPage(p => p + 1)}
-                    className="btn-ghost text-xs px-2 py-1 disabled:opacity-30"
-                  >
-                    <ChevronRight size={14} />
-                  </button>
-                </div>
-              </div>
+              <PaginationFooter page={inPage} totalPages={inTotalPages} total={eventsTotal} onPageChange={setInPage} />
             </>
           )}
         </div>

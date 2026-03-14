@@ -1,9 +1,12 @@
-import { useState, useEffect } from 'react'
+import { useState } from 'react'
 import { Link } from 'react-router-dom'
-import { Search, ChevronLeft, ChevronRight, ExternalLink } from 'lucide-react'
+import { ExternalLink } from 'lucide-react'
 import { useAdminUsers } from '../../api/hooks'
 import SortableHeader from '../../components/SortableHeader'
-import { useSortState } from '../../hooks/useSortState'
+import SearchInput from '../../components/SearchInput'
+import FilterSelect from '../../components/FilterSelect'
+import PaginationFooter from '../../components/PaginationFooter'
+import { useListState } from '../../hooks/useListState'
 
 const planBadge: Record<string, string> = {
   spark: 'bg-cyan-glow/10 text-cyan-glow',
@@ -22,26 +25,21 @@ const providerBadge: Record<string, string> = {
   google: 'bg-cyan-glow/10 text-cyan-glow',
 }
 
+const roleOptions = [
+  { value: '', label: 'All Roles' },
+  { value: 'user', label: 'User' },
+  { value: 'admin', label: 'Admin' },
+]
+
 export default function AdminUsers() {
-  const [search, setSearch] = useState('')
-  const [debouncedSearch, setDebouncedSearch] = useState('')
+  const list = useListState({ limit: 20 })
   const [role, setRole] = useState('')
-  const [page, setPage] = useState(1)
-  const limit = 20
-  const { sortBy, sortOrder, handleSort } = useSortState()
 
-  useEffect(() => {
-    const timer = setTimeout(() => setDebouncedSearch(search), 300)
-    return () => clearTimeout(timer)
-  }, [search])
-
-  useEffect(() => { setPage(1) }, [sortBy, sortOrder])
-
-  const { data, isLoading, error } = useAdminUsers({ search: debouncedSearch || undefined, role: role || undefined, page, limit, sortBy, sortOrder })
+  const { data, isLoading, error } = useAdminUsers({ search: list.debouncedSearch || undefined, role: role || undefined, page: list.page, limit: list.limit, sortBy: list.sortBy, sortOrder: list.sortOrder })
 
   const users: Record<string, unknown>[] = (data as Record<string, unknown>)?.data as Record<string, unknown>[] ?? []
   const total: number = ((data as Record<string, unknown>)?.total as number) ?? 0
-  const totalPages = Math.max(1, Math.ceil(total / limit))
+  const totalPages = Math.max(1, Math.ceil(total / list.limit))
 
   return (
     <div className="space-y-6 animate-fade-in">
@@ -50,30 +48,11 @@ export default function AdminUsers() {
         <p className="text-sm text-nexus-400 mt-1">Manage all platform users.</p>
       </div>
 
-      {/* Filters */}
       <div className="flex flex-col sm:flex-row gap-3">
-        <div className="relative flex-1 max-w-lg">
-          <Search size={18} className="absolute left-4 top-1/2 -translate-y-1/2 text-nexus-500" />
-          <input
-            type="text"
-            placeholder="Search by email or name..."
-            value={search}
-            onChange={e => { setSearch(e.target.value); setPage(1) }}
-            className="input-field pl-11 w-full"
-          />
-        </div>
-        <select
-          value={role}
-          onChange={e => { setRole(e.target.value); setPage(1) }}
-          className="input-field w-48"
-        >
-          <option value="">All Roles</option>
-          <option value="user">User</option>
-          <option value="admin">Admin</option>
-        </select>
+        <SearchInput value={list.search} onChange={list.setSearch} placeholder="Search by email or name..." />
+        <FilterSelect value={role} onChange={v => { setRole(v); list.setPage(1) }} options={roleOptions} />
       </div>
 
-      {/* Table */}
       <div className="card-surface overflow-hidden">
         {isLoading ? (
           <div className="p-6 text-nexus-400">Loading...</div>
@@ -86,12 +65,12 @@ export default function AdminUsers() {
             <table className="w-full">
               <thead>
                 <tr className="border-b border-magenta-glow/[0.06]">
-                  <SortableHeader label="Email" sortKey="email" currentSortBy={sortBy} currentSortOrder={sortOrder} onSort={handleSort} />
-                  <SortableHeader label="Name" sortKey="firstName" currentSortBy={sortBy} currentSortOrder={sortOrder} onSort={handleSort} />
+                  <SortableHeader label="Email" sortKey="email" currentSortBy={list.sortBy} currentSortOrder={list.sortOrder} onSort={list.handleSort} />
+                  <SortableHeader label="Name" sortKey="firstName" currentSortBy={list.sortBy} currentSortOrder={list.sortOrder} onSort={list.handleSort} />
                   <th className="text-left px-4 py-3 text-[10px] font-mono text-nexus-500 tracking-widest uppercase">Roles</th>
                   <th className="text-left px-4 py-3 text-[10px] font-mono text-nexus-500 tracking-widest uppercase">Provider</th>
                   <th className="text-left px-4 py-3 text-[10px] font-mono text-nexus-500 tracking-widest uppercase">Plan</th>
-                  <SortableHeader label="Created" sortKey="createdAt" currentSortBy={sortBy} currentSortOrder={sortOrder} onSort={handleSort} />
+                  <SortableHeader label="Created" sortKey="createdAt" currentSortBy={list.sortBy} currentSortOrder={list.sortOrder} onSort={list.handleSort} />
                   <th className="px-4 py-3" />
                 </tr>
               </thead>
@@ -144,32 +123,7 @@ export default function AdminUsers() {
         )}
       </div>
 
-      {/* Pagination */}
-      {totalPages > 1 && (
-        <div className="flex items-center justify-between">
-          <span className="text-xs font-mono text-nexus-500">
-            Page {page} of {totalPages} ({total} total)
-          </span>
-          <div className="flex items-center gap-2">
-            <button
-              type="button"
-              disabled={page <= 1}
-              onClick={() => setPage(p => Math.max(1, p - 1))}
-              className="btn-ghost p-2 disabled:opacity-30"
-            >
-              <ChevronLeft size={16} />
-            </button>
-            <button
-              type="button"
-              disabled={page >= totalPages}
-              onClick={() => setPage(p => p + 1)}
-              className="btn-ghost p-2 disabled:opacity-30"
-            >
-              <ChevronRight size={16} />
-            </button>
-          </div>
-        </div>
-      )}
+      <PaginationFooter page={list.page} totalPages={totalPages} total={total} onPageChange={list.setPage} />
     </div>
   )
 }

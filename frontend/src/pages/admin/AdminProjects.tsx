@@ -1,30 +1,29 @@
-import { useState, useEffect } from 'react'
+import { useState } from 'react'
 import { Link } from 'react-router-dom'
-import { Search, ChevronLeft, ChevronRight, ExternalLink } from 'lucide-react'
+import { ExternalLink } from 'lucide-react'
 import { useAdminProjects } from '../../api/hooks'
 import SortableHeader from '../../components/SortableHeader'
-import { useSortState } from '../../hooks/useSortState'
+import SearchInput from '../../components/SearchInput'
+import FilterSelect from '../../components/FilterSelect'
+import PaginationFooter from '../../components/PaginationFooter'
+import { useListState } from '../../hooks/useListState'
+
+const statusOptions = [
+  { value: '', label: 'All Status' },
+  { value: 'active', label: 'Active' },
+  { value: 'paused', label: 'Paused' },
+  { value: 'archived', label: 'Archived' },
+]
 
 export default function AdminProjects() {
-  const [search, setSearch] = useState('')
-  const [debouncedSearch, setDebouncedSearch] = useState('')
+  const list = useListState()
   const [status, setStatus] = useState('')
-  const [page, setPage] = useState(1)
-  const limit = 15
-  const { sortBy, sortOrder, handleSort } = useSortState()
 
-  useEffect(() => {
-    const timer = setTimeout(() => setDebouncedSearch(search), 300)
-    return () => clearTimeout(timer)
-  }, [search])
-
-  useEffect(() => { setPage(1) }, [sortBy, sortOrder])
-
-  const { data, isLoading, error } = useAdminProjects({ search: debouncedSearch || undefined, status: status || undefined, page, limit, sortBy, sortOrder })
+  const { data, isLoading, error } = useAdminProjects({ search: list.debouncedSearch || undefined, status: status || undefined, page: list.page, limit: list.limit, sortBy: list.sortBy, sortOrder: list.sortOrder })
 
   const projects: Record<string, unknown>[] = (data as Record<string, unknown>)?.data as Record<string, unknown>[] ?? []
   const total: number = ((data as Record<string, unknown>)?.total as number) ?? 0
-  const totalPages = Math.max(1, Math.ceil(total / limit))
+  const totalPages = Math.max(1, Math.ceil(total / list.limit))
 
   return (
     <div className="space-y-6 animate-fade-in">
@@ -33,31 +32,11 @@ export default function AdminProjects() {
         <p className="text-sm text-nexus-400 mt-1">All projects across the platform.</p>
       </div>
 
-      {/* Filters */}
       <div className="flex flex-col sm:flex-row gap-3">
-        <div className="relative flex-1 max-w-lg">
-          <Search size={18} className="absolute left-4 top-1/2 -translate-y-1/2 text-nexus-500" />
-          <input
-            type="text"
-            placeholder="Search by name..."
-            value={search}
-            onChange={e => { setSearch(e.target.value); setPage(1) }}
-            className="input-field pl-11 w-full"
-          />
-        </div>
-        <select
-          value={status}
-          onChange={e => { setStatus(e.target.value); setPage(1) }}
-          className="input-field w-48"
-        >
-          <option value="">All Status</option>
-          <option value="active">Active</option>
-          <option value="paused">Paused</option>
-          <option value="archived">Archived</option>
-        </select>
+        <SearchInput value={list.search} onChange={list.setSearch} placeholder="Search by name..." />
+        <FilterSelect value={status} onChange={v => { setStatus(v); list.setPage(1) }} options={statusOptions} />
       </div>
 
-      {/* Table */}
       <div className="card-surface overflow-hidden">
         {isLoading ? (
           <div className="p-6 text-nexus-400">Loading...</div>
@@ -70,11 +49,11 @@ export default function AdminProjects() {
             <table className="w-full">
               <thead>
                 <tr className="border-b border-magenta-glow/[0.06]">
-                  <SortableHeader label="Name" sortKey="name" currentSortBy={sortBy} currentSortOrder={sortOrder} onSort={handleSort} />
+                  <SortableHeader label="Name" sortKey="name" currentSortBy={list.sortBy} currentSortOrder={list.sortOrder} onSort={list.handleSort} />
                   <th className="text-left px-4 py-3 text-[10px] font-mono text-nexus-500 tracking-widest uppercase">Account</th>
-                  <SortableHeader label="Status" sortKey="status" currentSortBy={sortBy} currentSortOrder={sortOrder} onSort={handleSort} />
+                  <SortableHeader label="Status" sortKey="status" currentSortBy={list.sortBy} currentSortOrder={list.sortOrder} onSort={list.handleSort} />
                   <th className="text-left px-4 py-3 text-[10px] font-mono text-nexus-500 tracking-widest uppercase">Subscribers</th>
-                  <SortableHeader label="Created" sortKey="createdAt" currentSortBy={sortBy} currentSortOrder={sortOrder} onSort={handleSort} />
+                  <SortableHeader label="Created" sortKey="createdAt" currentSortBy={list.sortBy} currentSortOrder={list.sortOrder} onSort={list.handleSort} />
                   <th className="px-4 py-3" />
                 </tr>
               </thead>
@@ -120,32 +99,7 @@ export default function AdminProjects() {
         )}
       </div>
 
-      {/* Pagination */}
-      {totalPages > 1 && (
-        <div className="flex items-center justify-between">
-          <span className="text-xs font-mono text-nexus-500">
-            Page {page} of {totalPages} ({total} total)
-          </span>
-          <div className="flex items-center gap-2">
-            <button
-              type="button"
-              disabled={page <= 1}
-              onClick={() => setPage(p => Math.max(1, p - 1))}
-              className="btn-ghost p-2 disabled:opacity-30"
-            >
-              <ChevronLeft size={16} />
-            </button>
-            <button
-              type="button"
-              disabled={page >= totalPages}
-              onClick={() => setPage(p => p + 1)}
-              className="btn-ghost p-2 disabled:opacity-30"
-            >
-              <ChevronRight size={16} />
-            </button>
-          </div>
-        </div>
-      )}
+      <PaginationFooter page={list.page} totalPages={totalPages} total={total} onPageChange={list.setPage} />
     </div>
   )
 }

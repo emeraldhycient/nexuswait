@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import {
   Bell, Clock, XCircle, Skull, FileText, Plus, ChevronDown, ChevronUp,
-  Trash2, Mail, Loader2, ChevronLeft, ChevronRight,
+  Trash2, Mail, Loader2,
 } from 'lucide-react'
 import {
   useAdminNotificationQueue,
@@ -11,6 +11,7 @@ import {
   useAdminFailedNotifications,
   type NotificationTemplate,
 } from '../../api/hooks'
+import PaginationFooter from '../../components/PaginationFooter'
 
 export default function AdminNotifications() {
   const { data: queueData, isLoading: queueLoading, error: queueError } = useAdminNotificationQueue()
@@ -316,32 +317,7 @@ export default function AdminNotifications() {
               </table>
             </div>
 
-            {/* Pagination */}
-            {failedTotalPages > 1 && (
-              <div className="flex items-center justify-between px-6">
-                <span className="text-xs font-mono text-nexus-500">
-                  Page {failedPage} of {failedTotalPages} ({failedTotal} total)
-                </span>
-                <div className="flex items-center gap-2">
-                  <button
-                    type="button"
-                    disabled={failedPage <= 1}
-                    onClick={() => setFailedPage(p => Math.max(1, p - 1))}
-                    className="btn-ghost p-2 disabled:opacity-30"
-                  >
-                    <ChevronLeft size={16} />
-                  </button>
-                  <button
-                    type="button"
-                    disabled={failedPage >= failedTotalPages}
-                    onClick={() => setFailedPage(p => p + 1)}
-                    className="btn-ghost p-2 disabled:opacity-30"
-                  >
-                    <ChevronRight size={16} />
-                  </button>
-                </div>
-              </div>
-            )}
+            <PaginationFooter page={failedPage} totalPages={failedTotalPages} total={failedTotal} onPageChange={setFailedPage} className="px-6" />
           </div>
         )}
       </div>

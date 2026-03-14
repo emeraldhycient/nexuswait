@@ -1,9 +1,11 @@
-import { useState, useEffect } from 'react'
+import { useState } from 'react'
 import { useParams, Link } from 'react-router-dom'
-import { ArrowLeft, Save, Search, ChevronLeft, ChevronRight, ExternalLink } from 'lucide-react'
+import { ArrowLeft, Save, ExternalLink } from 'lucide-react'
 import { useAdminAccount, useAdminUpdateAccount, useAdminAccountSubscribers } from '../../api/hooks'
 import SortableHeader from '../../components/SortableHeader'
-import { useSortState } from '../../hooks/useSortState'
+import SearchInput from '../../components/SearchInput'
+import PaginationFooter from '../../components/PaginationFooter'
+import { useListState } from '../../hooks/useListState'
 
 const planBadge: Record<string, string> = {
   spark: 'bg-cyan-glow/10 text-cyan-glow',
@@ -17,20 +19,9 @@ export default function AdminAccountDetail() {
   const { data: account, isLoading, error } = useAdminAccount(id)
   const mutation = useAdminUpdateAccount(id)
   const [selectedPlan, setSelectedPlan] = useState<string | null>(null)
-  const [subSearch, setSubSearch] = useState('')
-  const [debouncedSubSearch, setDebouncedSubSearch] = useState('')
-  const [subPage, setSubPage] = useState(1)
-  const subLimit = 10
-  const { sortBy: subSortBy, sortOrder: subSortOrder, handleSort: handleSubSort } = useSortState()
+  const subList = useListState({ limit: 10 })
 
-  useEffect(() => {
-    const timer = setTimeout(() => setDebouncedSubSearch(subSearch), 300)
-    return () => clearTimeout(timer)
-  }, [subSearch])
-
-  useEffect(() => { setSubPage(1) }, [subSortBy, subSortOrder])
-
-  const { data: subData } = useAdminAccountSubscribers(id, { search: debouncedSubSearch || undefined, page: subPage, limit: subLimit, sortBy: subSortBy, sortOrder: subSortOrder })
+  const { data: subData } = useAdminAccountSubscribers(id, { search: subList.debouncedSearch || undefined, page: subList.page, limit: subList.limit, sortBy: subList.sortBy, sortOrder: subList.sortOrder })
 
   if (isLoading) return <div className="p-6 text-nexus-400">Loading...</div>
   if (error || !account) return <div className="p-6 text-magenta-glow">Failed to load account.</div>
@@ -201,21 +192,12 @@ export default function AdminAccountDetail() {
       {(() => {
         const subscribers: Record<string, unknown>[] = (subData as Record<string, unknown>)?.data as Record<string, unknown>[] ?? []
         const subTotal: number = ((subData as Record<string, unknown>)?.total as number) ?? 0
-        const subTotalPages = Math.max(1, Math.ceil(subTotal / subLimit))
+        const subTotalPages = Math.max(1, Math.ceil(subTotal / subList.limit))
         return (
           <div className="card-surface overflow-hidden">
             <div className="px-6 pt-5 pb-3 flex items-center justify-between">
               <h2 className="font-display text-sm font-bold text-nexus-200 tracking-widest uppercase">Subscribers ({subTotal})</h2>
-              <div className="relative w-72">
-                <Search size={18} className="absolute left-4 top-1/2 -translate-y-1/2 text-nexus-500" />
-                <input
-                  type="text"
-                  placeholder="Search subscribers..."
-                  value={subSearch}
-                  onChange={e => { setSubSearch(e.target.value); setSubPage(1) }}
-                  className="input-field pl-11 w-full"
-                />
-              </div>
+              <SearchInput value={subList.search} onChange={subList.setSearch} placeholder="Search subscribers..." className="min-w-[200px] max-w-md" />
             </div>
             {subscribers.length === 0 ? (
               <div className="px-6 pb-5 text-sm text-nexus-500">No subscribers found.</div>
@@ -224,11 +206,11 @@ export default function AdminAccountDetail() {
                 <table className="w-full">
                   <thead>
                     <tr className="border-b border-magenta-glow/[0.06]">
-                      <SortableHeader label="Email" sortKey="email" currentSortBy={subSortBy} currentSortOrder={subSortOrder} onSort={handleSubSort} />
-                      <SortableHeader label="Name" sortKey="name" currentSortBy={subSortBy} currentSortOrder={subSortOrder} onSort={handleSubSort} />
+                      <SortableHeader label="Email" sortKey="email" currentSortBy={subList.sortBy} currentSortOrder={subList.sortOrder} onSort={subList.handleSort} />
+                      <SortableHeader label="Name" sortKey="name" currentSortBy={subList.sortBy} currentSortOrder={subList.sortOrder} onSort={subList.handleSort} />
                       <th className="text-left px-4 py-3 text-[10px] font-mono text-nexus-500 tracking-widest uppercase">Project</th>
-                      <SortableHeader label="Source" sortKey="source" currentSortBy={subSortBy} currentSortOrder={subSortOrder} onSort={handleSubSort} />
-                      <SortableHeader label="Created" sortKey="createdAt" currentSortBy={subSortBy} currentSortOrder={subSortOrder} onSort={handleSubSort} />
+                      <SortableHeader label="Source" sortKey="source" currentSortBy={subList.sortBy} currentSortOrder={subList.sortOrder} onSort={subList.handleSort} />
+                      <SortableHeader label="Created" sortKey="createdAt" currentSortBy={subList.sortBy} currentSortOrder={subList.sortOrder} onSort={subList.handleSort} />
                     </tr>
                   </thead>
                   <tbody>
@@ -245,19 +227,7 @@ export default function AdminAccountDetail() {
                 </table>
               </div>
             )}
-            {subTotalPages > 1 && (
-              <div className="flex items-center justify-between px-6 py-3 border-t border-nexus-700/10">
-                <span className="text-xs font-mono text-nexus-500">Page {subPage} of {subTotalPages}</span>
-                <div className="flex items-center gap-2">
-                  <button type="button" disabled={subPage <= 1} onClick={() => setSubPage(p => Math.max(1, p - 1))} className="btn-ghost p-1.5 disabled:opacity-30">
-                    <ChevronLeft size={14} />
-                  </button>
-                  <button type="button" disabled={subPage >= subTotalPages} onClick={() => setSubPage(p => p + 1)} className="btn-ghost p-1.5 disabled:opacity-30">
-                    <ChevronRight size={14} />
-                  </button>
-                </div>
-              </div>
-            )}
+            <PaginationFooter page={subList.page} totalPages={subTotalPages} total={subTotal} onPageChange={subList.setPage} className="px-6 py-3 border-t border-nexus-700/10" />
           </div>
         )
       })()}

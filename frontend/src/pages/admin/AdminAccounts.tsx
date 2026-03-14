@@ -1,9 +1,12 @@
-import { useState, useEffect } from 'react'
+import { useState } from 'react'
 import { Link } from 'react-router-dom'
-import { Search, ChevronLeft, ChevronRight, ExternalLink } from 'lucide-react'
+import { ExternalLink } from 'lucide-react'
 import { useAdminAccounts } from '../../api/hooks'
 import SortableHeader from '../../components/SortableHeader'
-import { useSortState } from '../../hooks/useSortState'
+import SearchInput from '../../components/SearchInput'
+import FilterSelect from '../../components/FilterSelect'
+import PaginationFooter from '../../components/PaginationFooter'
+import { useListState } from '../../hooks/useListState'
 
 const planBadge: Record<string, string> = {
   spark: 'bg-cyan-glow/10 text-cyan-glow',
@@ -12,27 +15,23 @@ const planBadge: Record<string, string> = {
   enterprise: 'bg-amber-glow/10 text-amber-glow',
 }
 
+const planOptions = [
+  { value: '', label: 'All Plans' },
+  { value: 'spark', label: 'Spark' },
+  { value: 'pulse', label: 'Pulse' },
+  { value: 'nexus', label: 'Nexus' },
+  { value: 'enterprise', label: 'Enterprise' },
+]
+
 export default function AdminAccounts() {
-  const [search, setSearch] = useState('')
-  const [debouncedSearch, setDebouncedSearch] = useState('')
+  const list = useListState()
   const [plan, setPlan] = useState('')
-  const [page, setPage] = useState(1)
-  const limit = 15
-  const { sortBy, sortOrder, handleSort } = useSortState()
 
-  useEffect(() => {
-    const timer = setTimeout(() => setDebouncedSearch(search), 300)
-    return () => clearTimeout(timer)
-  }, [search])
-
-  // Reset page on sort change
-  useEffect(() => { setPage(1) }, [sortBy, sortOrder])
-
-  const { data, isLoading, error } = useAdminAccounts({ search: debouncedSearch || undefined, plan: plan || undefined, page, limit, sortBy, sortOrder })
+  const { data, isLoading, error } = useAdminAccounts({ search: list.debouncedSearch || undefined, plan: plan || undefined, page: list.page, limit: list.limit, sortBy: list.sortBy, sortOrder: list.sortOrder })
 
   const accounts: Record<string, unknown>[] = (data as Record<string, unknown>)?.data as Record<string, unknown>[] ?? []
   const total: number = ((data as Record<string, unknown>)?.total as number) ?? 0
-  const totalPages = Math.max(1, Math.ceil(total / limit))
+  const totalPages = Math.max(1, Math.ceil(total / list.limit))
 
   return (
     <div className="space-y-6 animate-fade-in">
@@ -41,32 +40,11 @@ export default function AdminAccounts() {
         <p className="text-sm text-nexus-400 mt-1">Manage all platform accounts.</p>
       </div>
 
-      {/* Filters */}
       <div className="flex flex-col sm:flex-row gap-3">
-        <div className="relative flex-1 max-w-lg">
-          <Search size={18} className="absolute left-4 top-1/2 -translate-y-1/2 text-nexus-500" />
-          <input
-            type="text"
-            placeholder="Search by email..."
-            value={search}
-            onChange={e => { setSearch(e.target.value); setPage(1) }}
-            className="input-field pl-11 w-full"
-          />
-        </div>
-        <select
-          value={plan}
-          onChange={e => { setPlan(e.target.value); setPage(1) }}
-          className="input-field w-48"
-        >
-          <option value="">All Plans</option>
-          <option value="spark">Spark</option>
-          <option value="pulse">Pulse</option>
-          <option value="nexus">Nexus</option>
-          <option value="enterprise">Enterprise</option>
-        </select>
+        <SearchInput value={list.search} onChange={list.setSearch} placeholder="Search by email..." />
+        <FilterSelect value={plan} onChange={v => { setPlan(v); list.setPage(1) }} options={planOptions} />
       </div>
 
-      {/* Table */}
       <div className="card-surface overflow-hidden">
         {isLoading ? (
           <div className="p-6 text-nexus-400">Loading...</div>
@@ -80,10 +58,10 @@ export default function AdminAccounts() {
               <thead>
                 <tr className="border-b border-magenta-glow/[0.06]">
                   <th className="text-left px-4 py-3 text-[10px] font-mono text-nexus-500 tracking-widest uppercase">Email</th>
-                  <SortableHeader label="Plan" sortKey="plan" currentSortBy={sortBy} currentSortOrder={sortOrder} onSort={handleSort} />
+                  <SortableHeader label="Plan" sortKey="plan" currentSortBy={list.sortBy} currentSortOrder={list.sortOrder} onSort={list.handleSort} />
                   <th className="text-left px-4 py-3 text-[10px] font-mono text-nexus-500 tracking-widest uppercase">Projects</th>
                   <th className="text-left px-4 py-3 text-[10px] font-mono text-nexus-500 tracking-widest uppercase">Subscribers</th>
-                  <SortableHeader label="Created" sortKey="createdAt" currentSortBy={sortBy} currentSortOrder={sortOrder} onSort={handleSort} />
+                  <SortableHeader label="Created" sortKey="createdAt" currentSortBy={list.sortBy} currentSortOrder={list.sortOrder} onSort={list.handleSort} />
                   <th className="px-4 py-3" />
                 </tr>
               </thead>
@@ -120,32 +98,7 @@ export default function AdminAccounts() {
         )}
       </div>
 
-      {/* Pagination */}
-      {totalPages > 1 && (
-        <div className="flex items-center justify-between">
-          <span className="text-xs font-mono text-nexus-500">
-            Page {page} of {totalPages} ({total} total)
-          </span>
-          <div className="flex items-center gap-2">
-            <button
-              type="button"
-              disabled={page <= 1}
-              onClick={() => setPage(p => Math.max(1, p - 1))}
-              className="btn-ghost p-2 disabled:opacity-30"
-            >
-              <ChevronLeft size={16} />
-            </button>
-            <button
-              type="button"
-              disabled={page >= totalPages}
-              onClick={() => setPage(p => p + 1)}
-              className="btn-ghost p-2 disabled:opacity-30"
-            >
-              <ChevronRight size={16} />
-            </button>
-          </div>
-        </div>
-      )}
+      <PaginationFooter page={list.page} totalPages={totalPages} total={total} onPageChange={list.setPage} />
     </div>
   )
 }

@@ -1,42 +1,40 @@
-import { useState, useEffect } from 'react'
+import { useState } from 'react'
 import { Link } from 'react-router-dom'
-import { Search, ChevronLeft, ChevronRight, AlertTriangle, Users } from 'lucide-react'
+import { AlertTriangle, Users } from 'lucide-react'
 import { useAdminSubscribers, useAdminFlaggedSubscribers } from '../../api/hooks'
 import SortableHeader from '../../components/SortableHeader'
-import { useSortState } from '../../hooks/useSortState'
+import SearchInput from '../../components/SearchInput'
+import FilterSelect from '../../components/FilterSelect'
+import PaginationFooter from '../../components/PaginationFooter'
+import { useListState } from '../../hooks/useListState'
 
 type TabId = 'all' | 'flagged'
 
+const sourceOptions = [
+  { value: '', label: 'All Sources' },
+  { value: 'direct', label: 'Direct' },
+  { value: 'referral', label: 'Referral' },
+  { value: 'api', label: 'API' },
+  { value: 'import', label: 'Import' },
+]
+
 export default function AdminSubscribers() {
   const [activeTab, setActiveTab] = useState<TabId>('all')
-
-  // All subscribers state
-  const [search, setSearch] = useState('')
-  const [debouncedSearch, setDebouncedSearch] = useState('')
+  const list = useListState({ limit: 20 })
   const [source, setSource] = useState('')
-  const [page, setPage] = useState(1)
-  const limit = 20
-  const { sortBy, sortOrder, handleSort } = useSortState()
-
-  useEffect(() => {
-    const timer = setTimeout(() => setDebouncedSearch(search), 300)
-    return () => clearTimeout(timer)
-  }, [search])
-
-  useEffect(() => { setPage(1) }, [sortBy, sortOrder])
 
   const { data, isLoading, error } = useAdminSubscribers({
-    search: debouncedSearch || undefined,
+    search: list.debouncedSearch || undefined,
     source: source || undefined,
-    page,
-    limit,
-    sortBy,
-    sortOrder,
+    page: list.page,
+    limit: list.limit,
+    sortBy: list.sortBy,
+    sortOrder: list.sortOrder,
   })
 
   const subscribers: Record<string, unknown>[] = (data as Record<string, unknown>)?.data as Record<string, unknown>[] ?? []
   const total: number = ((data as Record<string, unknown>)?.total as number) ?? 0
-  const totalPages = Math.max(1, Math.ceil(total / limit))
+  const totalPages = Math.max(1, Math.ceil(total / list.limit))
 
   // Flagged subscribers
   const { data: flaggedData, isLoading: flaggedLoading, error: flaggedError } = useAdminFlaggedSubscribers()
@@ -79,32 +77,11 @@ export default function AdminSubscribers() {
       {/* All Subscribers Tab */}
       {activeTab === 'all' && (
         <>
-          {/* Filters */}
           <div className="flex flex-col sm:flex-row gap-3">
-            <div className="relative flex-1 max-w-lg">
-              <Search size={18} className="absolute left-4 top-1/2 -translate-y-1/2 text-nexus-500" />
-              <input
-                type="text"
-                placeholder="Search by email or name..."
-                value={search}
-                onChange={e => { setSearch(e.target.value); setPage(1) }}
-                className="input-field pl-11 w-full"
-              />
-            </div>
-            <select
-              value={source}
-              onChange={e => { setSource(e.target.value); setPage(1) }}
-              className="input-field w-48"
-            >
-              <option value="">All Sources</option>
-              <option value="direct">Direct</option>
-              <option value="referral">Referral</option>
-              <option value="api">API</option>
-              <option value="import">Import</option>
-            </select>
+            <SearchInput value={list.search} onChange={list.setSearch} placeholder="Search by email or name..." />
+            <FilterSelect value={source} onChange={v => { setSource(v); list.setPage(1) }} options={sourceOptions} />
           </div>
 
-          {/* Table */}
           <div className="card-surface overflow-hidden">
             {isLoading ? (
               <div className="p-6 text-nexus-400">Loading...</div>
@@ -117,11 +94,11 @@ export default function AdminSubscribers() {
                 <table className="w-full">
                   <thead>
                     <tr className="border-b border-magenta-glow/[0.06]">
-                      <SortableHeader label="Email" sortKey="email" currentSortBy={sortBy} currentSortOrder={sortOrder} onSort={handleSort} />
-                      <SortableHeader label="Name" sortKey="name" currentSortBy={sortBy} currentSortOrder={sortOrder} onSort={handleSort} />
+                      <SortableHeader label="Email" sortKey="email" currentSortBy={list.sortBy} currentSortOrder={list.sortOrder} onSort={list.handleSort} />
+                      <SortableHeader label="Name" sortKey="name" currentSortBy={list.sortBy} currentSortOrder={list.sortOrder} onSort={list.handleSort} />
                       <th className="text-left px-4 py-3 text-[10px] font-mono text-nexus-500 tracking-widest uppercase">Project</th>
-                      <SortableHeader label="Source" sortKey="source" currentSortBy={sortBy} currentSortOrder={sortOrder} onSort={handleSort} />
-                      <SortableHeader label="Date" sortKey="createdAt" currentSortBy={sortBy} currentSortOrder={sortOrder} onSort={handleSort} />
+                      <SortableHeader label="Source" sortKey="source" currentSortBy={list.sortBy} currentSortOrder={list.sortOrder} onSort={list.handleSort} />
+                      <SortableHeader label="Date" sortKey="createdAt" currentSortBy={list.sortBy} currentSortOrder={list.sortOrder} onSort={list.handleSort} />
                     </tr>
                   </thead>
                   <tbody>
@@ -155,32 +132,7 @@ export default function AdminSubscribers() {
             )}
           </div>
 
-          {/* Pagination */}
-          {totalPages > 1 && (
-            <div className="flex items-center justify-between">
-              <span className="text-xs font-mono text-nexus-500">
-                Page {page} of {totalPages} ({total} total)
-              </span>
-              <div className="flex items-center gap-2">
-                <button
-                  type="button"
-                  disabled={page <= 1}
-                  onClick={() => setPage(p => Math.max(1, p - 1))}
-                  className="btn-ghost p-2 disabled:opacity-30"
-                >
-                  <ChevronLeft size={16} />
-                </button>
-                <button
-                  type="button"
-                  disabled={page >= totalPages}
-                  onClick={() => setPage(p => p + 1)}
-                  className="btn-ghost p-2 disabled:opacity-30"
-                >
-                  <ChevronRight size={16} />
-                </button>
-              </div>
-            </div>
-          )}
+          <PaginationFooter page={list.page} totalPages={totalPages} total={total} onPageChange={list.setPage} />
         </>
       )}
 
