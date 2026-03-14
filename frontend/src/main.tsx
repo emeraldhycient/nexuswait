@@ -7,6 +7,9 @@ import { AuthProvider } from './contexts/AuthContext'
 import { ThemeProvider } from './contexts/ThemeContext'
 import App from './App'
 import './index.css'
+import { initClarity } from './lib/clarity'
+
+initClarity()
 
 const root = document.getElementById('root')
 if (!root) throw new Error('Root element not found')

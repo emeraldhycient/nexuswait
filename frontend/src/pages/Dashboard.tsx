@@ -7,6 +7,7 @@ import {
 } from 'lucide-react'
 import { useProjects, useSubscribers, useAnalyticsTimeseries } from '../api/hooks'
 import { useAuth } from '../contexts/AuthContext'
+import { clarityEvent } from '../lib/clarity'
 import { useDocumentTitle } from '../hooks/useDocumentTitle'
 
 const colorMap: Record<string, string> = {
@@ -31,6 +32,10 @@ export default function Dashboard() {
   useEffect(() => {
     if (!authLoading && !isAuthenticated) navigate('/login')
   }, [authLoading, isAuthenticated, navigate])
+
+  useEffect(() => {
+    if (isAuthenticated && !authLoading) clarityEvent('dashboard_viewed')
+  }, [isAuthenticated, authLoading])
 
   const projects = projectsList ?? []
   const firstProjectId = projects.length > 0 ? projects[0].id : undefined

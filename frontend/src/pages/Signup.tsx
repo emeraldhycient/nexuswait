@@ -3,6 +3,7 @@ import { useState } from 'react'
 import { Eye, EyeOff, ArrowRight, Check } from 'lucide-react'
 import { useGoogleLogin } from '@react-oauth/google'
 import { useRegister, useGoogleAuth, getMutationErrorMessage } from '../api/hooks'
+import { clarityEvent } from '../lib/clarity'
 import { useDocumentTitle } from '../hooks/useDocumentTitle'
 
 interface SignupForm {
@@ -41,6 +42,7 @@ export default function Signup() {
       { email: form.email, password: form.password, firstName, lastName },
       {
         onSuccess: (data) => {
+          clarityEvent('signup_complete')
           if (data?.requiresVerification) {
             navigate('/check-email', { state: { email: data.email || form.email } })
           } else {

@@ -1,14 +1,25 @@
-import { Injectable, OnModuleInit, OnModuleDestroy } from '@nestjs/common';
+import { Injectable, Logger, OnModuleInit, OnModuleDestroy } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
 import { PrismaService } from '../../infrastructure/prisma/prisma.service';
 import { NotificationStatus } from '../../generated/prisma/client/enums';
+import { Resend } from 'resend';
 
 const RETRY_DELAYS_MS = [1000, 10000, 60000]; // 1s, 10s, 60s
 
 @Injectable()
 export class NotificationWorkerService implements OnModuleInit, OnModuleDestroy {
+  private readonly logger = new Logger(NotificationWorkerService.name);
   private intervalId: ReturnType<typeof setInterval> | null = null;
+  private resend: Resend;
+  private from: string;
 
-  constructor(private prisma: PrismaService) {}
+  constructor(
+    private prisma: PrismaService,
+    private config: ConfigService,
+  ) {
+    this.resend = new Resend(config.get<string>('RESEND_API_KEY'));
+    this.from = config.get<string>('EMAIL_FROM') || 'NexusWait <noreply@nexuswait.com>';
+  }
 
   onModuleInit() {
     this.intervalId = setInterval(() => this.processBatch(), 5000);
@@ -34,8 +45,16 @@ export class NotificationWorkerService implements OnModuleInit, OnModuleDestroy 
     for (const n of pending) {
       if (n.attempts >= n.maxAttempts || !n.template) continue;
       try {
-        await this.sendOne(n.id, n.recipient, n.payload, n.attempts, n.maxAttempts, n.template.body);
-      } catch (e) {
+        await this.sendOne(
+          n.id,
+          n.recipient,
+          n.payload,
+          n.attempts,
+          n.maxAttempts,
+          n.template.body,
+          n.template.subject,
+        );
+      } catch {
         // continue with next
       }
     }
@@ -48,13 +67,24 @@ export class NotificationWorkerService implements OnModuleInit, OnModuleDestroy 
     attempts: number,
     maxAttempts: number,
     bodyTemplate: string,
+    subjectTemplate: string | null,
   ) {
-    // Placeholder: substitute placeholders and "send" (e.g. email). For now we just mark sent for testing.
     const payloadObj = (typeof payload === 'object' && payload !== null ? payload : {}) as Record<string, string>;
     const body = this.substitute(bodyTemplate, payloadObj);
+    const subject = subjectTemplate
+      ? this.substitute(subjectTemplate, payloadObj)
+      : 'NexusWait Notification';
+
     try {
-      // TODO: inject ISendNotification adapter (SendGrid, etc.)
-      console.log(`[NotificationWorker] Would send to ${recipient}: ${body.slice(0, 80)}...`);
+      const { error } = await this.resend.emails.send({
+        from: this.from,
+        to: recipient,
+        subject,
+        html: body,
+      });
+
+      if (error) throw new Error(error.message);
+
       await this.prisma.notification.update({
         where: { id },
         data: {
@@ -80,7 +110,7 @@ export class NotificationWorkerService implements OnModuleInit, OnModuleDestroy 
     }
   }
 
-  private substitute(template: string, payload: Record<string, string>): string {
+  substitute(template: string, payload: Record<string, string>): string {
     let out = template;
     for (const [k, v] of Object.entries(payload)) {
       out = out.replace(new RegExp(`\\{\\{\\s*${k}\\s*\\}\\}`, 'g'), String(v));

@@ -3,6 +3,7 @@ import { useQueryClient } from '@tanstack/react-query'
 import { isAxiosError } from 'axios'
 import { api, setApiTokenGetter } from '../api/client'
 import { clearUserScopeCache } from '../api/clearUserCache'
+import { identifyUser, clarityEvent } from '../lib/clarity'
 
 interface AuthUser {
   id: string
@@ -44,6 +45,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, [])
 
   const logout = useCallback(() => {
+    clarityEvent('logout')
     setToken(null)
     setUser(null)
     if (typeof window !== 'undefined') (window as Window & { __logout?: () => void }).__logout = undefined
@@ -71,6 +73,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       .get<AuthUser>('/auth/me')
       .then((res) => {
         setUser(res.data)
+        const u = res.data
+        identifyUser(u.id, u.email ?? undefined, {
+          accountId: u.accountId ?? '',
+          plan: u.account?.plan ?? '',
+          role: u.roles?.includes('admin') ? 'admin' : 'user',
+        })
       })
       .catch((err: unknown) => {
         // Only clear auth on genuine 401 (expired / invalid token).

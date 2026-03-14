@@ -2,6 +2,7 @@ import { useState, useRef } from 'react'
 import { Loader2, CheckCircle, Users, Share2, Copy, Check } from 'lucide-react'
 import type { FormConfig, SuccessConfig, ResolvedTheme, CustomFieldDefinition } from './hosted-page-types'
 import { api } from '../api/client'
+import { clarityEvent } from '../lib/clarity'
 
 interface WaitlistSignupFormProps {
   formConfig: FormConfig
@@ -91,6 +92,7 @@ export function WaitlistSignupForm({
       // Pass referral code as query param (backend reads @Query('ref'))
       const refParam = referralCode ? `?ref=${encodeURIComponent(referralCode)}` : ''
       const { data } = await api.post(`/projects/${projectId}/subscribers${refParam}`, body)
+      clarityEvent('waitlist_signup')
       setSuccess({
         position: data?.position ?? data?._count,
         referralCode: data?.referralCode,

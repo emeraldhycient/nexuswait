@@ -1,4 +1,5 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
+import { EventEmitter2 } from '@nestjs/event-emitter';
 import { PrismaService } from '../../infrastructure/prisma/prisma.service';
 import { CreateIntegrationDto } from './dto/create-integration.dto';
 import { UpdateIntegrationDto } from './dto/update-integration.dto';
@@ -11,6 +12,7 @@ export class IntegrationsService {
     private prisma: PrismaService,
     private webhookDelivery: WebhookDeliveryService,
     private planEnforcement: PlanEnforcementService,
+    private eventEmitter: EventEmitter2,
   ) {}
 
   private async verifyOwnership(projectId: string, accountId: string) {
@@ -24,7 +26,7 @@ export class IntegrationsService {
   async create(projectId: string, accountId: string, dto: CreateIntegrationDto) {
     await this.verifyOwnership(projectId, accountId);
     await this.planEnforcement.checkIntegrationLimit(accountId);
-    return this.prisma.integration.create({
+    const integration = await this.prisma.integration.create({
       data: {
         projectId,
         type: dto.type,
@@ -34,6 +36,14 @@ export class IntegrationsService {
         events: dto.events,
       },
     });
+
+    this.eventEmitter.emit('integration.created', {
+      accountId,
+      projectId,
+      integration: { id: integration.id, type: integration.type, displayName: integration.displayName },
+    });
+
+    return integration;
   }
 
   async findAll(projectId: string, accountId: string) {
@@ -78,9 +88,17 @@ export class IntegrationsService {
       where: { id: integrationId, projectId },
     });
     if (!existing) throw new NotFoundException('Integration not found');
-    return this.prisma.integration.delete({
+    const deleted = await this.prisma.integration.delete({
       where: { id: integrationId },
     });
+
+    this.eventEmitter.emit('integration.removed', {
+      accountId,
+      projectId,
+      integration: { id: existing.id, type: existing.type, displayName: existing.displayName },
+    });
+
+    return deleted;
   }
 
   async test(projectId: string, integrationId: string, accountId: string) {

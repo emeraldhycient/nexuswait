@@ -18,6 +18,7 @@ import {
   getMutationErrorMessage,
 } from '../api/hooks'
 import { api } from '../api/client'
+import { clarityEvent, setClarityTag } from '../lib/clarity'
 import { CustomFieldsBuilder } from './CustomFieldsBuilder'
 import type { CustomFieldDefinition } from '../shared/hosted-page-types'
 
@@ -77,6 +78,13 @@ export default function ViewProject() {
   } = useSubscribers(id, { search: debouncedSearch || undefined, source: subSource || undefined, sort: subSort })
   const { data: subCountData } = useSubscriberCount(id)
   const { data: referralData } = useReferralLeaderboard(id)
+
+  useEffect(() => {
+    if (id && project) {
+      setClarityTag('projectId', id)
+      clarityEvent('project_viewed')
+    }
+  }, [id, project])
 
   // ─── Settings tab state ────────────────────────────
   const [settingsName, setSettingsName] = useState('')
@@ -177,6 +185,7 @@ export default function ViewProject() {
       a.click()
       a.remove()
       URL.revokeObjectURL(url)
+      clarityEvent('subscribers_exported')
     } catch {
       // silently fail — user can try again
     }

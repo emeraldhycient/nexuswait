@@ -1,4 +1,5 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
+import { EventEmitter2 } from '@nestjs/event-emitter';
 import { createHash, randomBytes } from 'crypto';
 import { ApiKeyType } from '../../generated/prisma/client/enums';
 import { PrismaService } from '../../infrastructure/prisma/prisma.service';
@@ -6,7 +7,10 @@ import { CreateApiKeyDto } from './dto/create-api-key.dto';
 
 @Injectable()
 export class ApiKeysService {
-  constructor(private prisma: PrismaService) {}
+  constructor(
+    private prisma: PrismaService,
+    private eventEmitter: EventEmitter2,
+  ) {}
 
   /**
    * Generate a new API key, store its SHA-256 hash, and return the raw key once.
@@ -29,6 +33,12 @@ export class ApiKeysService {
         projectId: dto.projectId ?? null,
         accountId,
       },
+    });
+
+    this.eventEmitter.emit('api-key.created', {
+      accountId,
+      keyPrefix: displayPrefix,
+      type: dto.type,
     });
 
     return {
@@ -67,6 +77,12 @@ export class ApiKeysService {
       throw new NotFoundException('API key not found');
     }
     await this.prisma.apiKey.delete({ where: { id } });
+
+    this.eventEmitter.emit('api-key.revoked', {
+      accountId,
+      keyPrefix: existing.prefix,
+    });
+
     return { deleted: true };
   }
 

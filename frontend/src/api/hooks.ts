@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import type { AxiosError } from 'axios'
 import { api } from './client'
 import { useAuth } from '../contexts/AuthContext'
+import { clarityEvent } from '../lib/clarity'
 
 // ─── Projects ──────────────────────────────────────────
 
@@ -78,6 +79,7 @@ export function useCreateProject() {
       return data
     },
     onSuccess: (data) => {
+      clarityEvent('project_created')
       queryClient.invalidateQueries({ queryKey: ['projects'] })
       navigate(`/dashboard/project/${data.id}`)
     },
@@ -114,6 +116,7 @@ export function useDeleteProject(id: string | undefined) {
       await api.delete(`/projects/${id}`)
     },
     onSuccess: () => {
+      clarityEvent('project_archived')
       queryClient.invalidateQueries({ queryKey: ['projects'] })
       navigate('/dashboard')
     },
@@ -208,7 +211,10 @@ export function useLogin() {
       return data
     },
     onSuccess: (data) => {
-      if (data?.token) setToken(data.token)
+      if (data?.token) {
+        clarityEvent('login_complete')
+        setToken(data.token)
+      }
     },
   })
 }
@@ -221,7 +227,10 @@ export function useGoogleAuth() {
       return data
     },
     onSuccess: (data) => {
-      if (data?.token) setToken(data.token)
+      if (data?.token) {
+        clarityEvent('google_auth_complete')
+        setToken(data.token)
+      }
     },
   })
 }
@@ -243,7 +252,10 @@ export function useVerifyEmail() {
       return data
     },
     onSuccess: (data) => {
-      if (data?.token) setToken(data.token)
+      if (data?.token) {
+        clarityEvent('email_verified')
+        setToken(data.token)
+      }
     },
   })
 }
@@ -318,7 +330,10 @@ export function useCheckoutSession() {
     },
     onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: ['billing'] })
-      if (data?.url) window.location.href = data.url
+      if (data?.url) {
+        clarityEvent('checkout_started')
+        window.location.href = data.url
+      }
     },
   })
 }

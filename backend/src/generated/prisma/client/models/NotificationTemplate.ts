@@ -223,6 +223,7 @@ export type NotificationTemplateOrderByWithRelationInput = {
 
 export type NotificationTemplateWhereUniqueInput = Prisma.AtLeast<{
   id?: string
+  name_channel_accountId?: Prisma.NotificationTemplateNameChannelAccountIdCompoundUniqueInput
   AND?: Prisma.NotificationTemplateWhereInput | Prisma.NotificationTemplateWhereInput[]
   OR?: Prisma.NotificationTemplateWhereInput[]
   NOT?: Prisma.NotificationTemplateWhereInput | Prisma.NotificationTemplateWhereInput[]
@@ -234,7 +235,7 @@ export type NotificationTemplateWhereUniqueInput = Prisma.AtLeast<{
   createdAt?: Prisma.DateTimeFilter<"NotificationTemplate"> | Date | string
   updatedAt?: Prisma.DateTimeFilter<"NotificationTemplate"> | Date | string
   notifications?: Prisma.NotificationListRelationFilter
-}, "id">
+}, "id" | "name_channel_accountId">
 
 export type NotificationTemplateOrderByWithAggregationInput = {
   id?: Prisma.SortOrder
@@ -348,6 +349,12 @@ export type NotificationTemplateUncheckedUpdateManyInput = {
 export type NotificationTemplateNullableScalarRelationFilter = {
   is?: Prisma.NotificationTemplateWhereInput | null
   isNot?: Prisma.NotificationTemplateWhereInput | null
+}
+
+export type NotificationTemplateNameChannelAccountIdCompoundUniqueInput = {
+  name: string
+  channel: string
+  accountId: string
 }
 
 export type NotificationTemplateCountOrderByAggregateInput = {

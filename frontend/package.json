@@ -13,6 +13,7 @@
     "test:watch": "vitest"
   },
   "dependencies": {
+    "@microsoft/clarity": "^1.0.2",
     "@react-oauth/google": "^0.13.4",
     "@tanstack/react-query": "^5.62.0",
     "axios": "^1.7.9",

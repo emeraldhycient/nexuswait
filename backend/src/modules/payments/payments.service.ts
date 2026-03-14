@@ -1,5 +1,6 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
+import { EventEmitter2 } from '@nestjs/event-emitter';
 import { PrismaService } from '../../infrastructure/prisma/prisma.service';
 import axios from 'axios';
 import { PlanTier } from '../../generated/prisma/client/enums';
@@ -14,6 +15,7 @@ export class PaymentsService {
   constructor(
     private config: ConfigService,
     private prisma: PrismaService,
+    private eventEmitter: EventEmitter2,
   ) {}
 
   // ──────────────────────────────────────────────
@@ -142,6 +144,7 @@ export class PaymentsService {
         if (!externalCustomerId) return;
         const account = await this.prisma.account.findUnique({ where: { id: externalCustomerId } });
         if (!account) return;
+        const previousPlan = account.plan;
         const plan = productId ? await this.mapProductToPlan(productId) : 'spark';
         await this.prisma.polarSubscription.upsert({
           where: { accountId: account.id },
@@ -163,6 +166,12 @@ export class PaymentsService {
           where: { id: account.id },
           data: { plan, polarCustomerId: String(polarCustomerId), polarSubscriptionId: String(polarSubscriptionId) },
         });
+
+        this.eventEmitter.emit('subscription.upgraded', {
+          accountId: account.id,
+          plan,
+          previousPlan,
+        });
       }
 
       if (type === 'subscription.cancelled' || type === 'subscription.revoked') {
@@ -176,6 +185,10 @@ export class PaymentsService {
         await this.prisma.account.update({
           where: { id: externalCustomerId },
           data: { plan: 'spark', polarSubscriptionId: null },
+        });
+
+        this.eventEmitter.emit('subscription.cancelled', {
+          accountId: externalCustomerId,
         });
       }
 

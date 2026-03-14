@@ -201,6 +201,8 @@ model NotificationTemplate {
   updatedAt DateTime @updatedAt @map("updated_at")
 
   notifications Notification[]
+
+  @@unique([name, channel, accountId])
 }
 
 model InAppNotification {

@@ -1,4 +1,5 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
+import { EventEmitter2 } from '@nestjs/event-emitter';
 import { PrismaService } from '../../infrastructure/prisma/prisma.service';
 import { CreateProjectDto } from './dto/create-project.dto';
 import { PlanEnforcementService } from '../plan-config/plan-enforcement.service';
@@ -8,6 +9,7 @@ export class ProjectsService {
   constructor(
     private prisma: PrismaService,
     private planEnforcement: PlanEnforcementService,
+    private eventEmitter: EventEmitter2,
   ) {}
 
   private async ensureUniqueSlug(baseSlug: string, excludeId?: string): Promise<string> {
@@ -24,7 +26,7 @@ export class ProjectsService {
     await this.planEnforcement.checkProjectLimit(accountId);
     const baseSlug = dto.slug || dto.name.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '');
     const slug = await this.ensureUniqueSlug(baseSlug);
-    return this.prisma.project.create({
+    const project = await this.prisma.project.create({
       data: {
         name: dto.name,
         slug,
@@ -34,6 +36,13 @@ export class ProjectsService {
         customFields: dto.customFields as object[] | undefined,
       },
     });
+
+    this.eventEmitter.emit('project.created', {
+      accountId,
+      project: { id: project.id, name: project.name, slug: project.slug },
+    });
+
+    return project;
   }
 
   async findAll(accountId: string) {
@@ -105,11 +114,18 @@ export class ProjectsService {
   }
 
   async remove(id: string, accountId: string) {
-    await this.findOne(id, accountId);
-    return this.prisma.project.update({
+    const project = await this.findOne(id, accountId);
+    const archived = await this.prisma.project.update({
       where: { id },
       data: { status: 'archived' },
     });
+
+    this.eventEmitter.emit('project.archived', {
+      accountId,
+      project: { id: project.id, name: project.name },
+    });
+
+    return archived;
   }
 
   async search(accountId: string, q: string) {
