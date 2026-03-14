@@ -13,6 +13,7 @@ interface AuthUser {
   accountId?: string
   provider?: string
   avatarUrl?: string
+  emailVerifiedAt?: string | null
   account?: { id: string; plan: string }
   [key: string]: unknown
 }
@@ -25,6 +26,7 @@ interface AuthValue {
   loading: boolean
   isAuthenticated: boolean
   isAdmin: boolean
+  isEmailVerified: boolean
 }
 
 const AuthContext = createContext<AuthValue | null>(null)
@@ -90,6 +92,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     loading,
     isAuthenticated: !!token && !!user,
     isAdmin: user?.roles?.includes('admin') ?? false,
+    isEmailVerified: !!user?.emailVerifiedAt || user?.provider === 'google',
   }
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>
 }

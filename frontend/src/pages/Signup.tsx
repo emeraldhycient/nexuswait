@@ -39,7 +39,15 @@ export default function Signup() {
     const { firstName, lastName } = nameToFirstLast(form.name)
     register.mutate(
       { email: form.email, password: form.password, firstName, lastName },
-      { onSuccess: () => navigate('/dashboard') }
+      {
+        onSuccess: (data) => {
+          if (data?.requiresVerification) {
+            navigate('/check-email', { state: { email: data.email || form.email } })
+          } else {
+            navigate('/dashboard')
+          }
+        },
+      }
     )
   }
 

@@ -1,10 +1,13 @@
 import { Body, Controller, Get, Patch, Post, UseGuards } from '@nestjs/common';
 import { AuthGuard } from '@nestjs/passport';
+import { Throttle } from '@nestjs/throttler';
 import { AuthService } from './auth.service';
 import { LoginDto, RegisterDto } from './dto/auth.dto';
 import { GoogleAuthDto } from './dto/google-auth.dto';
 import { UpdateProfileDto } from './dto/update-profile.dto';
 import { ChangePasswordDto } from './dto/change-password.dto';
+import { VerifyEmailDto } from './dto/verify-email.dto';
+import { ResendVerificationDto } from './dto/resend-verification.dto';
 import { JwtPayloadDecorator } from './jwt-payload.decorator';
 
 @Controller('auth')
@@ -48,5 +51,16 @@ export class AuthController {
     @Body() dto: ChangePasswordDto,
   ) {
     return this.auth.changePassword(payload.userId, dto.currentPassword, dto.newPassword);
+  }
+
+  @Post('verify-email')
+  async verifyEmail(@Body() dto: VerifyEmailDto) {
+    return this.auth.verifyEmail(dto.token);
+  }
+
+  @Post('resend-verification')
+  @Throttle({ default: { limit: 3, ttl: 60000 } })
+  async resendVerification(@Body() dto: ResendVerificationDto) {
+    return this.auth.resendVerificationEmail(dto.email);
   }
 }

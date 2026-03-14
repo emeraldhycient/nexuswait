@@ -227,14 +227,32 @@ export function useGoogleAuth() {
 }
 
 export function useRegister() {
-  const { setToken } = useAuth()
   return useMutation({
     mutationFn: async (body: Record<string, unknown>) => {
-      const { data } = await api.post<{ token?: string }>('/auth/register', body)
+      const { data } = await api.post<{ requiresVerification?: boolean; email?: string }>('/auth/register', body)
+      return data
+    },
+  })
+}
+
+export function useVerifyEmail() {
+  const { setToken } = useAuth()
+  return useMutation({
+    mutationFn: async (token: string) => {
+      const { data } = await api.post<{ token?: string; alreadyVerified?: boolean; message?: string; user?: Record<string, unknown> }>('/auth/verify-email', { token })
       return data
     },
     onSuccess: (data) => {
       if (data?.token) setToken(data.token)
+    },
+  })
+}
+
+export function useResendVerification() {
+  return useMutation({
+    mutationFn: async (email: string) => {
+      const { data } = await api.post<{ message?: string }>('/auth/resend-verification', { email })
+      return data
     },
   })
 }

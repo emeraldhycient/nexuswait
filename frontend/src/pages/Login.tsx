@@ -2,6 +2,7 @@ import { Link, useNavigate } from 'react-router-dom'
 import { useState } from 'react'
 import { Eye, EyeOff, ArrowRight } from 'lucide-react'
 import { useGoogleLogin } from '@react-oauth/google'
+import { isAxiosError } from 'axios'
 import { useLogin, useGoogleAuth, getMutationErrorMessage } from '../api/hooks'
 import { useDocumentTitle } from '../hooks/useDocumentTitle'
 
@@ -112,9 +113,24 @@ export default function Login() {
             >
               {login.isPending ? 'Signing in...' : 'Sign In'} <ArrowRight size={14} />
             </button>
-            {login.error && (
-              <p className="text-sm text-magenta-glow mt-2">{getMutationErrorMessage(login.error)}</p>
-            )}
+            {login.error && (() => {
+              const resp = isAxiosError(login.error) ? login.error.response?.data as { code?: string; email?: string } | undefined : undefined
+              if (resp?.code === 'EMAIL_NOT_VERIFIED') {
+                return (
+                  <div className="text-sm text-amber-glow/90 mt-2 bg-amber-glow/[0.06] border border-amber-glow/10 rounded-lg p-3">
+                    <p>Please verify your email before signing in.</p>
+                    <Link
+                      to="/check-email"
+                      state={{ email: resp.email || email }}
+                      className="text-cyan-glow no-underline hover:underline mt-1 inline-block"
+                    >
+                      Resend verification email
+                    </Link>
+                  </div>
+                )
+              }
+              return <p className="text-sm text-magenta-glow mt-2">{getMutationErrorMessage(login.error)}</p>
+            })()}
           </form>
         </div>
 

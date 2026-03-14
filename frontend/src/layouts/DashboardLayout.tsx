@@ -28,11 +28,17 @@ export default function DashboardLayout() {
   const [collapsed, setCollapsed] = useState(false)
   const location = useLocation()
   const navigate = useNavigate()
-  const { token, loading, logout, isAdmin } = useAuth()
+  const { token, loading, logout, isAdmin, isEmailVerified, user } = useAuth()
 
   useEffect(() => {
     if (!loading && !token) navigate('/login')
   }, [loading, token, navigate])
+
+  useEffect(() => {
+    if (!loading && token && user && !isEmailVerified) {
+      navigate('/check-email', { state: { email: user.email } })
+    }
+  }, [loading, token, user, isEmailVerified, navigate])
 
   return (
     <div className="min-h-screen flex bg-nexus-900">

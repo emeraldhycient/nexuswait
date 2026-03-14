@@ -525,10 +525,6 @@ export type SubscriberUncheckedCreateNestedManyWithoutReferrerInput = {
   connect?: Prisma.SubscriberWhereUniqueInput | Prisma.SubscriberWhereUniqueInput[]
 }
 
-export type NullableDateTimeFieldUpdateOperationsInput = {
-  set?: Date | string | null
-}
-
 export type SubscriberUpdateOneWithoutReferredNestedInput = {
   create?: Prisma.XOR<Prisma.SubscriberCreateWithoutReferredInput, Prisma.SubscriberUncheckedCreateWithoutReferredInput>
   connectOrCreate?: Prisma.SubscriberCreateOrConnectWithoutReferredInput

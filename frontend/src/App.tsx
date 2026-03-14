@@ -14,6 +14,8 @@ import Legal from './pages/Legal'
 import About from './pages/About'
 import Changelog from './pages/Changelog'
 import ForgotPassword from './pages/ForgotPassword'
+import CheckEmail from './pages/CheckEmail'
+import VerifyEmail from './pages/VerifyEmail'
 import Dashboard from './pages/Dashboard'
 import CreateProject from './pages/CreateProject'
 import ProjectsList from './pages/ProjectsList'
@@ -60,6 +62,8 @@ export default function App() {
         <Route path="/about" element={<About />} />
         <Route path="/changelog" element={<Changelog />} />
         <Route path="/forgot-password" element={<ForgotPassword />} />
+        <Route path="/check-email" element={<CheckEmail />} />
+        <Route path="/verify-email" element={<VerifyEmail />} />
         <Route path="*" element={<NotFound />} />
       </Route>
       <Route element={<DashboardLayout />}>
