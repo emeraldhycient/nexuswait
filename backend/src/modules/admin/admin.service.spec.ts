@@ -242,6 +242,40 @@ describe('AdminService', () => {
   });
 
   // ──────────────────────────────────────────────
+  //  getProject
+  // ──────────────────────────────────────────────
+
+  it('getProject returns project with relations', async () => {
+    const mockProject = {
+      id: 'p1',
+      name: 'Test Project',
+      slug: 'test-project',
+      status: 'active',
+      account: { id: 'acc-1', plan: 'spark' },
+      subscribers: [{ id: 's1', email: 'sub@test.com' }],
+      integrations: [{ id: 'int-1', type: 'webhook' }],
+      hostedPage: null,
+      _count: { subscribers: 1, integrations: 1 },
+    };
+    (prisma.project.findUnique as jest.Mock).mockResolvedValue(mockProject);
+
+    const result = await service.getProject('p1');
+
+    expect(result).toEqual(mockProject);
+    expect(prisma.project.findUnique).toHaveBeenCalledWith(
+      expect.objectContaining({ where: { id: 'p1' } }),
+    );
+  });
+
+  it('getProject throws NotFoundException for unknown id', async () => {
+    (prisma.project.findUnique as jest.Mock).mockResolvedValue(null);
+
+    await expect(service.getProject('unknown-id')).rejects.toThrow(
+      NotFoundException,
+    );
+  });
+
+  // ──────────────────────────────────────────────
   //  updateProject
   // ──────────────────────────────────────────────
 

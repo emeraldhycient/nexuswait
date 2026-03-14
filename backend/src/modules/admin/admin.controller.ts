@@ -145,6 +145,11 @@ export class AdminController {
     });
   }
 
+  @Get('projects/:id')
+  async getProject(@Param('id') id: string) {
+    return this.adminService.getProject(id);
+  }
+
   @Patch('projects/:id')
   async updateProject(
     @Param('id') id: string,

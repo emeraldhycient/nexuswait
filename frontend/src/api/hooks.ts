@@ -720,6 +720,17 @@ export function useAdminProjects(params: { search?: string; status?: string; acc
   })
 }
 
+export function useAdminProject(id: string | undefined) {
+  return useQuery({
+    queryKey: ['admin', 'project', id],
+    queryFn: async () => {
+      const { data } = await api.get(`/admin/projects/${id}`)
+      return data
+    },
+    enabled: !!id,
+  })
+}
+
 export function useAdminUpdateProject(id: string | undefined) {
   const queryClient = useQueryClient()
   return useMutation({
@@ -729,6 +740,7 @@ export function useAdminUpdateProject(id: string | undefined) {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['admin', 'projects'] })
+      queryClient.invalidateQueries({ queryKey: ['admin', 'project', id] })
       queryClient.invalidateQueries({ queryKey: ['admin', 'stats'] })
     },
   })

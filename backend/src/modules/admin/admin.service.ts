@@ -440,6 +440,51 @@ export class AdminService {
     return { data, total, page, limit };
   }
 
+  async getProject(id: string) {
+    const project = await this.prisma.project.findUnique({
+      where: { id },
+      include: {
+        account: {
+          select: { id: true, plan: true },
+        },
+        subscribers: {
+          take: 50,
+          orderBy: { createdAt: 'desc' },
+          select: {
+            id: true,
+            email: true,
+            name: true,
+            source: true,
+            createdAt: true,
+          },
+        },
+        integrations: {
+          orderBy: { createdAt: 'desc' },
+          select: {
+            id: true,
+            type: true,
+            displayName: true,
+            enabled: true,
+            failureCount: true,
+            createdAt: true,
+          },
+        },
+        hostedPage: {
+          select: { id: true, slug: true, status: true },
+        },
+        _count: {
+          select: { subscribers: true, integrations: true },
+        },
+      },
+    });
+
+    if (!project) {
+      throw new NotFoundException('Project not found');
+    }
+
+    return project;
+  }
+
   async updateProject(id: string, dto: UpdateProjectDto) {
     const project = await this.prisma.project.findUnique({ where: { id } });
     if (!project) {

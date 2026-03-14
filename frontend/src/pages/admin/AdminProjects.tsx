@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react'
-import { Search, ChevronLeft, ChevronRight } from 'lucide-react'
+import { Link } from 'react-router-dom'
+import { Search, ChevronLeft, ChevronRight, ExternalLink } from 'lucide-react'
 import { useAdminProjects } from '../../api/hooks'
 
 export default function AdminProjects() {
@@ -69,6 +70,7 @@ export default function AdminProjects() {
                   <th className="text-left px-4 py-3 text-[10px] font-mono text-nexus-500 tracking-widest uppercase">Status</th>
                   <th className="text-left px-4 py-3 text-[10px] font-mono text-nexus-500 tracking-widest uppercase">Subscribers</th>
                   <th className="text-left px-4 py-3 text-[10px] font-mono text-nexus-500 tracking-widest uppercase">Created</th>
+                  <th className="px-4 py-3" />
                 </tr>
               </thead>
               <tbody>
@@ -81,8 +83,16 @@ export default function AdminProjects() {
                   const createdAt = p.createdAt ? new Date(p.createdAt as string).toLocaleDateString() : '—'
                   return (
                     <tr key={id ?? i} className="border-b border-nexus-700/10 hover:bg-nexus-800/30 transition-colors">
-                      <td className="px-4 py-3 text-sm text-nexus-200 font-semibold">{name}</td>
-                      <td className="px-4 py-3 text-xs text-nexus-500 font-mono truncate max-w-[140px]">{accountId}</td>
+                      <td className="px-4 py-3 text-sm font-semibold">
+                        <Link to={`/admin/projects/${id}`} className="text-nexus-200 hover:text-cyan-glow no-underline transition-colors">
+                          {name}
+                        </Link>
+                      </td>
+                      <td className="px-4 py-3 text-xs font-mono">
+                        <Link to={`/admin/accounts/${accountId}`} className="text-nexus-500 hover:text-cyan-glow no-underline transition-colors">
+                          {accountId.slice(0, 8)}...
+                        </Link>
+                      </td>
                       <td className="px-4 py-3">
                         <span className="flex items-center gap-1.5">
                           <span className={`w-1.5 h-1.5 rounded-full ${projectStatus === 'active' ? 'bg-emerald-glow' : projectStatus === 'paused' ? 'bg-amber-glow' : 'bg-nexus-500'}`} />
@@ -91,6 +101,11 @@ export default function AdminProjects() {
                       </td>
                       <td className="px-4 py-3 text-sm text-nexus-300 font-mono">{subscribersCount.toLocaleString()}</td>
                       <td className="px-4 py-3 text-xs text-nexus-500 font-mono">{createdAt}</td>
+                      <td className="px-4 py-3">
+                        <Link to={`/admin/projects/${id}`} className="text-nexus-500 hover:text-magenta-glow transition-colors">
+                          <ExternalLink size={14} />
+                        </Link>
+                      </td>
                     </tr>
                   )
                 })}

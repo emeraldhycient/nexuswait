@@ -28,6 +28,7 @@ import AdminOverview from './pages/admin/AdminOverview'
 import AdminAccounts from './pages/admin/AdminAccounts'
 import AdminAccountDetail from './pages/admin/AdminAccountDetail'
 import AdminProjects from './pages/admin/AdminProjects'
+import AdminProjectDetail from './pages/admin/AdminProjectDetail'
 import AdminSubscribers from './pages/admin/AdminSubscribers'
 import AdminIntegrations from './pages/admin/AdminIntegrations'
 import AdminNotifications from './pages/admin/AdminNotifications'
@@ -79,6 +80,7 @@ export default function App() {
         <Route path="/admin/users" element={<AdminUsers />} />
         <Route path="/admin/users/:id" element={<AdminUserDetail />} />
         <Route path="/admin/projects" element={<AdminProjects />} />
+        <Route path="/admin/projects/:id" element={<AdminProjectDetail />} />
         <Route path="/admin/subscribers" element={<AdminSubscribers />} />
         <Route path="/admin/integrations" element={<AdminIntegrations />} />
         <Route path="/admin/plans" element={<AdminPlans />} />
