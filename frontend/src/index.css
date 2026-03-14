@@ -54,6 +54,11 @@ html.light {
 
   html {
     scroll-behavior: smooth;
+    color-scheme: dark;
+  }
+
+  html.light {
+    color-scheme: light;
   }
 
   body {

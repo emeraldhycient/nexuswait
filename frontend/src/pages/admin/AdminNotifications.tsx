@@ -111,7 +111,7 @@ export default function AdminNotifications() {
                     type="text"
                     value={form.name}
                     onChange={(e) => setForm({ ...form, name: e.target.value })}
-                    className="w-full px-3 py-2 bg-nexus-800 border border-cyan-glow/10 rounded-lg text-sm text-nexus-200 outline-none focus:border-cyan-glow/30"
+                    className="input-field text-sm"
                     placeholder="Welcome Email"
                   />
                 </div>
@@ -122,7 +122,7 @@ export default function AdminNotifications() {
                   <select
                     value={form.channel}
                     onChange={(e) => setForm({ ...form, channel: e.target.value })}
-                    className="w-full px-3 py-2 bg-nexus-800 border border-cyan-glow/10 rounded-lg text-sm text-nexus-200 outline-none focus:border-cyan-glow/30"
+                    className="input-field text-sm"
                   >
                     <option value="email">Email</option>
                     <option value="in_app">In-App</option>
@@ -140,7 +140,7 @@ export default function AdminNotifications() {
                     type="text"
                     value={form.subject}
                     onChange={(e) => setForm({ ...form, subject: e.target.value })}
-                    className="w-full px-3 py-2 bg-nexus-800 border border-cyan-glow/10 rounded-lg text-sm text-nexus-200 outline-none focus:border-cyan-glow/30"
+                    className="input-field text-sm"
                     placeholder="You're on the waitlist!"
                   />
                 </div>
@@ -153,7 +153,7 @@ export default function AdminNotifications() {
                   value={form.body}
                   onChange={(e) => setForm({ ...form, body: e.target.value })}
                   rows={4}
-                  className="w-full px-3 py-2 bg-nexus-800 border border-cyan-glow/10 rounded-lg text-sm text-nexus-200 outline-none focus:border-cyan-glow/30 resize-none font-mono"
+                  className="input-field text-sm resize-none font-mono"
                   placeholder="Hello {{name}}, you've been added to the waitlist..."
                 />
               </div>
