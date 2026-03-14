@@ -99,7 +99,7 @@ export default function Dashboard() {
         <div className="lg:col-span-2">
           <div className="flex items-center justify-between mb-4">
             <h2 className="font-display text-sm font-bold text-nexus-200 tracking-widest uppercase">Projects</h2>
-            <Link to="/dashboard/create" className="text-xs text-cyan-glow/60 hover:text-cyan-glow no-underline flex items-center gap-1">
+            <Link to="/dashboard/projects" className="text-xs text-cyan-glow/60 hover:text-cyan-glow no-underline flex items-center gap-1">
               View all <ArrowUpRight size={11} />
             </Link>
           </div>

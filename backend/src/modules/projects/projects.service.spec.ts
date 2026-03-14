@@ -15,6 +15,7 @@ describe('ProjectsService', () => {
         findMany: jest.fn(),
         findUnique: jest.fn(),
         update: jest.fn(),
+        count: jest.fn(),
       },
     };
     const mockPlanEnforcement = {
@@ -59,5 +60,72 @@ describe('ProjectsService', () => {
     (prisma.project.update as jest.Mock).mockResolvedValue({ id: 'p1', name: 'Updated' });
     const result = await service.update('p1', 'acc-1', { name: 'Updated' });
     expect(result.name).toBe('Updated');
+  });
+
+  describe('findAllPaginated', () => {
+    const sampleProjects = [
+      { id: 'p1', name: 'Alpha', status: 'active', _count: { subscribers: 10 } },
+      { id: 'p2', name: 'Beta', status: 'paused', _count: { subscribers: 5 } },
+    ];
+
+    it('should return paginated results with defaults', async () => {
+      (prisma.project.findMany as jest.Mock).mockResolvedValue(sampleProjects);
+      (prisma.project.count as jest.Mock).mockResolvedValue(2);
+      const result = await service.findAllPaginated('acc-1', {});
+      expect(result).toEqual({ data: sampleProjects, total: 2, page: 1, limit: 15 });
+      expect(prisma.project.findMany).toHaveBeenCalledWith(
+        expect.objectContaining({
+          orderBy: { createdAt: 'desc' },
+          skip: 0,
+          take: 15,
+        }),
+      );
+    });
+
+    it('should filter by search term', async () => {
+      (prisma.project.findMany as jest.Mock).mockResolvedValue([sampleProjects[0]]);
+      (prisma.project.count as jest.Mock).mockResolvedValue(1);
+      await service.findAllPaginated('acc-1', { search: 'Alpha' });
+      expect(prisma.project.findMany).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: expect.objectContaining({
+            name: { contains: 'Alpha', mode: 'insensitive' },
+          }),
+        }),
+      );
+    });
+
+    it('should filter by status', async () => {
+      (prisma.project.findMany as jest.Mock).mockResolvedValue([sampleProjects[1]]);
+      (prisma.project.count as jest.Mock).mockResolvedValue(1);
+      await service.findAllPaginated('acc-1', { status: 'paused' });
+      expect(prisma.project.findMany).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: expect.objectContaining({ status: 'paused' }),
+        }),
+      );
+    });
+
+    it('should fall back to createdAt when sortBy is invalid', async () => {
+      (prisma.project.findMany as jest.Mock).mockResolvedValue([]);
+      (prisma.project.count as jest.Mock).mockResolvedValue(0);
+      await service.findAllPaginated('acc-1', { sortBy: 'invalid_field', sortOrder: 'asc' });
+      expect(prisma.project.findMany).toHaveBeenCalledWith(
+        expect.objectContaining({
+          orderBy: { createdAt: 'asc' },
+        }),
+      );
+    });
+
+    it('should apply valid sortBy and sortOrder', async () => {
+      (prisma.project.findMany as jest.Mock).mockResolvedValue(sampleProjects);
+      (prisma.project.count as jest.Mock).mockResolvedValue(2);
+      await service.findAllPaginated('acc-1', { sortBy: 'name', sortOrder: 'asc' });
+      expect(prisma.project.findMany).toHaveBeenCalledWith(
+        expect.objectContaining({
+          orderBy: { name: 'asc' },
+        }),
+      );
+    });
   });
 });

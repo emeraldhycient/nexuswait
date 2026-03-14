@@ -16,6 +16,7 @@ import Changelog from './pages/Changelog'
 import ForgotPassword from './pages/ForgotPassword'
 import Dashboard from './pages/Dashboard'
 import CreateProject from './pages/CreateProject'
+import ProjectsList from './pages/ProjectsList'
 import ViewProject from './pages/ViewProject'
 import Integrations from './pages/Integrations'
 import Settings from './pages/Settings'
@@ -63,6 +64,7 @@ export default function App() {
       </Route>
       <Route element={<DashboardLayout />}>
         <Route path="/dashboard" element={<Dashboard />} />
+        <Route path="/dashboard/projects" element={<ProjectsList />} />
         <Route path="/dashboard/create" element={<CreateProject />} />
         <Route path="/dashboard/project/:id" element={<ViewProject />} />
         <Route path="/dashboard/integrations" element={<Integrations />} />

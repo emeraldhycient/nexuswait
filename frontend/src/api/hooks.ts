@@ -33,6 +33,29 @@ export function useProjects() {
   })
 }
 
+export function useProjectsPaginated(params: {
+  search?: string; status?: string;
+  page?: number; limit?: number;
+  sortBy?: string; sortOrder?: string;
+} = {}) {
+  const { token } = useAuth()
+  return useQuery({
+    queryKey: ['projects', 'paginated', params],
+    queryFn: async () => {
+      const qp = new URLSearchParams()
+      if (params.search) qp.set('search', params.search)
+      if (params.status) qp.set('status', params.status)
+      if (params.page) qp.set('page', String(params.page))
+      if (params.limit) qp.set('limit', String(params.limit))
+      if (params.sortBy) qp.set('sortBy', params.sortBy)
+      if (params.sortOrder) qp.set('sortOrder', params.sortOrder)
+      const { data } = await api.get(`/projects/paginated?${qp}`)
+      return data as { data: Project[]; total: number; page: number; limit: number }
+    },
+    enabled: !!token,
+  })
+}
+
 export function useProject(id: string | undefined) {
   const { token } = useAuth()
   return useQuery<Project>({

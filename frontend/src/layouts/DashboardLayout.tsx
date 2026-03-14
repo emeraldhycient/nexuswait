@@ -3,7 +3,7 @@ import { useEffect, useState } from 'react'
 import Logo from '../components/Logo'
 import type { LucideIcon } from 'lucide-react'
 import {
-  LayoutDashboard, FolderPlus, Plug, Settings, LogOut, ChevronLeft,
+  LayoutDashboard, Layers, FolderPlus, Plug, Settings, LogOut, ChevronLeft,
   ChevronRight, Globe, Webhook, Code, FileCode2, ShieldCheck
 } from 'lucide-react'
 import { useAuth } from '../contexts/AuthContext'
@@ -14,6 +14,7 @@ import ThemeToggle from '../components/ThemeToggle'
 
 const sidebarItems: { to: string; icon: LucideIcon; label: string }[] = [
   { to: '/dashboard', icon: LayoutDashboard, label: 'Overview' },
+  { to: '/dashboard/projects', icon: Layers, label: 'Projects' },
   { to: '/dashboard/create', icon: FolderPlus, label: 'New Project' },
   { to: '/dashboard/hosted-page', icon: Globe, label: 'Hosted Page' },
   { to: '/dashboard/form-integrations', icon: Webhook, label: 'Form Integrations' },
@@ -55,7 +56,9 @@ export default function DashboardLayout() {
 
         <nav aria-label="Sidebar navigation" className="flex-1 py-4 px-2 space-y-1">
           {sidebarItems.map(item => {
-            const active = location.pathname === item.to
+            const active = item.to === '/dashboard'
+              ? location.pathname === '/dashboard'
+              : location.pathname.startsWith(item.to)
             const Icon = item.icon
             return (
               <Link

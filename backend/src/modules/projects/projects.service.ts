@@ -44,6 +44,37 @@ export class ProjectsService {
     });
   }
 
+  async findAllPaginated(accountId: string, params: {
+    search?: string; status?: string;
+    page?: number; limit?: number;
+    sortBy?: string; sortOrder?: string;
+  }) {
+    const page = Math.max(1, params.page ?? 1);
+    const limit = Math.min(100, Math.max(1, params.limit ?? 15));
+    const skip = (page - 1) * limit;
+
+    const allowedSort = ['createdAt', 'name', 'status'];
+    const sortField = allowedSort.includes(params.sortBy ?? '') ? params.sortBy! : 'createdAt';
+    const sortDir: 'asc' | 'desc' = params.sortOrder === 'asc' ? 'asc' : 'desc';
+
+    const where: Record<string, unknown> = { accountId, status: { not: 'archived' } };
+    if (params.search) where.name = { contains: params.search, mode: 'insensitive' };
+    if (params.status) where.status = params.status;
+
+    const [data, total] = await Promise.all([
+      this.prisma.project.findMany({
+        where,
+        orderBy: { [sortField]: sortDir },
+        skip,
+        take: limit,
+        include: { _count: { select: { subscribers: true } } },
+      }),
+      this.prisma.project.count({ where }),
+    ]);
+
+    return { data, total, page, limit };
+  }
+
   async findOne(id: string, accountId?: string) {
     const project = await this.prisma.project.findUnique({
       where: { id },
