@@ -191,9 +191,14 @@ export function CustomFieldsBuilder({ fields, onChange }: CustomFieldsBuilderPro
                         value={(field.options ?? []).join('\n')}
                         onChange={(e) =>
                           updateField(field.id, {
-                            options: e.target.value.split('\n').filter((o) => o.trim()),
+                            options: e.target.value.split('\n'),
                           })
                         }
+                        onBlur={() => {
+                          // Clean up empty lines when the user leaves the field
+                          const cleaned = (field.options ?? []).filter((o) => o.trim())
+                          updateField(field.id, { options: cleaned })
+                        }}
                         rows={3}
                         className="input-field text-sm resize-none font-mono"
                         placeholder={'Option 1\nOption 2\nOption 3'}

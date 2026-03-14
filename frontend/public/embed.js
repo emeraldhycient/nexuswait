@@ -406,6 +406,7 @@
         html += '<option value="">' + escapeHtml(field.placeholder || 'Select ' + (field.label || '')) + '</option>';
         var opts = field.options || [];
         for (var j = 0; j < opts.length; j++) {
+          if (!opts[j] || !opts[j].trim()) continue;
           html += '<option value="' + escapeAttr(opts[j]) + '">' + escapeHtml(opts[j]) + '</option>';
         }
         html += '</select>';

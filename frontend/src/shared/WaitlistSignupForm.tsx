@@ -233,7 +233,7 @@ export function WaitlistSignupForm({
             style={inputStyle}
           >
             <option value="">{field.placeholder || `Select ${field.label}`}</option>
-            {(field.options ?? []).map((opt) => (
+            {(field.options ?? []).filter((o) => o.trim()).map((opt) => (
               <option key={opt} value={opt}>{opt}</option>
             ))}
           </select>
