@@ -1,12 +1,20 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import {
+  Injectable,
+  NotFoundException,
+  BadRequestException,
+  ForbiddenException,
+} from '@nestjs/common';
+import * as bcrypt from 'bcrypt';
 import { PrismaService } from '../../infrastructure/prisma/prisma.service';
 import { UpdateAccountDto } from './dto/update-account.dto';
 import { UpdateProjectDto } from './dto/update-project.dto';
+import { AdminUpdateUserDto } from './dto/admin-update-user.dto';
 import {
   IntegrationType,
   NotificationStatus,
   PlanTier,
   ProjectStatus,
+  UserRole,
 } from '../../generated/prisma/client/enums';
 
 @Injectable()
@@ -140,6 +148,246 @@ export class AdminService {
       where: { id },
       data,
     });
+  }
+
+  // ──────────────────────────────────────────────
+  //  Users
+  // ──────────────────────────────────────────────
+
+  async getUsers(params: {
+    search?: string;
+    role?: UserRole;
+    accountId?: string;
+    page?: number;
+    limit?: number;
+  }) {
+    const page = Math.max(params.page ?? 1, 1);
+    const limit = Math.min(Math.max(params.limit ?? 20, 1), 100);
+    const skip = (page - 1) * limit;
+
+    const where: Record<string, unknown> = {};
+
+    if (params.role) {
+      where.roles = { has: params.role };
+    }
+
+    if (params.accountId) {
+      where.accountId = params.accountId;
+    }
+
+    if (params.search) {
+      where.OR = [
+        { email: { contains: params.search, mode: 'insensitive' } },
+        { firstName: { contains: params.search, mode: 'insensitive' } },
+        { lastName: { contains: params.search, mode: 'insensitive' } },
+      ];
+    }
+
+    const [data, total] = await Promise.all([
+      this.prisma.user.findMany({
+        where,
+        skip,
+        take: limit,
+        orderBy: { createdAt: 'desc' },
+        select: {
+          id: true,
+          email: true,
+          firstName: true,
+          lastName: true,
+          roles: true,
+          provider: true,
+          avatarUrl: true,
+          createdAt: true,
+          accountId: true,
+          account: {
+            select: { id: true, plan: true },
+          },
+        },
+      }),
+      this.prisma.user.count({ where }),
+    ]);
+
+    return { data, total, page, limit };
+  }
+
+  async getUser(id: string) {
+    const user = await this.prisma.user.findUnique({
+      where: { id },
+      select: {
+        id: true,
+        email: true,
+        firstName: true,
+        lastName: true,
+        roles: true,
+        provider: true,
+        avatarUrl: true,
+        createdAt: true,
+        updatedAt: true,
+        accountId: true,
+        account: {
+          select: {
+            id: true,
+            plan: true,
+            createdAt: true,
+            _count: { select: { users: true, projects: true } },
+            projects: {
+              select: {
+                id: true,
+                name: true,
+                slug: true,
+                status: true,
+                _count: { select: { subscribers: true } },
+              },
+              orderBy: { createdAt: 'desc' },
+            },
+          },
+        },
+      },
+    });
+
+    if (!user) {
+      throw new NotFoundException('User not found');
+    }
+
+    return user;
+  }
+
+  async updateUser(
+    id: string,
+    dto: AdminUpdateUserDto,
+    requestingUserId: string,
+  ) {
+    const user = await this.prisma.user.findUnique({ where: { id } });
+    if (!user) {
+      throw new NotFoundException('User not found');
+    }
+
+    // Self-protection: admin cannot remove their own admin role
+    if (id === requestingUserId && dto.roles !== undefined) {
+      const currentlyAdmin = (user.roles as string[]).includes('admin');
+      const wouldRemoveAdmin = !dto.roles.includes('admin');
+      if (currentlyAdmin && wouldRemoveAdmin) {
+        throw new ForbiddenException('Cannot remove your own admin role');
+      }
+    }
+
+    const data: Record<string, unknown> = {};
+
+    if (dto.firstName !== undefined) data.firstName = dto.firstName;
+    if (dto.lastName !== undefined) data.lastName = dto.lastName;
+    if (dto.roles !== undefined) data.roles = dto.roles;
+
+    if (dto.email !== undefined) {
+      const existing = await this.prisma.user.findUnique({
+        where: { email: dto.email },
+      });
+      if (existing && existing.id !== id) {
+        throw new BadRequestException('Email already in use');
+      }
+      data.email = dto.email;
+    }
+
+    return this.prisma.user.update({
+      where: { id },
+      data,
+      select: {
+        id: true,
+        email: true,
+        firstName: true,
+        lastName: true,
+        roles: true,
+        provider: true,
+        avatarUrl: true,
+        accountId: true,
+        createdAt: true,
+        updatedAt: true,
+      },
+    });
+  }
+
+  async deleteUser(id: string, requestingUserId: string) {
+    if (id === requestingUserId) {
+      throw new ForbiddenException('Cannot delete your own account');
+    }
+
+    const user = await this.prisma.user.findUnique({ where: { id } });
+    if (!user) {
+      throw new NotFoundException('User not found');
+    }
+
+    await this.prisma.user.delete({ where: { id } });
+    return { success: true, message: 'User deleted' };
+  }
+
+  async resetUserPassword(id: string, temporaryPassword: string) {
+    const user = await this.prisma.user.findUnique({ where: { id } });
+    if (!user) {
+      throw new NotFoundException('User not found');
+    }
+
+    if (user.provider === 'google' && !user.passwordHash) {
+      throw new BadRequestException(
+        'This user uses Google sign-in only. Cannot set a password.',
+      );
+    }
+
+    const passwordHash = await bcrypt.hash(temporaryPassword, 10);
+    await this.prisma.user.update({
+      where: { id },
+      data: { passwordHash },
+    });
+
+    return { success: true, message: 'Password has been reset' };
+  }
+
+  // ──────────────────────────────────────────────
+  //  Account subscribers (cross-project)
+  // ──────────────────────────────────────────────
+
+  async getAccountSubscribers(
+    accountId: string,
+    params: { search?: string; page?: number; limit?: number },
+  ) {
+    const account = await this.prisma.account.findUnique({
+      where: { id: accountId },
+      select: { id: true, projects: { select: { id: true } } },
+    });
+    if (!account) {
+      throw new NotFoundException('Account not found');
+    }
+
+    const page = Math.max(params.page ?? 1, 1);
+    const limit = Math.min(Math.max(params.limit ?? 20, 1), 100);
+    const skip = (page - 1) * limit;
+
+    const projectIds = account.projects.map(
+      (p: { id: string }) => p.id,
+    );
+    const where: Record<string, unknown> = {
+      projectId: { in: projectIds },
+    };
+
+    if (params.search) {
+      where.OR = [
+        { email: { contains: params.search, mode: 'insensitive' } },
+        { name: { contains: params.search, mode: 'insensitive' } },
+      ];
+    }
+
+    const [data, total] = await Promise.all([
+      this.prisma.subscriber.findMany({
+        where,
+        skip,
+        take: limit,
+        orderBy: { createdAt: 'desc' },
+        include: {
+          project: { select: { id: true, name: true } },
+        },
+      }),
+      this.prisma.subscriber.count({ where }),
+    ]);
+
+    return { data, total, page, limit };
   }
 
   // ──────────────────────────────────────────────
@@ -404,9 +652,27 @@ export class AdminService {
   // ──────────────────────────────────────────────
 
   async globalSearch(q: string) {
-    if (!q || q.length < 2) return { projects: [], subscribers: [], integrations: [] };
+    if (!q || q.length < 2)
+      return { users: [], projects: [], subscribers: [], integrations: [] };
 
-    const [projects, subscribers, integrations] = await Promise.all([
+    const [users, projects, subscribers, integrations] = await Promise.all([
+      this.prisma.user.findMany({
+        where: {
+          OR: [
+            { email: { contains: q, mode: 'insensitive' } },
+            { firstName: { contains: q, mode: 'insensitive' } },
+            { lastName: { contains: q, mode: 'insensitive' } },
+          ],
+        },
+        take: 5,
+        select: {
+          id: true,
+          email: true,
+          firstName: true,
+          lastName: true,
+          roles: true,
+        },
+      }),
       this.prisma.project.findMany({
         where: { name: { contains: q, mode: 'insensitive' } },
         take: 5,
@@ -429,7 +695,7 @@ export class AdminService {
       }),
     ]);
 
-    return { projects, subscribers, integrations };
+    return { users, projects, subscribers, integrations };
   }
 
   // ──────────────────────────────────────────────

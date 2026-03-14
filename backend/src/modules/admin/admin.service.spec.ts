@@ -1,5 +1,9 @@
 import { Test, TestingModule } from '@nestjs/testing';
-import { NotFoundException } from '@nestjs/common';
+import {
+  NotFoundException,
+  BadRequestException,
+  ForbiddenException,
+} from '@nestjs/common';
 import { AdminService } from './admin.service';
 import { PrismaService } from '../../infrastructure/prisma/prisma.service';
 
@@ -18,6 +22,10 @@ describe('AdminService', () => {
       },
       user: {
         count: jest.fn(),
+        findUnique: jest.fn(),
+        findMany: jest.fn(),
+        update: jest.fn(),
+        delete: jest.fn(),
       },
       project: {
         count: jest.fn(),
@@ -415,5 +423,260 @@ describe('AdminService', () => {
     expect(result.database).toBe('disconnected');
     expect(result.notificationQueueDepth).toBe(0);
     expect(typeof result.uptimeSeconds).toBe('number');
+  });
+
+  // ──────────────────────────────────────────────
+  //  getUsers
+  // ──────────────────────────────────────────────
+
+  it('getUsers returns paginated users with defaults', async () => {
+    const mockUsers = [{ id: 'u1', email: 'a@b.com' }];
+    (prisma.user.findMany as jest.Mock).mockResolvedValue(mockUsers);
+    (prisma.user.count as jest.Mock).mockResolvedValue(1);
+
+    const result = await service.getUsers({});
+
+    expect(result).toEqual({ data: mockUsers, total: 1, page: 1, limit: 20 });
+    expect(prisma.user.findMany).toHaveBeenCalledWith(
+      expect.objectContaining({ skip: 0, take: 20, orderBy: { createdAt: 'desc' } }),
+    );
+  });
+
+  it('getUsers applies search filter with OR clause', async () => {
+    (prisma.user.findMany as jest.Mock).mockResolvedValue([]);
+    (prisma.user.count as jest.Mock).mockResolvedValue(0);
+
+    await service.getUsers({ search: 'alice' });
+
+    expect(prisma.user.findMany).toHaveBeenCalledWith(
+      expect.objectContaining({
+        where: expect.objectContaining({
+          OR: expect.arrayContaining([
+            { email: { contains: 'alice', mode: 'insensitive' } },
+          ]),
+        }),
+      }),
+    );
+  });
+
+  it('getUsers applies role filter', async () => {
+    (prisma.user.findMany as jest.Mock).mockResolvedValue([]);
+    (prisma.user.count as jest.Mock).mockResolvedValue(0);
+
+    await service.getUsers({ role: 'admin' as any });
+
+    expect(prisma.user.findMany).toHaveBeenCalledWith(
+      expect.objectContaining({
+        where: expect.objectContaining({ roles: { has: 'admin' } }),
+      }),
+    );
+  });
+
+  it('getUsers applies accountId filter', async () => {
+    (prisma.user.findMany as jest.Mock).mockResolvedValue([]);
+    (prisma.user.count as jest.Mock).mockResolvedValue(0);
+
+    await service.getUsers({ accountId: 'acc-1' });
+
+    expect(prisma.user.findMany).toHaveBeenCalledWith(
+      expect.objectContaining({
+        where: expect.objectContaining({ accountId: 'acc-1' }),
+      }),
+    );
+  });
+
+  // ──────────────────────────────────────────────
+  //  getUser
+  // ──────────────────────────────────────────────
+
+  it('getUser returns user with account and projects', async () => {
+    const mockUser = { id: 'u1', email: 'a@b.com', account: { id: 'acc-1', plan: 'spark', projects: [] } };
+    (prisma.user.findUnique as jest.Mock).mockResolvedValue(mockUser);
+
+    const result = await service.getUser('u1');
+
+    expect(result).toEqual(mockUser);
+    expect(prisma.user.findUnique).toHaveBeenCalledWith(
+      expect.objectContaining({ where: { id: 'u1' } }),
+    );
+  });
+
+  it('getUser throws NotFoundException for unknown id', async () => {
+    (prisma.user.findUnique as jest.Mock).mockResolvedValue(null);
+
+    await expect(service.getUser('unknown')).rejects.toThrow(NotFoundException);
+  });
+
+  // ──────────────────────────────────────────────
+  //  updateUser
+  // ──────────────────────────────────────────────
+
+  it('updateUser updates firstName and lastName', async () => {
+    const existing = { id: 'u1', email: 'a@b.com', roles: ['user'] };
+    const updated = { ...existing, firstName: 'Alice', lastName: 'Smith' };
+    (prisma.user.findUnique as jest.Mock).mockResolvedValue(existing);
+    (prisma.user.update as jest.Mock).mockResolvedValue(updated);
+
+    const result = await service.updateUser('u1', { firstName: 'Alice', lastName: 'Smith' }, 'admin-id');
+
+    expect(result).toEqual(updated);
+    expect(prisma.user.update).toHaveBeenCalledWith(
+      expect.objectContaining({
+        where: { id: 'u1' },
+        data: { firstName: 'Alice', lastName: 'Smith' },
+      }),
+    );
+  });
+
+  it('updateUser throws NotFoundException for unknown user', async () => {
+    (prisma.user.findUnique as jest.Mock).mockResolvedValue(null);
+
+    await expect(service.updateUser('unknown', { firstName: 'X' }, 'admin-id')).rejects.toThrow(
+      NotFoundException,
+    );
+  });
+
+  it('updateUser throws ForbiddenException when admin removes own admin role', async () => {
+    const existing = { id: 'admin-1', email: 'admin@test.com', roles: ['user', 'admin'] };
+    (prisma.user.findUnique as jest.Mock).mockResolvedValue(existing);
+
+    await expect(
+      service.updateUser('admin-1', { roles: ['user'] as any }, 'admin-1'),
+    ).rejects.toThrow(ForbiddenException);
+    expect(prisma.user.update).not.toHaveBeenCalled();
+  });
+
+  it('updateUser throws BadRequestException for duplicate email', async () => {
+    const existing = { id: 'u1', email: 'old@test.com', roles: ['user'] };
+    const conflicting = { id: 'u2', email: 'taken@test.com' };
+    (prisma.user.findUnique as jest.Mock)
+      .mockResolvedValueOnce(existing)
+      .mockResolvedValueOnce(conflicting);
+
+    await expect(
+      service.updateUser('u1', { email: 'taken@test.com' }, 'admin-id'),
+    ).rejects.toThrow(BadRequestException);
+  });
+
+  it('updateUser allows updating roles for other users', async () => {
+    const existing = { id: 'u2', email: 'other@test.com', roles: ['user'] };
+    const updated = { ...existing, roles: ['user', 'admin'] };
+    (prisma.user.findUnique as jest.Mock).mockResolvedValue(existing);
+    (prisma.user.update as jest.Mock).mockResolvedValue(updated);
+
+    const result = await service.updateUser('u2', { roles: ['user', 'admin'] as any }, 'admin-1');
+
+    expect(result).toEqual(updated);
+    expect(prisma.user.update).toHaveBeenCalledWith(
+      expect.objectContaining({
+        data: { roles: ['user', 'admin'] },
+      }),
+    );
+  });
+
+  // ──────────────────────────────────────────────
+  //  deleteUser
+  // ──────────────────────────────────────────────
+
+  it('deleteUser removes user successfully', async () => {
+    (prisma.user.findUnique as jest.Mock).mockResolvedValue({ id: 'u1' });
+    (prisma.user.delete as jest.Mock).mockResolvedValue({ id: 'u1' });
+
+    const result = await service.deleteUser('u1', 'admin-id');
+
+    expect(result).toEqual({ success: true, message: 'User deleted' });
+    expect(prisma.user.delete).toHaveBeenCalledWith({ where: { id: 'u1' } });
+  });
+
+  it('deleteUser throws ForbiddenException for self-delete', async () => {
+    await expect(service.deleteUser('admin-1', 'admin-1')).rejects.toThrow(ForbiddenException);
+    expect(prisma.user.delete).not.toHaveBeenCalled();
+  });
+
+  it('deleteUser throws NotFoundException for unknown user', async () => {
+    (prisma.user.findUnique as jest.Mock).mockResolvedValue(null);
+
+    await expect(service.deleteUser('unknown', 'admin-id')).rejects.toThrow(NotFoundException);
+  });
+
+  // ──────────────────────────────────────────────
+  //  resetUserPassword
+  // ──────────────────────────────────────────────
+
+  it('resetUserPassword sets new hash', async () => {
+    const existing = { id: 'u1', provider: 'local', passwordHash: 'old-hash' };
+    (prisma.user.findUnique as jest.Mock).mockResolvedValue(existing);
+    (prisma.user.update as jest.Mock).mockResolvedValue(existing);
+
+    const result = await service.resetUserPassword('u1', 'NewTemp123!');
+
+    expect(result).toEqual({ success: true, message: 'Password has been reset' });
+    expect(prisma.user.update).toHaveBeenCalledWith(
+      expect.objectContaining({
+        where: { id: 'u1' },
+        data: { passwordHash: expect.any(String) },
+      }),
+    );
+  });
+
+  it('resetUserPassword throws NotFoundException for unknown user', async () => {
+    (prisma.user.findUnique as jest.Mock).mockResolvedValue(null);
+
+    await expect(service.resetUserPassword('unknown', 'pass1234')).rejects.toThrow(NotFoundException);
+  });
+
+  it('resetUserPassword throws BadRequestException for Google-only user', async () => {
+    const googleUser = { id: 'u1', provider: 'google', passwordHash: null };
+    (prisma.user.findUnique as jest.Mock).mockResolvedValue(googleUser);
+
+    await expect(service.resetUserPassword('u1', 'pass1234')).rejects.toThrow(BadRequestException);
+  });
+
+  // ──────────────────────────────────────────────
+  //  getAccountSubscribers
+  // ──────────────────────────────────────────────
+
+  it('getAccountSubscribers returns paginated subscribers', async () => {
+    const mockAccount = { id: 'acc-1', projects: [{ id: 'p1' }, { id: 'p2' }] };
+    const mockSubscribers = [{ id: 's1', email: 'sub@test.com' }];
+    (prisma.account.findUnique as jest.Mock).mockResolvedValue(mockAccount);
+    (prisma.subscriber.findMany as jest.Mock).mockResolvedValue(mockSubscribers);
+    (prisma.subscriber.count as jest.Mock).mockResolvedValue(1);
+
+    const result = await service.getAccountSubscribers('acc-1', {});
+
+    expect(result).toEqual({ data: mockSubscribers, total: 1, page: 1, limit: 20 });
+    expect(prisma.subscriber.findMany).toHaveBeenCalledWith(
+      expect.objectContaining({
+        where: expect.objectContaining({
+          projectId: { in: ['p1', 'p2'] },
+        }),
+      }),
+    );
+  });
+
+  it('getAccountSubscribers throws NotFoundException for unknown account', async () => {
+    (prisma.account.findUnique as jest.Mock).mockResolvedValue(null);
+
+    await expect(service.getAccountSubscribers('unknown', {})).rejects.toThrow(NotFoundException);
+  });
+
+  // ──────────────────────────────────────────────
+  //  globalSearch (users added)
+  // ──────────────────────────────────────────────
+
+  it('globalSearch includes users in results', async () => {
+    const mockUsers = [{ id: 'u1', email: 'alice@test.com' }];
+    (prisma.user.findMany as jest.Mock).mockResolvedValue(mockUsers);
+    (prisma.project.findMany as jest.Mock).mockResolvedValue([]);
+    (prisma.subscriber.findMany as jest.Mock).mockResolvedValue([]);
+    (prisma.integration as any).findMany = jest.fn().mockResolvedValue([]);
+
+    const result = await service.globalSearch('alice');
+
+    expect(result.users).toEqual(mockUsers);
+    expect(result).toHaveProperty('projects');
+    expect(result).toHaveProperty('subscribers');
+    expect(result).toHaveProperty('integrations');
   });
 });

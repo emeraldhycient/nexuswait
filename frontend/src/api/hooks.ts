@@ -817,6 +817,77 @@ export function useAdminNotificationTemplates() {
   })
 }
 
+// ─── Admin Users ─────────────────────────────────────────
+
+export function useAdminUsers(params: { search?: string; role?: string; accountId?: string; page?: number; limit?: number } = {}) {
+  return useQuery({
+    queryKey: ['admin', 'users', params],
+    queryFn: async () => {
+      const { data } = await api.get('/admin/users', { params })
+      return data
+    },
+  })
+}
+
+export function useAdminUser(id: string | undefined) {
+  return useQuery({
+    queryKey: ['admin', 'user', id],
+    queryFn: async () => {
+      const { data } = await api.get(`/admin/users/${id}`)
+      return data
+    },
+    enabled: !!id,
+  })
+}
+
+export function useAdminUpdateUser(id: string | undefined) {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: async (body: { firstName?: string; lastName?: string; email?: string; roles?: string[] }) => {
+      const { data } = await api.patch(`/admin/users/${id}`, body)
+      return data
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['admin', 'users'] })
+      queryClient.invalidateQueries({ queryKey: ['admin', 'user', id] })
+      queryClient.invalidateQueries({ queryKey: ['admin', 'stats'] })
+    },
+  })
+}
+
+export function useAdminDeleteUser(id: string | undefined) {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: async () => {
+      await api.delete(`/admin/users/${id}`)
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['admin', 'users'] })
+      queryClient.invalidateQueries({ queryKey: ['admin', 'stats'] })
+    },
+  })
+}
+
+export function useAdminResetPassword(id: string | undefined) {
+  return useMutation({
+    mutationFn: async (body: { temporaryPassword: string }) => {
+      const { data } = await api.post(`/admin/users/${id}/reset-password`, body)
+      return data
+    },
+  })
+}
+
+export function useAdminAccountSubscribers(accountId: string | undefined, params: { search?: string; page?: number; limit?: number } = {}) {
+  return useQuery({
+    queryKey: ['admin', 'account-subscribers', accountId, params],
+    queryFn: async () => {
+      const { data } = await api.get(`/admin/accounts/${accountId}/subscribers`, { params })
+      return data
+    },
+    enabled: !!accountId,
+  })
+}
+
 export function useAdminGlobalSearch(q: string) {
   return useQuery({
     queryKey: ['admin', 'search', q],

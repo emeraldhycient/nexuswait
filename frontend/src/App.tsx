@@ -33,6 +33,8 @@ import AdminIntegrations from './pages/admin/AdminIntegrations'
 import AdminNotifications from './pages/admin/AdminNotifications'
 import AdminSystem from './pages/admin/AdminSystem'
 import AdminPlans from './pages/admin/AdminPlans'
+import AdminUsers from './pages/admin/AdminUsers'
+import AdminUserDetail from './pages/admin/AdminUserDetail'
 import AdminWebhookLogs from './pages/admin/AdminWebhookLogs'
 import PublicWaitlistPage from './pages/PublicWaitlistPage'
 import NotFound from './pages/NotFound'
@@ -74,6 +76,8 @@ export default function App() {
         <Route path="/admin" element={<AdminOverview />} />
         <Route path="/admin/accounts" element={<AdminAccounts />} />
         <Route path="/admin/accounts/:id" element={<AdminAccountDetail />} />
+        <Route path="/admin/users" element={<AdminUsers />} />
+        <Route path="/admin/users/:id" element={<AdminUserDetail />} />
         <Route path="/admin/projects" element={<AdminProjects />} />
         <Route path="/admin/subscribers" element={<AdminSubscribers />} />
         <Route path="/admin/integrations" element={<AdminIntegrations />} />

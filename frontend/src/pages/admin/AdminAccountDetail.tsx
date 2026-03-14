@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { useParams, Link } from 'react-router-dom'
-import { ArrowLeft, Save } from 'lucide-react'
-import { useAdminAccount, useAdminUpdateAccount } from '../../api/hooks'
+import { ArrowLeft, Save, Search, ChevronLeft, ChevronRight, ExternalLink } from 'lucide-react'
+import { useAdminAccount, useAdminUpdateAccount, useAdminAccountSubscribers } from '../../api/hooks'
 
 const planBadge: Record<string, string> = {
   spark: 'bg-cyan-glow/10 text-cyan-glow',
@@ -15,6 +15,10 @@ export default function AdminAccountDetail() {
   const { data: account, isLoading, error } = useAdminAccount(id)
   const mutation = useAdminUpdateAccount(id)
   const [selectedPlan, setSelectedPlan] = useState<string | null>(null)
+  const [subSearch, setSubSearch] = useState('')
+  const [subPage, setSubPage] = useState(1)
+  const subLimit = 10
+  const { data: subData } = useAdminAccountSubscribers(id, { search: subSearch || undefined, page: subPage, limit: subLimit })
 
   if (isLoading) return <div className="p-6 text-nexus-400">Loading...</div>
   if (error || !account) return <div className="p-6 text-magenta-glow">Failed to load account.</div>
@@ -108,20 +112,32 @@ export default function AdminAccountDetail() {
                   <th className="text-left px-4 py-3 text-[10px] font-mono text-nexus-500 tracking-widest uppercase">First Name</th>
                   <th className="text-left px-4 py-3 text-[10px] font-mono text-nexus-500 tracking-widest uppercase">Last Name</th>
                   <th className="text-left px-4 py-3 text-[10px] font-mono text-nexus-500 tracking-widest uppercase">Roles</th>
+                  <th className="px-4 py-3" />
                 </tr>
               </thead>
               <tbody>
                 {users.map((u, i) => (
                   <tr key={(u.id as string) ?? i} className="border-b border-nexus-700/10 hover:bg-nexus-800/30 transition-colors">
-                    <td className="px-4 py-3 text-sm text-nexus-200 font-mono">{(u.email as string) ?? '—'}</td>
+                    <td className="px-4 py-3 text-sm font-mono">
+                      <Link to={`/admin/users/${u.id}`} className="text-cyan-glow hover:text-cyan-glow/80 no-underline transition-colors">
+                        {(u.email as string) ?? '—'}
+                      </Link>
+                    </td>
                     <td className="px-4 py-3 text-sm text-nexus-300">{(u.firstName as string) ?? '—'}</td>
                     <td className="px-4 py-3 text-sm text-nexus-300">{(u.lastName as string) ?? '—'}</td>
-                    <td className="px-4 py-3 flex flex-wrap gap-1">
-                      {((u.roles as string[]) ?? ['member']).map((r: string) => (
-                        <span key={r} className="text-[9px] font-mono font-bold tracking-wider uppercase px-1.5 py-0.5 rounded bg-nexus-700/30 text-nexus-400">
-                          {r}
-                        </span>
-                      ))}
+                    <td className="px-4 py-3">
+                      <div className="flex flex-wrap gap-1">
+                        {((u.roles as string[]) ?? ['member']).map((r: string) => (
+                          <span key={r} className="text-[9px] font-mono font-bold tracking-wider uppercase px-1.5 py-0.5 rounded bg-nexus-700/30 text-nexus-400">
+                            {r}
+                          </span>
+                        ))}
+                      </div>
+                    </td>
+                    <td className="px-4 py-3">
+                      <Link to={`/admin/users/${u.id}`} className="text-nexus-500 hover:text-magenta-glow transition-colors">
+                        <ExternalLink size={14} />
+                      </Link>
                     </td>
                   </tr>
                 ))}
@@ -168,6 +184,71 @@ export default function AdminAccountDetail() {
           </div>
         )}
       </div>
+
+      {/* Subscribers */}
+      {(() => {
+        const subscribers: Record<string, unknown>[] = (subData as Record<string, unknown>)?.data as Record<string, unknown>[] ?? []
+        const subTotal: number = ((subData as Record<string, unknown>)?.total as number) ?? 0
+        const subTotalPages = Math.max(1, Math.ceil(subTotal / subLimit))
+        return (
+          <div className="card-surface overflow-hidden">
+            <div className="px-6 pt-5 pb-3 flex items-center justify-between">
+              <h2 className="font-display text-sm font-bold text-nexus-200 tracking-widest uppercase">Subscribers ({subTotal})</h2>
+              <div className="relative w-56">
+                <Search size={13} className="absolute left-2.5 top-1/2 -translate-y-1/2 text-nexus-500" />
+                <input
+                  type="text"
+                  placeholder="Search subscribers..."
+                  value={subSearch}
+                  onChange={e => { setSubSearch(e.target.value); setSubPage(1) }}
+                  className="input-field pl-8 w-full text-xs py-1.5"
+                />
+              </div>
+            </div>
+            {subscribers.length === 0 ? (
+              <div className="px-6 pb-5 text-sm text-nexus-500">No subscribers found.</div>
+            ) : (
+              <div className="overflow-x-auto">
+                <table className="w-full">
+                  <thead>
+                    <tr className="border-b border-magenta-glow/[0.06]">
+                      <th className="text-left px-4 py-3 text-[10px] font-mono text-nexus-500 tracking-widest uppercase">Email</th>
+                      <th className="text-left px-4 py-3 text-[10px] font-mono text-nexus-500 tracking-widest uppercase">Name</th>
+                      <th className="text-left px-4 py-3 text-[10px] font-mono text-nexus-500 tracking-widest uppercase">Project</th>
+                      <th className="text-left px-4 py-3 text-[10px] font-mono text-nexus-500 tracking-widest uppercase">Source</th>
+                      <th className="text-left px-4 py-3 text-[10px] font-mono text-nexus-500 tracking-widest uppercase">Created</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {subscribers.map((s, i) => (
+                      <tr key={(s.id as string) ?? i} className="border-b border-nexus-700/10 hover:bg-nexus-800/30 transition-colors">
+                        <td className="px-4 py-3 text-sm text-nexus-200 font-mono truncate max-w-[180px]">{(s.email as string) ?? '—'}</td>
+                        <td className="px-4 py-3 text-sm text-nexus-300">{(s.name as string) ?? '—'}</td>
+                        <td className="px-4 py-3 text-sm text-nexus-300">{((s.project as Record<string, unknown>)?.name as string) ?? '—'}</td>
+                        <td className="px-4 py-3 text-xs text-nexus-400 font-mono">{(s.source as string) ?? 'direct'}</td>
+                        <td className="px-4 py-3 text-xs text-nexus-500 font-mono">{s.createdAt ? new Date(s.createdAt as string).toLocaleDateString() : '—'}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
+            {subTotalPages > 1 && (
+              <div className="flex items-center justify-between px-6 py-3 border-t border-nexus-700/10">
+                <span className="text-xs font-mono text-nexus-500">Page {subPage} of {subTotalPages}</span>
+                <div className="flex items-center gap-2">
+                  <button type="button" disabled={subPage <= 1} onClick={() => setSubPage(p => Math.max(1, p - 1))} className="btn-ghost p-1.5 disabled:opacity-30">
+                    <ChevronLeft size={14} />
+                  </button>
+                  <button type="button" disabled={subPage >= subTotalPages} onClick={() => setSubPage(p => p + 1)} className="btn-ghost p-1.5 disabled:opacity-30">
+                    <ChevronRight size={14} />
+                  </button>
+                </div>
+              </div>
+            )}
+          </div>
+        )
+      })()}
     </div>
   )
 }

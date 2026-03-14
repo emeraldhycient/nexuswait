@@ -17,9 +17,13 @@ import { AdminGuard } from './guards/admin.guard';
 import { AdminService } from './admin.service';
 import { UpdateAccountDto } from './dto/update-account.dto';
 import { UpdateProjectDto } from './dto/update-project.dto';
-import { PlanTier, ProjectStatus } from '../../generated/prisma/client/enums';
+import { AdminUpdateUserDto } from './dto/admin-update-user.dto';
+import { AdminResetPasswordDto } from './dto/admin-reset-password.dto';
+import { PlanTier, ProjectStatus, UserRole } from '../../generated/prisma/client/enums';
 import { PlanConfigService } from '../plan-config/plan-config.service';
 import { UpsertPlanConfigDto } from '../plan-config/dto/upsert-plan-config.dto';
+import { JwtPayloadDecorator } from '../auth/jwt-payload.decorator';
+import { JwtPayload } from '../auth/jwt.strategy';
 
 @Controller('admin')
 @UseGuards(AuthGuard('jwt'), AdminGuard)
@@ -63,6 +67,61 @@ export class AdminController {
     @Body() dto: UpdateAccountDto,
   ) {
     return this.adminService.updateAccount(id, dto);
+  }
+
+  @Get('accounts/:id/subscribers')
+  async getAccountSubscribers(
+    @Param('id') id: string,
+    @Query('search') search?: string,
+    @Query('page', new DefaultValuePipe(1), ParseIntPipe) page?: number,
+    @Query('limit', new DefaultValuePipe(20), ParseIntPipe) limit?: number,
+  ) {
+    return this.adminService.getAccountSubscribers(id, { search, page, limit });
+  }
+
+  // ──────────────────────────────────────────────
+  //  Users
+  // ──────────────────────────────────────────────
+
+  @Get('users')
+  async getUsers(
+    @Query('search') search?: string,
+    @Query('role') role?: UserRole,
+    @Query('accountId') accountId?: string,
+    @Query('page', new DefaultValuePipe(1), ParseIntPipe) page?: number,
+    @Query('limit', new DefaultValuePipe(20), ParseIntPipe) limit?: number,
+  ) {
+    return this.adminService.getUsers({ search, role, accountId, page, limit });
+  }
+
+  @Get('users/:id')
+  async getUser(@Param('id') id: string) {
+    return this.adminService.getUser(id);
+  }
+
+  @Patch('users/:id')
+  async updateUser(
+    @Param('id') id: string,
+    @Body() dto: AdminUpdateUserDto,
+    @JwtPayloadDecorator() jwt: JwtPayload,
+  ) {
+    return this.adminService.updateUser(id, dto, jwt.userId);
+  }
+
+  @Delete('users/:id')
+  async deleteUser(
+    @Param('id') id: string,
+    @JwtPayloadDecorator() jwt: JwtPayload,
+  ) {
+    return this.adminService.deleteUser(id, jwt.userId);
+  }
+
+  @Post('users/:id/reset-password')
+  async resetPassword(
+    @Param('id') id: string,
+    @Body() dto: AdminResetPasswordDto,
+  ) {
+    return this.adminService.resetUserPassword(id, dto.temporaryPassword);
   }
 
   // ──────────────────────────────────────────────

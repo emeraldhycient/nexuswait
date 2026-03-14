@@ -13,6 +13,7 @@ import ThemeToggle from '../components/ThemeToggle'
 const sidebarItems: { to: string; icon: LucideIcon; label: string }[] = [
   { to: '/admin', icon: LayoutDashboard, label: 'Overview' },
   { to: '/admin/accounts', icon: Users, label: 'Accounts' },
+  { to: '/admin/users', icon: User, label: 'Users' },
   { to: '/admin/projects', icon: FolderOpen, label: 'Projects' },
   { to: '/admin/subscribers', icon: UserPlus, label: 'Subscribers' },
   { to: '/admin/integrations', icon: Plug, label: 'Integrations' },
