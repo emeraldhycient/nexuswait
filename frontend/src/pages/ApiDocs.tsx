@@ -68,7 +68,7 @@ export default function ApiDocs() {
 
   // ─── Platform config ────────────────────────────────
   const { data: platformConfig } = usePlatformConfig()
-  const apiUrl = platformConfig?.apiBaseUrl ?? 'https://api.nexuswait.io'
+  const apiUrl = platformConfig?.apiBaseUrl ?? 'https://api.nexuswait.com'
 
   const codeExamples = useMemo<Record<string, string>>(() => ({
     curl: `curl -X POST ${apiUrl}/v1/projects/prj_abc123/subscribers \\

@@ -137,7 +137,7 @@ export default function AdminSystem() {
               value={apiBaseUrl}
               onChange={e => setApiBaseUrl(e.target.value)}
               className="input-field"
-              placeholder="https://api.nexuswait.io"
+              placeholder="https://api.nexuswait.com"
             />
             <p className="text-[10px] text-nexus-600 mt-1">Used in cURL examples, fetch snippets, and API documentation.</p>
           </div>
@@ -148,7 +148,7 @@ export default function AdminSystem() {
               value={cdnBaseUrl}
               onChange={e => setCdnBaseUrl(e.target.value)}
               className="input-field"
-              placeholder="https://cdn.nexuswait.io"
+              placeholder="https://cdn.nexuswait.com"
             />
             <p className="text-[10px] text-nexus-600 mt-1">Used in the embed widget script tag.</p>
           </div>

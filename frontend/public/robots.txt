@@ -5,4 +5,4 @@ Disallow: /dashboard/*
 Disallow: /admin
 Disallow: /admin/*
 
-Sitemap: https://nexuswait.io/sitemap.xml
+Sitemap: https://nexuswait.com/sitemap.xml

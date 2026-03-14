@@ -6,8 +6,8 @@ const SINGLETON_ID = 'singleton';
 
 const DEFAULTS = {
   id: SINGLETON_ID,
-  apiBaseUrl: 'https://api.nexuswait.io',
-  cdnBaseUrl: 'https://cdn.nexuswait.io',
+  apiBaseUrl: 'https://api.nexuswait.com',
+  cdnBaseUrl: 'https://cdn.nexuswait.com',
 };
 
 @Injectable()

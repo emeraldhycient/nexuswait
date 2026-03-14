@@ -1,12 +1,12 @@
 /**
  * NexusWait Embeddable Widget v1.0.0
- * https://nexuswait.io
+ * https://nexuswait.com
  *
  * A self-contained JavaScript widget for embedding waitlist signup forms.
  * Zero dependencies. Works in all modern browsers.
  *
  * Usage:
- *   <script src="https://nexuswait.io/embed.js"></script>
+ *   <script src="https://nexuswait.com/embed.js"></script>
  *   <div data-nexuswait-id="PROJECT_ID"></div>
  *
  * Configuration (via data attributes):
@@ -16,7 +16,7 @@
  *   data-nexuswait-theme       — "dark" (default) or "light"
  *   data-nexuswait-accent      — Accent color hex (default "#00e8ff")
  *   data-nexuswait-show-count  — Show subscriber count ("true"/"false", default "false")
- *   data-nexuswait-api         — API base URL override (default "https://nexuswait.io/v1")
+ *   data-nexuswait-api         — API base URL override (default "https://nexuswait.com/v1")
  */
 (function () {
   'use strict';
@@ -26,7 +26,7 @@
   // ---------------------------------------------------------------------------
 
   var VERSION = '1.0.0';
-  var DEFAULT_API = 'https://nexuswait.io/v1';
+  var DEFAULT_API = 'https://nexuswait.com/v1';
   var STYLE_ID = 'nw-widget-styles';
 
   // ---------------------------------------------------------------------------
@@ -263,7 +263,7 @@
     }
 
     // Branding footer
-    html += '<div class="nw-brand">Powered by <a href="https://nexuswait.io" target="_blank" rel="noopener noreferrer">NexusWait</a></div>';
+    html += '<div class="nw-brand">Powered by <a href="https://nexuswait.com" target="_blank" rel="noopener noreferrer">NexusWait</a></div>';
     html += '</div>';
 
     this.container.innerHTML = html;

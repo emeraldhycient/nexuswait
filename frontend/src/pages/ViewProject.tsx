@@ -68,7 +68,7 @@ export default function ViewProject() {
   const { data: subscribersData, isLoading: subsLoading } = useSubscribers(id, { search: debouncedSearch || undefined, source: subSource || undefined, sort: subSort })
   const { data: referralData } = useReferralLeaderboard(id)
   const { data: platformConfig } = usePlatformConfig()
-  const apiUrl = platformConfig?.apiBaseUrl ?? 'https://api.nexuswait.io'
+  const apiUrl = platformConfig?.apiBaseUrl ?? 'https://api.nexuswait.com'
 
   // ─── Settings tab state ────────────────────────────
   const [settingsName, setSettingsName] = useState('')

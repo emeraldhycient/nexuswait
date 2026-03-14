@@ -855,8 +855,8 @@ export interface PlatformConfig {
 }
 
 const PLATFORM_CONFIG_DEFAULTS: PlatformConfig = {
-  apiBaseUrl: 'https://api.nexuswait.io',
-  cdnBaseUrl: 'https://cdn.nexuswait.io',
+  apiBaseUrl: 'https://api.nexuswait.com',
+  cdnBaseUrl: 'https://cdn.nexuswait.com',
 }
 
 export function usePlatformConfig() {

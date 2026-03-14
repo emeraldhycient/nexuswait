@@ -539,7 +539,7 @@ export default function Settings() {
                                 <span className="text-[10px] text-amber-glow font-mono">Syncing with Polar...</span>
                               )}
                               {isEnterprise && !isCurrent && (
-                                <a href="mailto:sales@nexuswait.io" className="btn-secondary text-xs py-1.5 px-4 no-underline">Contact Sales</a>
+                                <a href="mailto:sales@nexuswait.com" className="btn-secondary text-xs py-1.5 px-4 no-underline">Contact Sales</a>
                               )}
                               {isCurrent && <Check size={16} className="text-cyan-glow" />}
                             </div>

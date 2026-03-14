@@ -460,7 +460,7 @@ export default function HostedPage() {
                 <div>
                   <label className="block text-xs font-mono text-nexus-400 tracking-wider uppercase mb-1.5">Custom Domain</label>
                   <input type="text" value={customDomain} onChange={(e) => setCustomDomain(e.target.value)} className="input-field text-sm" placeholder="waitlist.yoursite.com" />
-                  <p className="text-[10px] text-nexus-600 mt-1">Add a CNAME record pointing to pages.nexuswait.io</p>
+                  <p className="text-[10px] text-nexus-600 mt-1">Add a CNAME record pointing to pages.nexuswait.com</p>
                 </div>
                 <div>
                   <label className="block text-xs font-mono text-nexus-400 tracking-wider uppercase mb-1.5">Meta Description</label>

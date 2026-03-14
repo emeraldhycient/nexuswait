@@ -138,7 +138,7 @@ export default function Landing() {
                 <div>
                   <span className="text-emerald-glow">Ready!</span>
                   <span className="text-nexus-400"> Deploy at </span>
-                  <span className="text-cyan-glow underline">nexuswait.io/my-launch</span>
+                  <span className="text-cyan-glow underline">nexuswait.com/my-launch</span>
                 </div>
               </div>
             </div>

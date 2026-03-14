@@ -114,7 +114,7 @@ export default function PublicLayout() {
             </div>
             {[
               { title: 'Product', links: [{ label: 'Features', to: '/#features' }, { label: 'Pricing', to: '/pricing' }, { label: 'Integrations', to: '/dashboard/integrations' }, { label: 'Changelog', to: '/changelog' }] },
-              { title: 'Resources', links: [{ label: 'Documentation', to: '/resources' }, { label: 'API Reference', to: '/resources' }, { label: 'Blog', to: '/resources' }, { label: 'Community', to: '/contact' }] },
+              { title: 'Resources', links: [{ label: 'Documentation', to: '/resources' }, { label: 'API Reference', to: '/dashboard/api' }, { label: 'Changelog', to: '/changelog' }, { label: 'Community', to: '/contact' }] },
               { title: 'Company', links: [{ label: 'About', to: '/about' }, { label: 'Careers', to: '/contact' }, { label: 'Contact', to: '/contact' }, { label: 'Legal', to: '/legal' }] },
             ].map(col => (
               <div key={col.title}>
