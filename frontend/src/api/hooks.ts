@@ -19,6 +19,7 @@ export interface CreateProjectBody {
   name: string
   redirectUrl?: string
   webhookUrl?: string
+  customFields?: Record<string, unknown>[]
 }
 
 export function useProjects() {

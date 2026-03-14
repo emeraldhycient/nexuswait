@@ -1,17 +1,83 @@
 import { useState } from 'react'
 import {
   ArrowRight, ArrowLeft, Share2,
-  Sparkles, Check, Code
+  Sparkles, Check, Code, Timer, Zap, Settings2
 } from 'lucide-react'
 import { useCreateProject, getMutationErrorMessage } from '../api/hooks'
 import { useDocumentTitle } from '../hooks/useDocumentTitle'
+import type { CustomFieldDefinition, CustomFieldType } from '../shared/hosted-page-types'
 
+// ─── Field presets: quick-add fields that become CustomFieldDefinitions ───
+const FIELD_PRESETS: Record<string, { label: string; fieldKey: string; placeholder: string; type: CustomFieldType }> = {
+  company:  { label: 'Company',  fieldKey: 'company', placeholder: 'Your company',      type: 'text'  },
+  role:     { label: 'Role',     fieldKey: 'role',    placeholder: 'Your role',          type: 'text'  },
+  phone:    { label: 'Phone',    fieldKey: 'phone',   placeholder: 'Your phone number',  type: 'phone' },
+  website:  { label: 'Website',  fieldKey: 'website', placeholder: 'https://yoursite.com', type: 'url' },
+}
+
+// ─── Template definitions with preset configuration ─────────────────────
 const templates = [
-  { id: 'minimal', name: 'Minimal', desc: 'Clean single-field form', color: 'from-cyan-glow/20 to-cyan-glow/5' },
-  { id: 'referral', name: 'Referral', desc: 'With viral share loop', color: 'from-magenta-glow/20 to-magenta-glow/5' },
-  { id: 'countdown', name: 'Countdown', desc: 'Urgency-driven launch', color: 'from-violet-glow/20 to-violet-glow/5' },
-  { id: 'custom', name: 'Custom', desc: 'Start from scratch', color: 'from-amber-glow/20 to-amber-glow/5' },
+  {
+    id: 'minimal',
+    name: 'Minimal',
+    desc: 'Clean email-only form',
+    icon: Zap,
+    color: 'from-cyan-glow/20 to-cyan-glow/5',
+    fields: ['email'],
+    enableReferral: false,
+  },
+  {
+    id: 'referral',
+    name: 'Referral',
+    desc: 'With viral share loop',
+    icon: Share2,
+    color: 'from-magenta-glow/20 to-magenta-glow/5',
+    fields: ['email', 'name'],
+    enableReferral: true,
+  },
+  {
+    id: 'countdown',
+    name: 'Countdown',
+    desc: 'Urgency-driven launch',
+    icon: Timer,
+    color: 'from-violet-glow/20 to-violet-glow/5',
+    fields: ['email', 'name'],
+    enableReferral: false,
+  },
+  {
+    id: 'custom',
+    name: 'Custom',
+    desc: 'Start from scratch',
+    icon: Settings2,
+    color: 'from-amber-glow/20 to-amber-glow/5',
+    fields: null, // null = keep current selection
+    enableReferral: true,
+  },
 ]
+
+let fieldIdCounter = 0
+function generateFieldId(): string {
+  return 'cf_create_' + (++fieldIdCounter) + '_' + Math.random().toString(36).slice(2, 8)
+}
+
+/** Convert selected field names into CustomFieldDefinition[] for the backend */
+function buildCustomFields(fields: string[]): CustomFieldDefinition[] {
+  return fields
+    .filter((f) => f !== 'email' && f !== 'name') // email is built-in, name uses showNameField
+    .map((f) => {
+      const preset = FIELD_PRESETS[f]
+      if (!preset) return null
+      return {
+        id: generateFieldId(),
+        label: preset.label,
+        fieldKey: preset.fieldKey,
+        placeholder: preset.placeholder,
+        type: preset.type,
+        required: false,
+      } satisfies CustomFieldDefinition
+    })
+    .filter(Boolean) as CustomFieldDefinition[]
+}
 
 interface CreateProjectForm {
   name: string
@@ -33,7 +99,7 @@ export default function CreateProject() {
     domain: '',
     template: 'minimal',
     fields: ['email'],
-    enableReferral: true,
+    enableReferral: false,
     brandColor: '#00e8ff',
     redirectUrl: '',
     webhookUrl: '',
@@ -49,12 +115,40 @@ export default function CreateProject() {
     update('fields', fields)
   }
 
+  /** Apply a template preset — updates fields and referral toggle */
+  const applyTemplate = (templateId: string) => {
+    const tpl = templates.find((t) => t.id === templateId)
+    if (!tpl) return
+    const updates: Partial<CreateProjectForm> = { template: templateId }
+    if (tpl.fields !== null) {
+      updates.fields = tpl.fields
+    }
+    updates.enableReferral = tpl.enableReferral
+    setForm((f) => ({ ...f, ...updates }))
+  }
+
+  /** Build the deploy payload */
+  const handleDeploy = () => {
+    const customFields = buildCustomFields(form.fields)
+    createProject.mutate({
+      name: form.name || 'Untitled Project',
+      redirectUrl: form.redirectUrl || undefined,
+      webhookUrl: form.webhookUrl || undefined,
+      ...(customFields.length > 0 && { customFields }),
+    })
+  }
+
   const steps = [
     { num: 1, label: 'Basics' },
     { num: 2, label: 'Template' },
     { num: 3, label: 'Configure' },
     { num: 4, label: 'Launch' },
   ]
+
+  // Derive display summary for Step 4
+  const selectedTemplate = templates.find((t) => t.id === form.template)
+  const customFieldNames = form.fields.filter((f) => f !== 'email' && f !== 'name' && FIELD_PRESETS[f])
+  const hasNameField = form.fields.includes('name')
 
   return (
     <div className="max-w-2xl mx-auto animate-fade-in">
@@ -111,6 +205,7 @@ export default function CreateProject() {
             </div>
             <div>
               <label className="block text-xs font-mono text-nexus-400 tracking-wider uppercase mb-2">Form Fields</label>
+              <p className="text-[11px] text-nexus-500 mb-2">Select which fields to collect from subscribers. You can add more custom fields later.</p>
               <div className="flex flex-wrap gap-2">
                 {['email', 'name', 'company', 'role', 'phone', 'website'].map(field => (
                   <button
@@ -135,30 +230,46 @@ export default function CreateProject() {
           <div className="animate-fade-in">
             <p className="text-sm text-nexus-400 mb-5">Choose a starting template for your waitlist page.</p>
             <div className="grid grid-cols-2 gap-3">
-              {templates.map(t => (
-                <button
-                  key={t.id}
-                  type="button"
-                  onClick={() => update('template', t.id)}
-                  className={`p-5 rounded-xl text-left transition-all border ${
-                    form.template === t.id
-                      ? 'border-cyan-glow/30 bg-cyan-glow/[0.04]'
-                      : 'border-nexus-700/30 hover:border-nexus-600/50 bg-nexus-800/30'
-                  }`}
-                >
-                  <div className={`w-10 h-10 rounded-lg bg-gradient-to-br ${t.color} flex items-center justify-center mb-3`}>
-                    <Sparkles size={16} className="text-nexus-200" />
-                  </div>
-                  <div className="font-display text-sm font-bold text-nexus-100 tracking-wider">{t.name}</div>
-                  <div className="text-xs text-nexus-500 mt-0.5">{t.desc}</div>
-                  {form.template === t.id && (
-                    <div className="mt-2">
-                      <Check size={14} className="text-cyan-glow" />
+              {templates.map(t => {
+                const Icon = t.icon
+                return (
+                  <button
+                    key={t.id}
+                    type="button"
+                    onClick={() => applyTemplate(t.id)}
+                    className={`p-5 rounded-xl text-left transition-all border ${
+                      form.template === t.id
+                        ? 'border-cyan-glow/30 bg-cyan-glow/[0.04]'
+                        : 'border-nexus-700/30 hover:border-nexus-600/50 bg-nexus-800/30'
+                    }`}
+                  >
+                    <div className={`w-10 h-10 rounded-lg bg-gradient-to-br ${t.color} flex items-center justify-center mb-3`}>
+                      <Icon size={16} className="text-nexus-200" />
                     </div>
-                  )}
-                </button>
-              ))}
+                    <div className="font-display text-sm font-bold text-nexus-100 tracking-wider">{t.name}</div>
+                    <div className="text-xs text-nexus-500 mt-0.5">{t.desc}</div>
+                    {t.fields !== null && (
+                      <div className="flex flex-wrap gap-1 mt-2">
+                        {t.fields.map(f => (
+                          <span key={f} className="text-[9px] font-mono tracking-wider px-1.5 py-0.5 rounded bg-nexus-700/40 text-nexus-400 capitalize">{f}</span>
+                        ))}
+                        {t.enableReferral && (
+                          <span className="text-[9px] font-mono tracking-wider px-1.5 py-0.5 rounded bg-magenta-glow/10 text-magenta-glow">referral</span>
+                        )}
+                      </div>
+                    )}
+                    {form.template === t.id && (
+                      <div className="mt-2">
+                        <Check size={14} className="text-cyan-glow" />
+                      </div>
+                    )}
+                  </button>
+                )
+              })}
             </div>
+            <p className="text-[11px] text-nexus-500 mt-3">
+              Selecting a template pre-configures your form fields and settings. Choose <strong className="text-nexus-300">Custom</strong> to keep your current selection.
+            </p>
           </div>
         )}
 
@@ -234,34 +345,64 @@ export default function CreateProject() {
               Hit deploy to go live.
             </p>
 
-            <div className="mt-6 card-surface p-4 text-left">
-              <div className="flex items-center justify-between mb-2">
+            {/* Configuration summary */}
+            <div className="mt-6 card-surface p-4 text-left space-y-3">
+              <span className="text-[10px] font-mono text-nexus-500 tracking-widest uppercase">Configuration Summary</span>
+
+              <div className="grid grid-cols-2 gap-3 text-xs">
+                <div>
+                  <span className="text-nexus-500">Template</span>
+                  <div className="text-nexus-200 font-semibold mt-0.5">{selectedTemplate?.name ?? 'Minimal'}</div>
+                </div>
+                <div>
+                  <span className="text-nexus-500">Referral</span>
+                  <div className={`font-semibold mt-0.5 ${form.enableReferral ? 'text-emerald-glow' : 'text-nexus-500'}`}>
+                    {form.enableReferral ? 'Enabled' : 'Disabled'}
+                  </div>
+                </div>
+                <div>
+                  <span className="text-nexus-500">Form Fields</span>
+                  <div className="flex flex-wrap gap-1 mt-0.5">
+                    <span className="text-[9px] font-mono px-1.5 py-0.5 rounded bg-nexus-700/40 text-nexus-300">email</span>
+                    {hasNameField && <span className="text-[9px] font-mono px-1.5 py-0.5 rounded bg-nexus-700/40 text-nexus-300">name</span>}
+                    {customFieldNames.map(f => (
+                      <span key={f} className="text-[9px] font-mono px-1.5 py-0.5 rounded bg-cyan-glow/10 text-cyan-glow">{f}</span>
+                    ))}
+                  </div>
+                </div>
+                {form.redirectUrl && (
+                  <div>
+                    <span className="text-nexus-500">Redirect</span>
+                    <div className="text-nexus-300 font-mono text-[10px] mt-0.5 truncate">{form.redirectUrl}</div>
+                  </div>
+                )}
+              </div>
+
+              <div className="border-t border-nexus-700/30 pt-3 mt-3">
                 <span className="text-[10px] font-mono text-nexus-500 tracking-widest uppercase">Quick Integration</span>
-              </div>
-              <p className="text-xs text-nexus-400 mb-3">
-                After deploying, you'll find the embed code and API snippets on your project page via the <Code size={11} className="inline text-cyan-glow" /> <span className="text-cyan-glow font-semibold">Embed</span> button.
-              </p>
-              <div className="flex items-center gap-2 text-xs text-nexus-500">
-                <span className="w-5 h-5 rounded-full bg-cyan-glow/10 flex items-center justify-center text-cyan-glow font-bold text-[10px]">1</span>
-                <span>Deploy your project</span>
-              </div>
-              <div className="flex items-center gap-2 text-xs text-nexus-500 mt-2">
-                <span className="w-5 h-5 rounded-full bg-cyan-glow/10 flex items-center justify-center text-cyan-glow font-bold text-[10px]">2</span>
-                <span>Click <strong className="text-nexus-300">Embed</strong> to get your snippet</span>
-              </div>
-              <div className="flex items-center gap-2 text-xs text-nexus-500 mt-2">
-                <span className="w-5 h-5 rounded-full bg-cyan-glow/10 flex items-center justify-center text-cyan-glow font-bold text-[10px]">3</span>
-                <span>Paste into your site or use the API</span>
+                <p className="text-xs text-nexus-400 mt-1 mb-2">
+                  After deploying, find the embed code on your project page via the <Code size={11} className="inline text-cyan-glow" /> <span className="text-cyan-glow font-semibold">Embed</span> button.
+                </p>
+                <div className="space-y-1.5">
+                  <div className="flex items-center gap-2 text-xs text-nexus-500">
+                    <span className="w-5 h-5 rounded-full bg-cyan-glow/10 flex items-center justify-center text-cyan-glow font-bold text-[10px]">1</span>
+                    <span>Deploy your project</span>
+                  </div>
+                  <div className="flex items-center gap-2 text-xs text-nexus-500">
+                    <span className="w-5 h-5 rounded-full bg-cyan-glow/10 flex items-center justify-center text-cyan-glow font-bold text-[10px]">2</span>
+                    <span>Click <strong className="text-nexus-300">Embed</strong> to get your snippet</span>
+                  </div>
+                  <div className="flex items-center gap-2 text-xs text-nexus-500">
+                    <span className="w-5 h-5 rounded-full bg-cyan-glow/10 flex items-center justify-center text-cyan-glow font-bold text-[10px]">3</span>
+                    <span>Paste into your site or use the API</span>
+                  </div>
+                </div>
               </div>
             </div>
 
             <button
               type="button"
-              onClick={() => createProject.mutate({
-                name: form.name || 'Untitled Project',
-                redirectUrl: form.redirectUrl || undefined,
-                webhookUrl: form.webhookUrl || undefined,
-              })}
+              onClick={handleDeploy}
               disabled={createProject.isPending}
               className="btn-primary mt-6 inline-flex items-center gap-2"
             >
@@ -281,7 +422,12 @@ export default function CreateProject() {
           </button>
         ) : <div />}
         {step < 4 && (
-          <button type="button" onClick={() => setStep(s => s + 1)} className="btn-primary flex items-center gap-2">
+          <button
+            type="button"
+            onClick={() => setStep(s => s + 1)}
+            disabled={step === 1 && !form.name.trim()}
+            className="btn-primary flex items-center gap-2"
+          >
             Continue <ArrowRight size={14} />
           </button>
         )}

@@ -1,6 +1,7 @@
 import { Test, TestingModule } from '@nestjs/testing';
-import { NotFoundException } from '@nestjs/common';
+import { ConflictException, NotFoundException } from '@nestjs/common';
 import { EventEmitter2 } from '@nestjs/event-emitter';
+import { Prisma } from '../../generated/prisma/client/client';
 import { SubscribersService } from './subscribers.service';
 import { PrismaService } from '../../infrastructure/prisma/prisma.service';
 import { PlanEnforcementService } from '../plan-config/plan-enforcement.service';
@@ -150,6 +151,38 @@ describe('SubscribersService', () => {
       await expect(
         service.create('unknown', { email: 'test@test.com' }),
       ).rejects.toThrow(NotFoundException);
+    });
+
+    it('should throw ConflictException for duplicate email in same project', async () => {
+      (prisma.project.findUnique as jest.Mock).mockResolvedValue({
+        id: 'p1',
+        accountId: 'acc-1',
+      });
+      (prisma.subscriber.findUnique as jest.Mock).mockResolvedValue(null);
+      (prisma.subscriber.create as jest.Mock).mockRejectedValue(
+        new Prisma.PrismaClientKnownRequestError(
+          'Unique constraint failed on the fields: (`projectId`,`email`)',
+          { code: 'P2002', clientVersion: '6.0.0' },
+        ),
+      );
+
+      await expect(
+        service.create('p1', { email: 'duplicate@test.com' }),
+      ).rejects.toThrow(ConflictException);
+    });
+
+    it('should re-throw non-P2002 Prisma errors', async () => {
+      (prisma.project.findUnique as jest.Mock).mockResolvedValue({
+        id: 'p1',
+        accountId: 'acc-1',
+      });
+      (prisma.subscriber.findUnique as jest.Mock).mockResolvedValue(null);
+      const otherError = new Error('Some unexpected error');
+      (prisma.subscriber.create as jest.Mock).mockRejectedValue(otherError);
+
+      await expect(
+        service.create('p1', { email: 'other@test.com' }),
+      ).rejects.toThrow('Some unexpected error');
     });
   });
 

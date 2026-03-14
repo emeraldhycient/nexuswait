@@ -1,6 +1,7 @@
-import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
+import { Injectable, NotFoundException, BadRequestException, ConflictException } from '@nestjs/common';
 import { EventEmitter2 } from '@nestjs/event-emitter';
 import { PrismaService } from '../../infrastructure/prisma/prisma.service';
+import { Prisma } from '../../generated/prisma/client/client';
 import { randomBytes } from 'crypto';
 import { CreateSubscriberDto } from './dto/create-subscriber.dto';
 import { UpdateSubscriberDto } from './dto/update-subscriber.dto';
@@ -52,17 +53,28 @@ export class SubscribersService {
     while (await this.prisma.subscriber.findUnique({ where: { projectId, referralCode: code } }))
       code = this.generateReferralCode();
 
-    const subscriber = await this.prisma.subscriber.create({
-      data: {
-        projectId,
-        email: dto.email,
-        name: dto.name,
-        metadata: dto.metadata as object | undefined,
-        referralCode: code,
-        referrerId,
-        source: dto.source || 'direct',
-      },
-    });
+    let subscriber;
+    try {
+      subscriber = await this.prisma.subscriber.create({
+        data: {
+          projectId,
+          email: dto.email,
+          name: dto.name,
+          metadata: dto.metadata as object | undefined,
+          referralCode: code,
+          referrerId,
+          source: dto.source || 'direct',
+        },
+      });
+    } catch (error) {
+      if (
+        error instanceof Prisma.PrismaClientKnownRequestError &&
+        error.code === 'P2002'
+      ) {
+        throw new ConflictException('This email is already on the waitlist.');
+      }
+      throw error;
+    }
 
     this.eventEmitter.emit('waitlist.signup.created', {
       projectId,
