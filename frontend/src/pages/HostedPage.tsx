@@ -241,12 +241,12 @@ export default function HostedPage() {
         <ArrowLeft size={14} /> Back to Dashboard
       </Link>
 
-      <div className="flex items-center justify-between mb-6">
-        <div>
+      <div className="flex flex-wrap items-center justify-between gap-4 mb-6">
+        <div className="min-w-0">
           <h1 className="font-display text-2xl font-black text-nexus-50 tracking-wider">Hosted Page Editor</h1>
           <p className="text-sm text-nexus-400 mt-1">Design and publish your waitlist landing page.</p>
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex flex-wrap items-center gap-2">
           {projectsLoading ? (
             <span className="text-xs text-nexus-500">Loading projects...</span>
           ) : (
@@ -281,7 +281,7 @@ export default function HostedPage() {
               href={`/w/${slug}`}
               target="_blank"
               rel="noopener noreferrer"
-              className="btn-ghost flex items-center gap-1.5 text-xs no-underline"
+              className="btn-ghost flex items-center gap-1.5 text-xs no-underline whitespace-nowrap shrink-0"
             >
               <Eye size={13} /> View Live
             </a>
@@ -290,7 +290,7 @@ export default function HostedPage() {
             type="button"
             onClick={handleSave}
             disabled={upsertPage.isPending || !selectedProjectId}
-            className="btn-secondary flex items-center gap-1.5 text-xs"
+            className="btn-secondary flex items-center gap-1.5 text-xs whitespace-nowrap shrink-0"
           >
             {upsertPage.isPending ? <Loader2 size={13} className="animate-spin" /> : <Save size={13} />}
             {saved ? 'Saved!' : 'Save'}
@@ -299,7 +299,7 @@ export default function HostedPage() {
             type="button"
             onClick={handlePublishToggle}
             disabled={isPublishing || !selectedProjectId}
-            className={`flex items-center gap-1.5 text-xs font-display font-bold tracking-wider px-4 py-2 rounded-lg transition-all ${
+            className={`flex items-center gap-1.5 text-xs font-display font-bold tracking-wider px-4 py-2 rounded-lg transition-all whitespace-nowrap shrink-0 ${
               published ? 'bg-emerald-glow/10 text-emerald-glow border border-emerald-glow/20' : 'btn-primary'
             }`}
           >
