@@ -1,6 +1,8 @@
 import { createContext, useContext, useState, useEffect, useCallback, type ReactNode } from 'react'
+import { useQueryClient } from '@tanstack/react-query'
 import { isAxiosError } from 'axios'
 import { api, setApiTokenGetter } from '../api/client'
+import { clearUserScopeCache } from '../api/clearUserCache'
 
 interface AuthUser {
   id: string
@@ -28,6 +30,7 @@ interface AuthValue {
 const AuthContext = createContext<AuthValue | null>(null)
 
 export function AuthProvider({ children }: { children: ReactNode }) {
+  const queryClient = useQueryClient()
   const [user, setUser] = useState<AuthUser | null>(null)
   const [token, setTokenState] = useState<string | null>(() => localStorage.getItem('nexuswait_token'))
   const [loading, setLoading] = useState(true)
@@ -48,6 +51,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setApiTokenGetter(() => token)
     if (typeof window !== 'undefined') (window as Window & { __logout?: () => void }).__logout = logout
   }, [token, logout])
+
+  // Clear user-scoped cache on logout or when token changes (e.g. login/register) so the new session never sees previous user's data
+  useEffect(() => {
+    clearUserScopeCache(queryClient)
+  }, [token, queryClient])
 
   useEffect(() => {
     if (!token) {

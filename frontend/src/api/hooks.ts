@@ -1,4 +1,4 @@
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
+import { useQuery, useInfiniteQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { useNavigate } from 'react-router-dom'
 import type { AxiosError } from 'axios'
 import { api } from './client'
@@ -22,23 +22,26 @@ export interface CreateProjectBody {
 }
 
 export function useProjects() {
+  const { token } = useAuth()
   return useQuery<Project[]>({
     queryKey: ['projects'],
     queryFn: async () => {
       const { data } = await api.get<Project[]>('/projects')
       return data
     },
+    enabled: !!token,
   })
 }
 
 export function useProject(id: string | undefined) {
+  const { token } = useAuth()
   return useQuery<Project>({
     queryKey: ['project', id],
     queryFn: async () => {
       const { data } = await api.get<Project>(`/projects/${id}`)
       return data
     },
-    enabled: !!id,
+    enabled: !!id && !!token,
   })
 }
 
@@ -100,29 +103,34 @@ export function useSubscribers(
   filters: { search?: string; source?: string; sort?: string } = {},
   opts: { enabled?: boolean } = {},
 ) {
-  return useQuery({
+  const { token } = useAuth()
+  return useInfiniteQuery({
     queryKey: ['subscribers', projectId, filters],
-    queryFn: async () => {
+    queryFn: async ({ pageParam }) => {
       const params = new URLSearchParams()
-      params.set('limit', '200')
+      params.set('limit', '50')
       if (filters.search) params.set('search', filters.search)
       if (filters.source) params.set('source', filters.source)
       if (filters.sort) params.set('sort', filters.sort)
+      if (pageParam) params.set('cursor', pageParam)
       const { data } = await api.get(`/projects/${projectId}/subscribers?${params}`)
-      return data
+      return data as { data: unknown[]; nextCursor: string | null }
     },
-    enabled: !!projectId && (opts.enabled !== false),
+    initialPageParam: undefined as string | undefined,
+    getNextPageParam: (lastPage) => lastPage.nextCursor ?? undefined,
+    enabled: !!token && !!projectId && (opts.enabled !== false),
   })
 }
 
 export function useSubscriberCount(projectId: string | undefined) {
+  const { token } = useAuth()
   return useQuery({
     queryKey: ['subscribers', projectId, 'count'],
     queryFn: async () => {
       const { data } = await api.get(`/projects/${projectId}/subscribers/count`)
       return data
     },
-    enabled: !!projectId,
+    enabled: !!token && !!projectId,
   })
 }
 
@@ -232,22 +240,26 @@ export function useChangePassword() {
 // ─── Account / Billing ──────────────────────────────────
 
 export function useAccount() {
+  const { token } = useAuth()
   return useQuery({
     queryKey: ['account'],
     queryFn: async () => {
       const { data } = await api.get('/account')
       return data
     },
+    enabled: !!token,
   })
 }
 
 export function useBilling() {
+  const { token } = useAuth()
   return useQuery({
     queryKey: ['billing'],
     queryFn: async () => {
       const { data } = await api.get('/account/billing')
       return data
     },
+    enabled: !!token,
   })
 }
 
@@ -280,12 +292,14 @@ export interface ApiKey {
 }
 
 export function useApiKeys() {
+  const { token } = useAuth()
   return useQuery<ApiKey[]>({
     queryKey: ['api-keys'],
     queryFn: async () => {
       const { data } = await api.get<ApiKey[]>('/api-keys')
       return data
     },
+    enabled: !!token,
   })
 }
 
@@ -317,13 +331,14 @@ export function useRevokeApiKey() {
 // ─── Hosted Pages ───────────────────────────────────────
 
 export function useHostedPage(projectId: string | undefined) {
+  const { token } = useAuth()
   return useQuery({
     queryKey: ['hosted-page', projectId],
     queryFn: async () => {
       const { data } = await api.get(`/projects/${projectId}/page`)
       return data
     },
-    enabled: !!projectId,
+    enabled: !!token && !!projectId,
   })
 }
 
@@ -382,13 +397,14 @@ export function useUnpublishHostedPage(projectId: string | undefined) {
 // ─── Integrations ───────────────────────────────────────
 
 export function useIntegrations(projectId: string | undefined) {
+  const { token } = useAuth()
   return useQuery({
     queryKey: ['integrations', projectId],
     queryFn: async () => {
       const { data } = await api.get(`/projects/${projectId}/integrations`)
       return data
     },
-    enabled: !!projectId,
+    enabled: !!token && !!projectId,
   })
 }
 
@@ -446,17 +462,19 @@ export function useTestIntegration(projectId: string | undefined, integrationId:
 // ─── Analytics ──────────────────────────────────────────
 
 export function useAnalyticsOverview(projectId: string | undefined) {
+  const { token } = useAuth()
   return useQuery({
     queryKey: ['analytics', projectId, 'overview'],
     queryFn: async () => {
       const { data } = await api.get(`/projects/${projectId}/analytics/overview`)
       return data
     },
-    enabled: !!projectId,
+    enabled: !!token && !!projectId,
   })
 }
 
 export function useAnalyticsTimeseries(projectId: string | undefined, period = '7d', granularity = 'day') {
+  const { token } = useAuth()
   return useQuery({
     queryKey: ['analytics', projectId, 'timeseries', period, granularity],
     queryFn: async () => {
@@ -465,18 +483,19 @@ export function useAnalyticsTimeseries(projectId: string | undefined, period = '
       })
       return data
     },
-    enabled: !!projectId,
+    enabled: !!token && !!projectId,
   })
 }
 
 export function useAnalyticsSources(projectId: string | undefined) {
+  const { token } = useAuth()
   return useQuery({
     queryKey: ['analytics', projectId, 'sources'],
     queryFn: async () => {
       const { data } = await api.get(`/projects/${projectId}/analytics/sources`)
       return data
     },
-    enabled: !!projectId,
+    enabled: !!token && !!projectId,
   })
 }
 
@@ -494,6 +513,7 @@ export interface InAppNotification {
 }
 
 export function useNotificationInbox(opts: { unreadOnly?: boolean } = {}) {
+  const { token } = useAuth()
   return useQuery<InAppNotification[]>({
     queryKey: ['notifications', 'inbox', opts.unreadOnly ? 'unread' : 'all'],
     queryFn: async () => {
@@ -503,10 +523,12 @@ export function useNotificationInbox(opts: { unreadOnly?: boolean } = {}) {
       return data
     },
     refetchInterval: 30_000,
+    enabled: !!token,
   })
 }
 
 export function useUnreadCount() {
+  const { token } = useAuth()
   return useQuery<{ count: number }>({
     queryKey: ['notifications', 'unread-count'],
     queryFn: async () => {
@@ -514,6 +536,7 @@ export function useUnreadCount() {
       return data
     },
     refetchInterval: 15_000,
+    enabled: !!token,
   })
 }
 
@@ -566,12 +589,14 @@ export interface NotificationPreference {
 }
 
 export function useNotificationPreferences() {
+  const { token } = useAuth()
   return useQuery<NotificationPreference[]>({
     queryKey: ['notifications', 'preferences'],
     queryFn: async () => {
       const { data } = await api.get('/notifications/preferences')
       return data
     },
+    enabled: !!token,
   })
 }
 
@@ -602,12 +627,14 @@ export interface NotificationTemplate {
 }
 
 export function useNotificationTemplates() {
+  const { token } = useAuth()
   return useQuery<NotificationTemplate[]>({
     queryKey: ['notifications', 'templates'],
     queryFn: async () => {
       const { data } = await api.get('/notifications/templates')
       return data
     },
+    enabled: !!token,
   })
 }
 
@@ -652,13 +679,14 @@ export function useDeleteNotificationTemplate() {
 // ─── Referrals ──────────────────────────────────────────
 
 export function useReferralLeaderboard(projectId: string | undefined) {
+  const { token } = useAuth()
   return useQuery({
     queryKey: ['referrals', projectId, 'leaderboard'],
     queryFn: async () => {
       const { data } = await api.get(`/projects/${projectId}/referrals/leaderboard`)
       return data
     },
-    enabled: !!projectId,
+    enabled: !!token && !!projectId,
   })
 }
 
@@ -674,7 +702,7 @@ export function useAdminStats() {
   })
 }
 
-export function useAdminAccounts(params: { search?: string; plan?: string; page?: number; limit?: number } = {}) {
+export function useAdminAccounts(params: { search?: string; plan?: string; page?: number; limit?: number; sortBy?: string; sortOrder?: string } = {}) {
   return useQuery({
     queryKey: ['admin', 'accounts', params],
     queryFn: async () => {
@@ -710,7 +738,7 @@ export function useAdminUpdateAccount(id: string | undefined) {
   })
 }
 
-export function useAdminProjects(params: { search?: string; status?: string; accountId?: string; page?: number; limit?: number } = {}) {
+export function useAdminProjects(params: { search?: string; status?: string; accountId?: string; page?: number; limit?: number; sortBy?: string; sortOrder?: string } = {}) {
   return useQuery({
     queryKey: ['admin', 'projects', params],
     queryFn: async () => {
@@ -761,6 +789,36 @@ export function useAdminFlaggedSubscribers() {
     queryKey: ['admin', 'subscribers', 'flagged'],
     queryFn: async () => {
       const { data } = await api.get('/admin/subscribers/flagged')
+      return data
+    },
+  })
+}
+
+export function useAdminSubscribers(params: { search?: string; source?: string; page?: number; limit?: number; sortBy?: string; sortOrder?: string } = {}) {
+  return useQuery({
+    queryKey: ['admin', 'subscribers', 'list', params],
+    queryFn: async () => {
+      const { data } = await api.get('/admin/subscribers', { params })
+      return data
+    },
+  })
+}
+
+export function useAdminFailedIntegrationsPaginated(params: { search?: string; page?: number; limit?: number; sortBy?: string; sortOrder?: string } = {}) {
+  return useQuery({
+    queryKey: ['admin', 'integrations', 'failed', 'paginated', params],
+    queryFn: async () => {
+      const { data } = await api.get('/admin/integrations/failed', { params: { ...params, paginated: 'true' } })
+      return data
+    },
+  })
+}
+
+export function useAdminFailedNotifications(params: { page?: number; limit?: number } = {}) {
+  return useQuery({
+    queryKey: ['admin', 'notifications', 'failed', params],
+    queryFn: async () => {
+      const { data } = await api.get('/admin/notifications/failed', { params })
       return data
     },
   })
@@ -831,7 +889,7 @@ export function useAdminNotificationTemplates() {
 
 // ─── Admin Users ─────────────────────────────────────────
 
-export function useAdminUsers(params: { search?: string; role?: string; accountId?: string; page?: number; limit?: number } = {}) {
+export function useAdminUsers(params: { search?: string; role?: string; accountId?: string; page?: number; limit?: number; sortBy?: string; sortOrder?: string } = {}) {
   return useQuery({
     queryKey: ['admin', 'users', params],
     queryFn: async () => {
@@ -889,7 +947,7 @@ export function useAdminResetPassword(id: string | undefined) {
   })
 }
 
-export function useAdminAccountSubscribers(accountId: string | undefined, params: { search?: string; page?: number; limit?: number } = {}) {
+export function useAdminAccountSubscribers(accountId: string | undefined, params: { search?: string; page?: number; limit?: number; sortBy?: string; sortOrder?: string } = {}) {
   return useQuery({
     queryKey: ['admin', 'account-subscribers', accountId, params],
     queryFn: async () => {
@@ -920,13 +978,14 @@ export interface SearchResults {
 }
 
 export function useSearch(q: string) {
+  const { token } = useAuth()
   return useQuery<SearchResults>({
     queryKey: ['search', q],
     queryFn: async () => {
       const { data } = await api.get<SearchResults>('/projects/search/all', { params: { q } })
       return data
     },
-    enabled: q.length >= 2,
+    enabled: !!token && q.length >= 2,
   })
 }
 
@@ -1119,12 +1178,12 @@ export interface DeliveryLog {
   createdAt: string
 }
 
-export function useAdminDeliveryLogs(integrationId: string | undefined, page = 1, limit = 25) {
+export function useAdminDeliveryLogs(integrationId: string | undefined, page = 1, limit = 25, sortBy?: string, sortOrder?: string) {
   return useQuery<{ data: DeliveryLog[]; total: number; page: number; limit: number }>({
-    queryKey: ['admin', 'delivery-logs', integrationId, page],
+    queryKey: ['admin', 'delivery-logs', integrationId, page, sortBy, sortOrder],
     queryFn: async () => {
       const { data } = await api.get(`/admin/integrations/${integrationId}/delivery-logs`, {
-        params: { page, limit },
+        params: { page, limit, sortBy, sortOrder },
       })
       return data as { data: DeliveryLog[]; total: number; page: number; limit: number }
     },
@@ -1157,12 +1216,12 @@ export interface WebhookEvent {
   createdAt: string
 }
 
-export function useAdminWebhookEvents(page = 1, limit = 25) {
+export function useAdminWebhookEvents(page = 1, limit = 25, sortBy?: string, sortOrder?: string) {
   return useQuery<{ data: WebhookEvent[]; total: number; page: number; limit: number }>({
-    queryKey: ['admin', 'webhook-events', page],
+    queryKey: ['admin', 'webhook-events', page, sortBy, sortOrder],
     queryFn: async () => {
       const { data } = await api.get('/admin/webhook-events', {
-        params: { page, limit },
+        params: { page, limit, sortBy, sortOrder },
       })
       return data as { data: WebhookEvent[]; total: number; page: number; limit: number }
     },
