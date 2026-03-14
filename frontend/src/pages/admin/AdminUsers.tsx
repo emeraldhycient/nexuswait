@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { Link } from 'react-router-dom'
 import { Search, ChevronLeft, ChevronRight, ExternalLink } from 'lucide-react'
 import { useAdminUsers } from '../../api/hooks'
@@ -22,11 +22,17 @@ const providerBadge: Record<string, string> = {
 
 export default function AdminUsers() {
   const [search, setSearch] = useState('')
+  const [debouncedSearch, setDebouncedSearch] = useState('')
   const [role, setRole] = useState('')
   const [page, setPage] = useState(1)
   const limit = 20
 
-  const { data, isLoading, error } = useAdminUsers({ search: search || undefined, role: role || undefined, page, limit })
+  useEffect(() => {
+    const timer = setTimeout(() => setDebouncedSearch(search), 300)
+    return () => clearTimeout(timer)
+  }, [search])
+
+  const { data, isLoading, error } = useAdminUsers({ search: debouncedSearch || undefined, role: role || undefined, page, limit })
 
   const users: Record<string, unknown>[] = (data as Record<string, unknown>)?.data as Record<string, unknown>[] ?? []
   const total: number = ((data as Record<string, unknown>)?.total as number) ?? 0

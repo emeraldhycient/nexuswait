@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useParams, Link } from 'react-router-dom'
 import { ArrowLeft, Save, Search, ChevronLeft, ChevronRight, ExternalLink } from 'lucide-react'
 import { useAdminAccount, useAdminUpdateAccount, useAdminAccountSubscribers } from '../../api/hooks'
@@ -16,9 +16,16 @@ export default function AdminAccountDetail() {
   const mutation = useAdminUpdateAccount(id)
   const [selectedPlan, setSelectedPlan] = useState<string | null>(null)
   const [subSearch, setSubSearch] = useState('')
+  const [debouncedSubSearch, setDebouncedSubSearch] = useState('')
   const [subPage, setSubPage] = useState(1)
   const subLimit = 10
-  const { data: subData } = useAdminAccountSubscribers(id, { search: subSearch || undefined, page: subPage, limit: subLimit })
+
+  useEffect(() => {
+    const timer = setTimeout(() => setDebouncedSubSearch(subSearch), 300)
+    return () => clearTimeout(timer)
+  }, [subSearch])
+
+  const { data: subData } = useAdminAccountSubscribers(id, { search: debouncedSubSearch || undefined, page: subPage, limit: subLimit })
 
   if (isLoading) return <div className="p-6 text-nexus-400">Loading...</div>
   if (error || !account) return <div className="p-6 text-magenta-glow">Failed to load account.</div>

@@ -1,14 +1,20 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { Search, ChevronLeft, ChevronRight } from 'lucide-react'
 import { useAdminProjects } from '../../api/hooks'
 
 export default function AdminProjects() {
   const [search, setSearch] = useState('')
+  const [debouncedSearch, setDebouncedSearch] = useState('')
   const [status, setStatus] = useState('')
   const [page, setPage] = useState(1)
   const limit = 15
 
-  const { data, isLoading, error } = useAdminProjects({ search: search || undefined, status: status || undefined, page, limit })
+  useEffect(() => {
+    const timer = setTimeout(() => setDebouncedSearch(search), 300)
+    return () => clearTimeout(timer)
+  }, [search])
+
+  const { data, isLoading, error } = useAdminProjects({ search: debouncedSearch || undefined, status: status || undefined, page, limit })
 
   const projects: Record<string, unknown>[] = (data as Record<string, unknown>)?.data as Record<string, unknown>[] ?? []
   const total: number = ((data as Record<string, unknown>)?.total as number) ?? 0
