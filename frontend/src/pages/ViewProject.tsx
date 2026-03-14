@@ -15,12 +15,14 @@ import {
   useAnalyticsTimeseries,
   useAnalyticsSources,
   useReferralLeaderboard,
-  usePlatformConfig,
   getMutationErrorMessage,
 } from '../api/hooks'
 import { api } from '../api/client'
 import { CustomFieldsBuilder } from './CustomFieldsBuilder'
 import type { CustomFieldDefinition } from '../shared/hosted-page-types'
+
+const API_BASE = import.meta.env.VITE_API_BASE_URL || 'http://localhost:3001/v1'
+const APP_URL = import.meta.env.VITE_APP_URL || window.location.origin
 
 const tabsList = ['Overview', 'Subscribers', 'Referrals', 'Settings'] as const
 type Tab = (typeof tabsList)[number]
@@ -75,8 +77,6 @@ export default function ViewProject() {
   } = useSubscribers(id, { search: debouncedSearch || undefined, source: subSource || undefined, sort: subSort })
   const { data: subCountData } = useSubscriberCount(id)
   const { data: referralData } = useReferralLeaderboard(id)
-  const { data: platformConfig } = usePlatformConfig()
-  const apiUrl = platformConfig?.apiBaseUrl ?? 'https://api.nexuswait.com'
 
   // ─── Settings tab state ────────────────────────────
   const [settingsName, setSettingsName] = useState('')
@@ -671,14 +671,14 @@ export default function ViewProject() {
               <p className="text-xs text-nexus-500 mb-3">Drop this snippet into your HTML to show a fully styled signup form. No build tools required.</p>
               <SnippetBlock
                 label="HTML"
-                code={`<script src="${apiUrl.replace(/\/v1$/, '')}/embed.js"></script>\n<div data-nexuswait-id="${id}"></div>`}
+                code={`<script src="${APP_URL}/embed.js"></script>\n<div data-nexuswait-id="${id}"></div>`}
                 copied={copiedSnippet}
                 onCopy={setCopiedSnippet}
               />
               <div className="mt-2">
                 <SnippetBlock
                   label="All Options"
-                  code={`<script src="${apiUrl.replace(/\/v1$/, '')}/embed.js"></script>\n<div\n  data-nexuswait-id="${id}"\n  data-nexuswait-name="true"\n  data-nexuswait-button-text="Get Early Access"\n  data-nexuswait-theme="dark"\n  data-nexuswait-accent="#00e8ff"\n  data-nexuswait-show-count="true"\n  data-nexuswait-api="${apiUrl}"\n></div>`}
+                  code={`<script src="${APP_URL}/embed.js"></script>\n<div\n  data-nexuswait-id="${id}"\n  data-nexuswait-name="true"\n  data-nexuswait-button-text="Get Early Access"\n  data-nexuswait-theme="dark"\n  data-nexuswait-accent="#00e8ff"\n  data-nexuswait-show-count="true"\n  data-nexuswait-fields="true"\n  data-nexuswait-api="${API_BASE}"\n></div>`}
                   copied={copiedSnippet}
                   onCopy={setCopiedSnippet}
                 />
@@ -697,7 +697,7 @@ export default function ViewProject() {
               <p className="text-xs text-nexus-500 mb-3">Submit signups from your own form using a simple POST request.</p>
               <SnippetBlock
                 label="cURL"
-                code={`curl -X POST ${apiUrl}/v1/projects/${id}/subscribers \\\n  -H "Content-Type: application/json" \\\n  -d '{"email": "user@example.com", "name": "Jane Doe"${projectCustomFields.length > 0 ? `,\n       "metadata": { ${projectCustomFields.slice(0, 2).map((f) => `"${f.fieldKey}": "..."` ).join(', ')} }` : ''}'`}
+                code={`curl -X POST ${API_BASE}/projects/${id}/subscribers \\\n  -H "Content-Type: application/json" \\\n  -d '{"email": "user@example.com", "name": "Jane Doe"${projectCustomFields.length > 0 ? `,\n       "metadata": { ${projectCustomFields.slice(0, 2).map((f) => `"${f.fieldKey}": "..."` ).join(', ')} }` : ''}'`}
                 copied={copiedSnippet}
                 onCopy={setCopiedSnippet}
               />
@@ -712,7 +712,7 @@ export default function ViewProject() {
               <p className="text-xs text-nexus-500 mb-3">Use this in your form&apos;s submit handler.</p>
               <SnippetBlock
                 label="JavaScript"
-                code={`const res = await fetch("${apiUrl}/v1/projects/${id}/subscribers", {\n  method: "POST",\n  headers: { "Content-Type": "application/json" },\n  body: JSON.stringify({\n    email: formData.email,\n    name: formData.name,   // optional\n    source: "website",     // optional${projectCustomFields.length > 0 ? `\n    metadata: {            // custom fields\n${projectCustomFields.slice(0, 3).map((f) => `      ${f.fieldKey}: "..."`).join(',\n')}\n    }` : ''}\n  }),\n});\nconst subscriber = await res.json();\nconsole.log("Position:", subscriber.position);`}
+                code={`const res = await fetch("${API_BASE}/projects/${id}/subscribers", {\n  method: "POST",\n  headers: { "Content-Type": "application/json" },\n  body: JSON.stringify({\n    email: formData.email,\n    name: formData.name,   // optional\n    source: "website",     // optional${projectCustomFields.length > 0 ? `\n    metadata: {            // custom fields\n${projectCustomFields.slice(0, 3).map((f) => `      ${f.fieldKey}: "..."`).join(',\n')}\n    }` : ''}\n  }),\n});\nconst subscriber = await res.json();\nconsole.log("Position:", subscriber.position);`}
                 copied={copiedSnippet}
                 onCopy={setCopiedSnippet}
               />
@@ -727,7 +727,7 @@ export default function ViewProject() {
               <p className="text-xs text-nexus-500 mb-3">Quick copy-paste form component.</p>
               <SnippetBlock
                 label="React"
-                code={`async function handleSubmit(e) {\n  e.preventDefault();\n  const res = await fetch(\n    "${apiUrl}/v1/projects/${id}/subscribers",\n    {\n      method: "POST",\n      headers: { "Content-Type": "application/json" },\n      body: JSON.stringify({ email, name }),\n    }\n  );\n  const data = await res.json();\n  alert(\`You're #\${data.position} on the waitlist!\`);\n}`}
+                code={`async function handleSubmit(e) {\n  e.preventDefault();\n  const res = await fetch(\n    "${API_BASE}/projects/${id}/subscribers",\n    {\n      method: "POST",\n      headers: { "Content-Type": "application/json" },\n      body: JSON.stringify({ email, name }),\n    }\n  );\n  const data = await res.json();\n  alert(\`You're #\${data.position} on the waitlist!\`);\n}`}
                 copied={copiedSnippet}
                 onCopy={setCopiedSnippet}
               />
