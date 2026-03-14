@@ -114,6 +114,68 @@ describe('RetryService', () => {
         }),
       );
     });
+
+    it('should auto-disable immediately when failureCount already >= maxRetryAttempts', async () => {
+      const maxedOut = {
+        ...mockIntegration,
+        failureCount: 5,
+        maxRetryAttempts: 5,
+      };
+      (prisma.integration.findMany as jest.Mock).mockResolvedValue([maxedOut]);
+      (prisma.integration.update as jest.Mock).mockResolvedValue({});
+
+      await service.processRetries();
+
+      expect(webhookDelivery.deliverWebhook).not.toHaveBeenCalled();
+      expect(prisma.integration.update).toHaveBeenCalledWith({
+        where: { id: 'int-1' },
+        data: { enabled: false },
+      });
+      expect(eventEmitter.emit).toHaveBeenCalledWith(
+        'integration.webhook.failed',
+        expect.objectContaining({
+          integrationId: 'int-1',
+          error: expect.stringContaining('5 consecutive delivery failures'),
+        }),
+      );
+    });
+
+    it('should respect per-integration maxRetryAttempts', async () => {
+      const customMax = {
+        ...mockIntegration,
+        failureCount: 3,
+        maxRetryAttempts: 3,
+      };
+      (prisma.integration.findMany as jest.Mock).mockResolvedValue([customMax]);
+      (prisma.integration.update as jest.Mock).mockResolvedValue({});
+
+      await service.processRetries();
+
+      expect(webhookDelivery.deliverWebhook).not.toHaveBeenCalled();
+      expect(prisma.integration.update).toHaveBeenCalledWith({
+        where: { id: 'int-1' },
+        data: { enabled: false },
+      });
+    });
+
+    it('should not emit failed event on successful retry', async () => {
+      (prisma.integration.findMany as jest.Mock).mockResolvedValue([mockIntegration]);
+      (webhookDelivery.deliverWebhook as jest.Mock).mockResolvedValue(undefined);
+
+      await service.processRetries();
+
+      expect(webhookDelivery.deliverWebhook).toHaveBeenCalled();
+      expect(eventEmitter.emit).not.toHaveBeenCalled();
+    });
+
+    it('should handle empty batch gracefully', async () => {
+      (prisma.integration.findMany as jest.Mock).mockResolvedValue([]);
+
+      await service.processRetries();
+
+      expect(webhookDelivery.deliverWebhook).not.toHaveBeenCalled();
+      expect(eventEmitter.emit).not.toHaveBeenCalled();
+    });
   });
 
   describe('retryIntegration', () => {

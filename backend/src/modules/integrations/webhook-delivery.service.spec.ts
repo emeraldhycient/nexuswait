@@ -159,6 +159,89 @@ describe('WebhookDeliveryService', () => {
       expect(mockedAxios.post).not.toHaveBeenCalled();
       expect(prisma.integration.update).not.toHaveBeenCalled();
     });
+
+    it('should skip duplicate delivery when idempotency key already succeeded', async () => {
+      (prisma.webhookDeliveryLog.findUnique as jest.Mock).mockResolvedValue({
+        idempotencyKey: 'some-key',
+        success: true,
+      });
+
+      const payload = { event: 'waitlist.signup.created', data: { email: 'test@example.com' }, subscriber: { id: 'sub-1' } };
+      await service.deliverWebhook(mockWebhookIntegration, payload, 'waitlist.signup.created');
+
+      expect(mockedAxios.post).not.toHaveBeenCalled();
+      expect(prisma.integration.update).not.toHaveBeenCalled();
+    });
+
+    it('should allow re-delivery when previous delivery failed', async () => {
+      (prisma.webhookDeliveryLog.findUnique as jest.Mock).mockResolvedValue({
+        idempotencyKey: 'some-key',
+        success: false,
+      });
+      mockedAxios.post.mockResolvedValue({ status: 200 });
+      (prisma.integration.update as jest.Mock).mockResolvedValue({});
+
+      const payload = { event: 'waitlist.signup.created', data: { email: 'test@example.com' }, subscriber: { id: 'sub-1' } };
+      await service.deliverWebhook(mockWebhookIntegration, payload, 'waitlist.signup.created');
+
+      expect(mockedAxios.post).toHaveBeenCalled();
+    });
+
+    it('should log successful delivery via upsert', async () => {
+      mockedAxios.post.mockResolvedValue({ status: 200, data: { ok: true } });
+      (prisma.integration.update as jest.Mock).mockResolvedValue({});
+
+      const payload = { event: 'waitlist.signup.created', data: { email: 'test@example.com' } };
+      await service.deliverWebhook(mockWebhookIntegration, payload, 'waitlist.signup.created');
+
+      expect(prisma.webhookDeliveryLog.upsert).toHaveBeenCalledWith(
+        expect.objectContaining({
+          create: expect.objectContaining({
+            integrationId: 'int-1',
+            event: 'waitlist.signup.created',
+            success: true,
+            responseStatus: 200,
+          }),
+        }),
+      );
+    });
+
+    it('should log failed delivery with error details', async () => {
+      const axiosError = Object.assign(new Error('Server Error'), {
+        response: { status: 500, data: { error: 'Internal' } },
+      });
+      mockedAxios.post.mockRejectedValue(axiosError);
+      (prisma.integration.update as jest.Mock).mockResolvedValue({});
+
+      const payload = { event: 'waitlist.signup.created', data: { email: 'test@example.com' } };
+      await service.deliverWebhook(mockWebhookIntegration, payload, 'waitlist.signup.created');
+
+      expect(prisma.webhookDeliveryLog.upsert).toHaveBeenCalledWith(
+        expect.objectContaining({
+          create: expect.objectContaining({
+            integrationId: 'int-1',
+            success: false,
+            error: 'Server Error',
+            responseStatus: 500,
+          }),
+        }),
+      );
+    });
+
+    it('should update lastTriggeredAt on success', async () => {
+      mockedAxios.post.mockResolvedValue({ status: 200 });
+      (prisma.integration.update as jest.Mock).mockResolvedValue({});
+
+      await service.deliverWebhook(mockWebhookIntegration, { test: true });
+
+      expect(prisma.integration.update).toHaveBeenCalledWith({
+        where: { id: 'int-1' },
+        data: expect.objectContaining({
+          lastTriggeredAt: expect.any(Date),
+          failureCount: 0,
+        }),
+      });
+    });
   });
 
   describe('deliverTest', () => {
